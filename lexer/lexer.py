@@ -5,10 +5,9 @@ import sys
 class TokenType(Enum):
     # Identifiers and Literals
     IDENTIFIER = auto()
-    INTEGER = auto()
-    FLOAT = auto()
-    BOOLEAN = auto()
-    COLOUR = auto()
+    INT_LITERAL = auto()
+    FLOAT_LITERAL = auto()
+    COLOUR_LITERAL = auto()
     
     # Keywords
     LET = auto()
@@ -25,16 +24,22 @@ class TokenType(Enum):
     TRUE = auto()
     FALSE = auto()
     
-    # Built-ins 
+    # Type keywords
+    TYPE_INT = auto()
+    TYPE_FLOAT = auto()
+    TYPE_BOOL = auto()
+    TYPE_COLOUR = auto()
+    
+    # Built-ins (corrected based on assignment EBNF and examples)
     BUILTIN_PRINT = auto()
     BUILTIN_DELAY = auto()
     BUILTIN_WRITE = auto()
     BUILTIN_WRITE_BOX = auto()
-    BUILTIN_RANDOM_INT = auto()  
+    BUILTIN_RANDI = auto()        # Corrected: __randi not __random_int
     BUILTIN_READ = auto()
     BUILTIN_WIDTH = auto()
     BUILTIN_HEIGHT = auto()
-    BUILTIN_CLEAR = auto()
+    BUILTIN_CLEAR = auto()        # Added: used in examples
     
     # Operators
     EQUAL = auto()
@@ -69,6 +74,11 @@ class TokenType(Enum):
     LINECOMMENT = auto()
     BLOCKCOMMENT = auto()
     NEWLINE = auto()
+    ERROR_INVALID_FLOAT = auto()
+    ERROR_INVALID_COLOUR = auto()
+    ERROR_UNTERMINATED_COMMENT = auto()
+    ERROR_NESTED_COMMENT = auto()
+    ERROR_STRAY_COMMENT_CLOSE = auto()
 
 class Token:
     def __init__(self, token_type, lexeme, line=0, col=0):
@@ -82,7 +92,7 @@ class Token:
 
 class FSALexer:
     """
-    Fully table-driven FSA-based lexer for PArL language (Task 1)
+    Table-driven FSA-based lexer for PArL language (Task 1)
     Implements the micro-syntax as specified in the assignment EBNF
     """
     
@@ -126,68 +136,63 @@ class FSALexer:
 
     def _categorize_char(self, c):
         """Categorize a single character according to PArL micro-syntax"""
-        if not c:
-            return "other"
-        
-        # Handle hex letters specifically (A-F, a-f)
-        if c in 'ABCDEFabcdef':
-            return "hexletter"
-        elif c.isalpha():
+        if c.isalpha():
+            if c in 'ABCDEFabcdef': 
+                return "hexletter"
             return "letter"
-        elif c.isdigit():
+        if c.isdigit(): 
             return "digit"
-        elif c == '_':
+        if c == '_': 
             return "underscore"
-        elif c == '+':
+        if c == '+': 
             return "plus"
-        elif c == '-':
+        if c == '-': 
             return "minus"
-        elif c == '*':
+        if c == '*': 
             return "multiply"
-        elif c == '/':
+        if c == '/': 
             return "slash"
-        elif c == '=':
+        if c == '=': 
             return "equal"
-        elif c == '<':
+        if c == '<': 
             return "less"
-        elif c == '>':
+        if c == '>': 
             return "greater"
-        elif c == '!':
+        if c == '!': 
             return "excl"
-        elif c == '(':
+        if c == '(': 
             return "lparen"
-        elif c == ')':
+        if c == ')': 
             return "rparen"
-        elif c == '{':
+        if c == '{': 
             return "lbrace"
-        elif c == '}':
+        if c == '}': 
             return "rbrace"
-        elif c == '[':
+        if c == '[': 
             return "lbracket"
-        elif c == ']':
+        if c == ']': 
             return "rbracket"
-        elif c == ':':
+        if c == ':': 
             return "colon"
-        elif c == ',':
+        if c == ',': 
             return "comma"
-        elif c == ';':
+        if c == ';': 
             return "semicolon"
-        elif c == '#':
+        if c == '#': 
             return "hash"
-        elif c == '.':
+        if c == '.': 
             return "dot"
-        elif c in [' ', '\t', '\r']:
+        # Improved whitespace handling
+        if c.isspace() and c != '\n':
             return "whitespace"
-        elif c == '\n':
+        if c == '\n': 
             return "newline"
-        else:
-            return "other"
+        return "other"
 
     def _init_transition_table(self):
         """
         Initialize the DFA transition table for PArL tokens
-        State 0 is the initial state
-        States with negative numbers indicate error states
+        Following the assignment's EBNF grammar precisely
         """
         # Initialize transition table with error state (-1)
         self.Tx = defaultdict(lambda: defaultdict(lambda: -1))
@@ -199,57 +204,74 @@ class FSALexer:
                 if category in self.cat_map:
                     self.Tx[from_state][self.cat_map[category]] = to_state
 
-        # State 0: Initial state
+        # ===== NUMERIC LITERALS =====
+        # Integer: Digit { Digit }
+        add_transition(0, ["digit"], 5)
+        add_transition(5, ["digit"], 5)
+        self.accepting_states[5] = TokenType.INT_LITERAL  # Accept integers
+
+        # Float: Ensure ".123" and "123.45" are valid, "123." is invalid
+        add_transition(5, ["dot"], 30)  # State 30: After integer part, saw '.')
+        add_transition(30, ["digit"], 6)  # Valid float (e.g., "123.4")
+        add_transition(6, ["digit"], 6)
+        self.accepting_states[6] = TokenType.FLOAT_LITERAL
+
+        # State 30 is now accepting as ERROR_INVALID_FLOAT to consume "123." as single token
+        self.accepting_states[30] = TokenType.ERROR_INVALID_FLOAT
+
+        # ===== COLOUR LITERALS =====
+        add_transition(0, ["hash"], 8)
+        add_transition(8, ["hexletter", "digit"], 9)   # 1st hex digit
+        add_transition(9, ["hexletter", "digit"], 10)  # 2nd
+        add_transition(10, ["hexletter", "digit"], 11) # 3rd
+        add_transition(11, ["hexletter", "digit"], 12) # 4th
+        add_transition(12, ["hexletter", "digit"], 13) # 5th
+        add_transition(13, ["hexletter", "digit"], 14) # 6th
+        self.accepting_states[14] = TokenType.COLOUR_LITERAL
+
+        # Add error transitions for invalid characters in color literals
+        # Consume invalid characters to make single error token
+        for state in [8, 9, 10, 11, 12, 13]:
+            # For any invalid character, go to error state that continues consuming
+            for cat in ["letter", "other"]:  # Invalid hex characters
+                add_transition(state, [cat], 44)  # State 44: colour error state
         
-        # === IDENTIFIERS AND KEYWORDS ===
-        # Identifier: Letter { '_' | Letter | Digit }
-        # Built-ins: '__' Letter { '_' | Letter | Digit }
-        
-        # Regular identifiers (starts with letter or hex letter)
+        # State 44: Continue consuming characters for invalid colour
+        for cat in self.categories:
+            if cat not in ["whitespace", "newline", "lparen", "rparen", "lbrace", "rbrace", 
+                          "lbracket", "rbracket", "semicolon", "comma", "colon"]:
+                add_transition(44, [cat], 44)
+        self.accepting_states[44] = TokenType.ERROR_INVALID_COLOUR
+
+        # ===== STRAY */ DETECTION =====
+        add_transition(0, ["multiply"], 33)  # State 33: Saw '*' at top level
+        add_transition(33, ["slash"], 34)    # State 34: Saw '*/' → error
+        self.accepting_states[33] = TokenType.MULTIPLY  # Single '*' is valid multiply
+        self.accepting_states[34] = TokenType.ERROR_STRAY_COMMENT_CLOSE
+
+        # ===== OTHER EXISTING TRANSITIONS =====
+        # Add other transitions here (e.g., identifiers, operators, etc.)
+        # === IDENTIFIERS (Assignment EBNF: Letter { '_' | Letter | Digit }) ===
+        # Regular identifiers start with letter or hexletter
         add_transition(0, ["letter", "hexletter"], 1)
         add_transition(1, ["letter", "hexletter", "digit", "underscore"], 1)
         self.accepting_states[1] = TokenType.IDENTIFIER
         
-        # Built-ins (start with __)
-        add_transition(0, ["underscore"], 2)  # First underscore
-        add_transition(2, ["underscore"], 3)  # Second underscore  
-        add_transition(3, ["letter", "hexletter"], 4)  # Must start with letter
+        # Built-ins: start with '__'
+        add_transition(0, ["underscore"], 2)
+        add_transition(2, ["underscore"], 3)
+        add_transition(3, ["letter", "hexletter"], 4)
         add_transition(4, ["letter", "hexletter", "digit", "underscore"], 4)
-        self.accepting_states[4] = TokenType.IDENTIFIER  # Will be refined later
-        
-        # === NUMERIC LITERALS ===
-        
-        # Integer: Digit { Digit }
-        add_transition(0, ["digit"], 5)
-        add_transition(5, ["digit"], 5)
-        self.accepting_states[5] = TokenType.INTEGER
-        
-        # Float: Digit { Digit } '.' Digit { Digit }
-        add_transition(5, ["dot"], 6)  # From integer state
-        add_transition(6, ["digit"], 7)  # Must have at least one digit after dot
-        add_transition(7, ["digit"], 7)
-        self.accepting_states[7] = TokenType.FLOAT
-        
-        # === COLOUR LITERALS ===
-        # ColourLiteral: '#' Hex Hex Hex Hex Hex Hex
-        add_transition(0, ["hash"], 8)
-        add_transition(8, ["hexletter", "digit"], 9)   # 1st hex digit
-        add_transition(9, ["hexletter", "digit"], 10)  # 2nd hex digit
-        add_transition(10, ["hexletter", "digit"], 11) # 3rd hex digit
-        add_transition(11, ["hexletter", "digit"], 12) # 4th hex digit
-        add_transition(12, ["hexletter", "digit"], 13) # 5th hex digit
-        add_transition(13, ["hexletter", "digit"], 14) # 6th hex digit
-        self.accepting_states[14] = TokenType.COLOUR
+        self.accepting_states[4] = TokenType.IDENTIFIER  # Will be refined to built-ins
         
         # === OPERATORS ===
-        
-        # Arrow: '->'
+        # Arrow: '->' (FIXED: proper precedence)
         add_transition(0, ["minus"], 15)
         add_transition(15, ["greater"], 16)
-        self.accepting_states[15] = TokenType.MINUS
-        self.accepting_states[16] = TokenType.ARROW
+        self.accepting_states[15] = TokenType.MINUS  # Single minus is valid
+        self.accepting_states[16] = TokenType.ARROW  # Arrow takes precedence
         
-        # Equality operators: '=', '=='
+        # Equality: '=', '=='
         add_transition(0, ["equal"], 17)
         add_transition(17, ["equal"], 18)
         self.accepting_states[17] = TokenType.EQUAL
@@ -258,7 +280,7 @@ class FSALexer:
         # Inequality: '!', '!='
         add_transition(0, ["excl"], 19)
         add_transition(19, ["equal"], 20)
-        self.accepting_states[19] = TokenType.EXCL
+        # Removed accepting state for state 19 (single '!')
         self.accepting_states[20] = TokenType.NOT_EQUAL
         
         # Less than: '<', '<='
@@ -273,66 +295,77 @@ class FSALexer:
         self.accepting_states[23] = TokenType.GREATER
         self.accepting_states[24] = TokenType.GREATER_EQUAL
         
-        # === COMMENTS ===
+        # === COMMENTS (Assignment: '//' line, '/*...*/' block) ===
+        add_transition(0, ["slash"], 25)
+        self.accepting_states[25] = TokenType.SLASH  # Division operator
         
         # Line comment: '//'
-        add_transition(0, ["slash"], 25)
         add_transition(25, ["slash"], 26)
-        # Line comment continues until newline
+        # Continue until newline
         for cat in self.categories:
-            if cat != "newline":
+            if cat not in ["newline"]:
                 add_transition(26, [cat], 26)
-        add_transition(26, ["newline"], 27)
-        self.accepting_states[27] = TokenType.LINECOMMENT
+        self.accepting_states[26] = TokenType.LINECOMMENT
         
-        # Block comment: '/*' ... '*/'
-        add_transition(25, ["multiply"], 28)
-        # Block comment can contain any character
+        # Block comment with nested error detection
+        add_transition(25, ["multiply"], 27)  # Start of block comment
+        
+        # State 27: In comment body - FIXED FOR PROPER COMMENT HANDLING
         for cat in self.categories:
-            add_transition(28, [cat], 28)
-        add_transition(28, ["multiply"], 29)  # Possible end
-        add_transition(29, ["slash"], 30)     # Confirmed end
-        # If not '/', go back to comment content
+            if cat == "multiply":
+                add_transition(27, ["multiply"], 28)  # Potential end marker
+            elif cat == "slash":
+                add_transition(27, ["slash"], 31)  # Track '/' for nested detection
+            else:
+                add_transition(27, [cat], 27)  # Stay in comment
+        
+        # State 28: Saw '*' in comment - potential end
+        add_transition(28, ["slash"], 29)  # End of comment '*/'
+        add_transition(28, ["multiply"], 28)  # Multiple asterisks
+        # Go back to comment body if not '/'
         for cat in self.categories:
             if cat not in ["slash", "multiply"]:
-                add_transition(29, [cat], 28)
-        add_transition(29, ["multiply"], 29)  # Stay in end-check state
-        self.accepting_states[30] = TokenType.BLOCKCOMMENT
+                add_transition(28, [cat], 27)
         
-        # Single slash (division operator)
-        self.accepting_states[25] = TokenType.SLASH
+        # State 31: Saw '/' in comment - check for nested '/*'
+        add_transition(31, ["multiply"], 32)  # Nested '/*' → error
+        self.accepting_states[32] = TokenType.ERROR_NESTED_COMMENT
+        # Continue comment for other characters
+        for cat in self.categories:
+            if cat not in ["multiply"]:
+                add_transition(31, [cat], 27)
+        
+        self.accepting_states[29] = TokenType.BLOCKCOMMENT
         
         # === SINGLE CHARACTER TOKENS ===
-        single_char_tokens = [
-            (["plus"], TokenType.PLUS),
-            (["multiply"], TokenType.MULTIPLY),
-            (["lparen"], TokenType.LPAREN),
-            (["rparen"], TokenType.RPAREN),
-            (["lbrace"], TokenType.LBRACE),
-            (["rbrace"], TokenType.RBRACE),
-            (["lbracket"], TokenType.LBRACKET),
-            (["rbracket"], TokenType.RBRACKET),
-            (["colon"], TokenType.COLON),
-            (["comma"], TokenType.COMMA),
-            (["semicolon"], TokenType.SEMICOLON),
-            (["dot"], TokenType.DOT),
+        single_tokens = [
+            (45, ["plus"], TokenType.PLUS),  # Changed from 31 to 45 to avoid conflict
+            # Note: multiply (33) is handled by stray comment detection above
+            (35, ["lparen"], TokenType.LPAREN),
+            (36, ["rparen"], TokenType.RPAREN),
+            (37, ["lbrace"], TokenType.LBRACE),
+            (38, ["rbrace"], TokenType.RBRACE),
+            (39, ["lbracket"], TokenType.LBRACKET),
+            (40, ["rbracket"], TokenType.RBRACKET),
+            (41, ["colon"], TokenType.COLON),
+            (42, ["comma"], TokenType.COMMA),
+            (43, ["semicolon"], TokenType.SEMICOLON),
         ]
         
-        state_counter = 31
-        for char_cats, token_type in single_char_tokens:
-            add_transition(0, char_cats, state_counter)
-            self.accepting_states[state_counter] = token_type
-            state_counter += 1
+        for state_num, char_cats, token_type in single_tokens:
+            add_transition(0, char_cats, state_num)
+            self.accepting_states[state_num] = token_type
         
         # === WHITESPACE ===
         add_transition(0, ["whitespace"], 100)
+        add_transition(100, ["whitespace"], 100)
         self.accepting_states[100] = TokenType.WHITESPACE
         
         add_transition(0, ["newline"], 101)
         self.accepting_states[101] = TokenType.NEWLINE
 
     def _init_keywords_and_builtins(self):
-        """Initialize keyword and built-in mappings"""
+        """Initialize keyword and built-in mappings based on assignment EBNF"""
         self.keywords = {
             "let": TokenType.LET,
             "fun": TokenType.FUN,
@@ -345,21 +378,21 @@ class FSALexer:
             "not": TokenType.NOT,
             "and": TokenType.AND,
             "or": TokenType.OR,
-            "float": TokenType.FLOAT,
-            "int": TokenType.INTEGER,
-            "bool": TokenType.BOOLEAN,
-            "colour": TokenType.COLOUR,
+            "int": TokenType.TYPE_INT,
+            "float": TokenType.TYPE_FLOAT,
+            "bool": TokenType.TYPE_BOOL,
+            "colour": TokenType.TYPE_COLOUR,
             "true": TokenType.TRUE,
             "false": TokenType.FALSE,
         }
         
-        # Built-ins as specified in assignment EBNF
+        # Built-ins (CORRECTED to match assignment examples)
         self.builtins = {
             "__print": TokenType.BUILTIN_PRINT,
             "__delay": TokenType.BUILTIN_DELAY,
             "__write": TokenType.BUILTIN_WRITE,
             "__write_box": TokenType.BUILTIN_WRITE_BOX,
-            "__random_int": TokenType.BUILTIN_RANDOM_INT,  # Corrected name
+            "__randi": TokenType.BUILTIN_RANDI,           # FIXED: __randi not __random_int
             "__read": TokenType.BUILTIN_READ,
             "__width": TokenType.BUILTIN_WIDTH,
             "__height": TokenType.BUILTIN_HEIGHT,
@@ -367,123 +400,156 @@ class FSALexer:
         }
 
     def tokenize(self, text):
-        """
-        Tokenize input text using the FSA transition table
-        Returns list of tokens
-        """
         tokens = []
         pos = 0
         line = 1
         col = 1
         text_len = len(text)
-        
+
         while pos < text_len:
-            # Skip whitespace and track position
             start_pos = pos
             start_line = line
             start_col = col
-            
-            # Table-driven FSA simulation
+
             state = 0
-            lexeme = ""
+            last_state = 0
             last_accepting_state = -1
             last_accepting_pos = pos
-            
-            # Simulate DFA
+
             while pos < text_len:
                 char = text[pos]
                 char_category = self._categorize_char(char)
                 char_cat_index = self.cat_map[char_category]
-                
+
                 next_state = self.Tx[state][char_cat_index]
-                
+
                 if next_state == -1:
-                    # No valid transition
                     break
-                
-                # Valid transition
+
+                last_state = next_state
                 state = next_state
-                lexeme += char
                 pos += 1
-                
-                # Update position tracking
-                if char == '\n':
-                    line += 1
-                    col = 1
-                else:
-                    col += 1
-                
-                # Check if current state is accepting
+
                 if state in self.accepting_states:
                     last_accepting_state = state
                     last_accepting_pos = pos
-            
-            # Process the token
+
             if last_accepting_state != -1:
-                # We found a valid token
-                final_lexeme = text[start_pos:last_accepting_pos]
+                lexeme = text[start_pos:last_accepting_pos]
                 token_type = self.accepting_states[last_accepting_state]
-                
-                # Reset position to end of accepted token
                 pos = last_accepting_pos
-                line = start_line
-                col = start_col
-                
-                # Recalculate line/col for end position
+                token_type = self._refine_token_type(token_type, lexeme)
+
+                if (token_type not in [TokenType.WHITESPACE, TokenType.NEWLINE, 
+                      TokenType.LINECOMMENT, TokenType.BLOCKCOMMENT] 
+    or self.debug):
+                    tokens.append(Token(token_type, lexeme, start_line, start_col))
+
                 for i in range(start_pos, last_accepting_pos):
                     if text[i] == '\n':
                         line += 1
                         col = 1
                     else:
                         col += 1
-                
-                # Refine token type based on lexeme
-                token_type = self._refine_token_type(token_type, final_lexeme)
-                
-                # Add token if not whitespace/comment (unless debugging)
-                if token_type not in [TokenType.WHITESPACE, TokenType.NEWLINE, 
-                                    TokenType.LINECOMMENT, TokenType.BLOCKCOMMENT] or self.debug:
-                    tokens.append(Token(token_type, final_lexeme, start_line, start_col))
-                    
             else:
-                # Lexical error - consume one character
                 error_char = text[start_pos] if start_pos < text_len else ""
-                tokens.append(Token(TokenType.ERROR, error_char, start_line, start_col))
+                error_type = self._determine_error_type(text, start_pos, last_state)
+                tokens.append(Token(error_type, error_char, start_line, start_col))
                 pos = start_pos + 1
-                col += 1
-        
-        # Add end token
+                if error_char == '\n':
+                    line += 1
+                    col = 1
+                else:
+                    col += 1
+
         tokens.append(Token(TokenType.END, "", line, col))
         return tokens
 
+
+    def _determine_error_type(self, text, error_pos, state):
+        # Handle new error states
+        if state == 30:
+            return TokenType.ERROR_INVALID_FLOAT
+        if state == 32:
+            return TokenType.ERROR_NESTED_COMMENT
+        if state == 34:
+            return TokenType.ERROR_STRAY_COMMENT_CLOSE
+
+        # If we errored while inside a block comment (states 27 or 28), it's unterminated
+        if state in (27, 28, 31):  # Added state 31 for unterminated comments
+            return TokenType.ERROR_UNTERMINATED_COMMENT
+
+        if error_pos >= len(text):
+            # Special case: if we end in a comment state, it's unterminated
+            if state in (27, 28, 31):
+                return TokenType.ERROR_UNTERMINATED_COMMENT
+            return TokenType.ERROR
+
+        remaining = text[error_pos:]
+
+        # A lone '#' or malformed colour start → invalid colour
+        if remaining.startswith('#'):
+            return TokenType.ERROR_INVALID_COLOUR
+
+        # A dot with no digits afterward → invalid float
+        if state == 6:
+            return TokenType.ERROR_INVALID_FLOAT
+
+        return TokenType.ERROR
+
+
     def _refine_token_type(self, base_type, lexeme):
-        """Refine token type based on lexeme content"""
+        """Refine token type based on lexeme (keywords/builtins) and validate colour literals."""
+        # ——— Colour-literal validation ———
+        if base_type == TokenType.COLOUR_LITERAL:
+            # Must be exactly '#' plus six hex digits
+            if len(lexeme) != 7 or any(c not in '0123456789ABCDEFabcdef' for c in lexeme[1:]):
+                return TokenType.ERROR_INVALID_COLOUR
+
+        # ——— Keyword/Builtin refinement ———
         if base_type == TokenType.IDENTIFIER:
-            # Check for keywords
             if lexeme in self.keywords:
                 return self.keywords[lexeme]
-            
-            # Check for built-ins
             if lexeme in self.builtins:
                 return self.builtins[lexeme]
-            
-            # Check for boolean literals
-            if lexeme == "true":
-                return TokenType.TRUE
-            elif lexeme == "false":
-                return TokenType.FALSE
-        
+
         return base_type
 
     def report_errors(self, tokens):
-        """Report any lexical errors found during tokenization"""
-        errors = [token for token in tokens if token.type == TokenType.ERROR]
+        """Report lexical errors with descriptive messages"""
+        error_msgs = {
+            TokenType.ERROR_INVALID_FLOAT: "Invalid float literal",
+            TokenType.ERROR_INVALID_COLOUR: "Invalid colour literal", 
+            TokenType.ERROR_UNTERMINATED_COMMENT: "Unterminated block comment",
+            TokenType.ERROR_NESTED_COMMENT: "Nested block comment",
+            TokenType.ERROR_STRAY_COMMENT_CLOSE: "Stray '*/' outside comment",
+        }
+        errors = [t for t in tokens if t.type.name.startswith("ERROR")]
         if errors:
-            print(f"Lexical Analysis Errors ({len(errors)} found):")
+            print(f"Lexical Analysis Failed: {len(errors)} error(s) found")
             for error in errors:
-                print(f"  Line {error.line}, Col {error.col}: "
-                      f"Invalid character '{error.lexeme}'")
+                msg = error_msgs.get(error.type, f"Unexpected character '{error.lexeme}'")
+                print(f"  Line {error.line}, Column {error.col}: {msg}")
             return False
         return True
 
-
+    def print_transition_table(self):
+        """Debug helper: print the transition table"""
+        print("DFA Transition Table:")
+        print("State\\Category", end="")
+        for cat in self.categories:
+            print(f"\t{cat[:8]}", end="")
+        print()
+        
+        for state in sorted(self.Tx.keys()):
+            print(f"State {state:2d}", end="")
+            for cat_idx in range(len(self.categories)):
+                next_state = self.Tx[state][cat_idx]
+                if next_state == -1:
+                    print(f"\t-", end="")
+                else:
+                    print(f"\t{next_state}", end="")
+            if state in self.accepting_states:
+                print(f"\t[{self.accepting_states[state].name}]")
+            else:
+                print()
