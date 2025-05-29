@@ -395,3 +395,35 @@ def get_operator_precedence(operator: str) -> int:
         '*': 3, '/': 3, 'and': 3
     }
     return precedence_map.get(operator, 0)
+
+
+class ArrayType:
+    """Represents array type information"""
+    def __init__(self, element_type: str, size: Optional[int] = None):
+        self.element_type = element_type
+        self.size = size  # None for dynamic arrays
+        self.is_array = True
+    
+    def __str__(self):
+        if self.size is not None:
+            return f"{self.element_type}[{self.size}]"
+        return f"{self.element_type}[]"
+    
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return False  # Arrays are never equal to primitive types
+        if not isinstance(other, ArrayType):
+            return False
+        return (self.element_type == other.element_type and 
+                self.size == other.size)
+
+
+class ArrayLiteral(ASTNode):
+    """Array literal: [expr, expr, ...]"""
+    def __init__(self, elements: List[ASTNode], line: int = 0, col: int = 0):
+        super().__init__(line, col)
+        self.elements = elements
+    
+    def __str__(self):
+        elements_str = ", ".join(str(elem) for elem in self.elements)
+        return f"ArrayLiteral[{elements_str}]"
