@@ -4,10 +4,11 @@ Comprehensive semantic analysis with symbol table management and type checking
 FIXED: Proper binary operation type checking
 """
 
-from typing import Dict, List, Optional, Set, Any
+from typing import Dict, List, Optional, Set, Any, Union
 from enum import Enum, auto
 from parser.ast_nodes import *
 from parser.parser_errors import ParserError
+
 
 
 class SemanticErrorType(Enum):
@@ -41,7 +42,7 @@ class SemanticError(Exception):
 
 class Symbol:
     """Symbol table entry with type and scope information"""
-    def __init__(self, name: str, symbol_type: str, scope_level: int = 0, 
+    def __init__(self, name: str, symbol_type: Union[str, ArrayType], scope_level: int = 0, 
                  is_function: bool = False, is_parameter: bool = False):
         self.name = name
         self.symbol_type = symbol_type
@@ -53,16 +54,15 @@ class Symbol:
         self.col_declared = 0
         
         # For functions
-        self.parameter_types: List[str] = []
-        self.return_type: str = ""
+        self.parameter_types: List[Union[str, ArrayType]] = []
+        self.return_type: Union[str, ArrayType] = ""
     
     def __str__(self):
         if self.is_function:
-            params = ", ".join(self.parameter_types)
+            params = ", ".join(str(p) for p in self.parameter_types)
             return f"Function {self.name}({params}) -> {self.return_type}"
         else:
             return f"Variable {self.name}:{self.symbol_type}"
-
 
 class SymbolTable:
     """Symbol table with scope management"""
@@ -165,9 +165,22 @@ class TypeChecker:
     VALID_TYPES = {"int", "float", "bool", "colour"}
     
     @staticmethod
-    def is_valid_type(type_name: str) -> bool:
+    def is_valid_type(type_name: Union[str, ArrayType]) -> bool:
         """Check if a type is valid"""
+        if isinstance(type_name, ArrayType):
+            return TypeChecker.is_valid_type(type_name.element_type)
         return type_name in TypeChecker.VALID_TYPES
+    
+    @staticmethod
+    def types_equal(type1: Union[str, ArrayType], type2: Union[str, ArrayType]) -> bool:
+        """Check if two types are equal"""
+        if isinstance(type1, ArrayType) and isinstance(type2, ArrayType):
+            return (type1.element_type == type2.element_type and 
+                    type1.size == type2.size)
+        elif isinstance(type1, ArrayType) or isinstance(type2, ArrayType):
+            return False
+        else:
+            return type1 == type2
     
     @staticmethod
     def can_cast(from_type: str, to_type: str) -> bool:
@@ -371,16 +384,28 @@ class SemanticAnalyzer:
                           f"Unknown statement type: {type(node).__name__}", node)
     
     def visit_variable_declaration(self, node: VariableDeclaration):
-        """Visit variable declaration with parameter conflict checking"""
+        """Visit variable declaration with array support"""
+        var_type = node.var_type
+        
         # Validate type
-        if not TypeChecker.is_valid_type(node.var_type):
-            self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                        f"Invalid variable type '{node.var_type}'", node)
+        if not TypeChecker.is_valid_type(var_type):
+            if isinstance(var_type, ArrayType):
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Invalid array element type '{var_type.element_type}'", node)
+            else:
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Invalid variable type '{var_type}'", node)
             return
+        
+        # Validate array constraints
+        if isinstance(var_type, ArrayType):
+            if var_type.size is not None and var_type.size <= 0:
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Array size must be positive, got {var_type.size}", node)
+                return
         
         # Check for conflict with function parameters
         if self.current_function:
-            # Look through all scopes to see if this name exists as a parameter
             for scope in self.symbol_table.scopes:
                 if node.name in scope and scope[node.name].is_parameter:
                     self._add_error(SemanticErrorType.REDECLARATION,
@@ -389,47 +414,103 @@ class SemanticAnalyzer:
         
         # Check initializer if present
         if node.initializer:
-            init_type = self.visit_expression(node.initializer)
-            if init_type and init_type != node.var_type:
-                self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                            f"Cannot initialize variable '{node.name}' of type '{node.var_type}' "
-                            f"with expression of type '{init_type}'", node)
+            if isinstance(node.initializer, ArrayLiteral):
+                # Array literal initialization
+                if not isinstance(var_type, ArrayType):
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                f"Cannot initialize non-array variable '{node.name}' with array literal", node)
+                    return
+                
+                # Check element types
+                for i, elem in enumerate(node.initializer.elements):
+                    elem_type = self.visit_expression(elem)
+                    if elem_type and elem_type != var_type.element_type:
+                        self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                    f"Array element {i} type mismatch: expected '{var_type.element_type}', got '{elem_type}'", elem)
+                
+                # Check size constraints
+                actual_size = len(node.initializer.elements)
+                if var_type.size is not None and actual_size != var_type.size:
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                f"Array size mismatch: declared {var_type.size}, initialized with {actual_size} elements", node)
+                
+                # Update dynamic array size
+                if var_type.size is None:
+                    var_type.size = actual_size
+            else:
+                # Regular expression initialization
+                init_type = self.visit_expression(node.initializer)
+                if isinstance(var_type, ArrayType):
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                f"Cannot initialize array variable '{node.name}' with scalar expression", node)
+                elif init_type and not TypeChecker.types_equal(init_type, var_type):
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                f"Cannot initialize variable '{node.name}' of type '{var_type}' with expression of type '{init_type}'", node)
         
         # Declare variable
         try:
-            symbol = self.symbol_table.declare_variable(node.name, node.var_type, node)
+            symbol = self.symbol_table.declare_variable(node.name, var_type, node)
             if node.initializer:
                 symbol.is_initialized = True
         except SemanticError as e:
             self.errors.append(e)
     
     def visit_assignment(self, node: Assignment):
-        """Visit assignment statement"""
-        # Get target variable (only identifiers supported in Task 3)
+        """Visit assignment statement with array support"""
         if isinstance(node.target, Identifier):
+            # Simple variable assignment
             var_symbol = self.symbol_table.lookup_variable(node.target.name)
             if not var_symbol:
                 self._add_error(SemanticErrorType.UNDECLARED_VARIABLE,
-                              f"Undeclared variable '{node.target.name}'", node.target)
+                            f"Undeclared variable '{node.target.name}'", node.target)
                 return
             
             target_type = var_symbol.symbol_type
+            
+            if isinstance(target_type, ArrayType):
+                self._add_error(SemanticErrorType.INVALID_ASSIGNMENT,
+                            f"Cannot assign to entire array '{node.target.name}'. Use array indexing for element assignment.", node)
+                return
+            
+            value_type = self.visit_expression(node.value)
+            if value_type and not TypeChecker.types_equal(target_type, value_type):
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Cannot assign expression of type '{value_type}' to variable of type '{target_type}'", node)
+            
+            var_symbol.is_initialized = True
+                
+        elif isinstance(node.target, IndexAccess):
+            # Array element assignment
+            if isinstance(node.target.base, Identifier):
+                var_symbol = self.symbol_table.lookup_variable(node.target.base.name)
+                if not var_symbol:
+                    self._add_error(SemanticErrorType.UNDECLARED_VARIABLE,
+                                f"Undeclared variable '{node.target.base.name}'", node.target.base)
+                    return
+                
+                if not isinstance(var_symbol.symbol_type, ArrayType):
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                f"Cannot index non-array variable '{node.target.base.name}'", node.target)
+                    return
+                
+                # Check index type
+                index_type = self.visit_expression(node.target.index)
+                if index_type and index_type != "int":
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                f"Array index must be int, got '{index_type}'", node.target.index)
+                
+                # Check value type
+                value_type = self.visit_expression(node.value)
+                expected_type = var_symbol.symbol_type.element_type
+                if value_type and value_type != expected_type:
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                f"Cannot assign '{value_type}' to array element of type '{expected_type}'", node)
+            else:
+                self._add_error(SemanticErrorType.INVALID_ASSIGNMENT,
+                            "Complex array assignment not supported", node.target)
         else:
             self._add_error(SemanticErrorType.INVALID_ASSIGNMENT,
-                          "Arrays not supported in Task 3", node.target)
-            return
-        
-        # Check value expression
-        value_type = self.visit_expression(node.value)
-        
-        if target_type and value_type and target_type != value_type:
-            self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                          f"Cannot assign expression of type '{value_type}' "
-                          f"to variable of type '{target_type}'", node)
-        
-        # Mark variable as initialized
-        if isinstance(node.target, Identifier):
-            var_symbol.is_initialized = True
+                        "Arrays not supported in Task 3", node.target)
     
     def visit_if_statement(self, node: IfStatement):
         """Visit if statement"""
@@ -559,7 +640,7 @@ class SemanticAnalyzer:
             self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
                           f"__clear expects colour, got '{color_type}'", node)
     
-    def visit_expression(self, node: ASTNode) -> Optional[str]:
+    def visit_expression(self, node: ASTNode) -> Optional[Union[str, ArrayType]]:
         """Visit expression and return its type"""
         if isinstance(node, BinaryOperation):
             return self.visit_binary_operation(node)
@@ -569,10 +650,10 @@ class SemanticAnalyzer:
             return self.visit_cast_expression(node)
         elif isinstance(node, FunctionCall):
             return self.visit_function_call(node)
+        elif isinstance(node, ArrayLiteral):
+            return self.visit_array_literal(node)
         elif isinstance(node, IndexAccess):
-            self._add_error(SemanticErrorType.INVALID_ASSIGNMENT,
-                          "Arrays not supported in Task 3", node)
-            return None
+            return self.visit_index_access(node)
         elif isinstance(node, Literal):
             return self.visit_literal(node)
         elif isinstance(node, Identifier):
@@ -587,9 +668,9 @@ class SemanticAnalyzer:
             return self.visit_pad_rand_i(node)
         else:
             self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                          f"Unknown expression type: {type(node).__name__}", node)
+                        f"Unknown expression type: {type(node).__name__}", node)
             return None
-    
+        
     def visit_binary_operation(self, node: BinaryOperation) -> Optional[str]:
         """
         Visit binary operation - FIXED for proper type checking
@@ -718,6 +799,54 @@ class SemanticAnalyzer:
         
         return "int"
     
+    
+    def visit_array_literal(self, node: ArrayLiteral) -> Optional[ArrayType]:
+        """Visit array literal"""
+        if not node.elements:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                        "Empty array literals not allowed", node)
+            return None
+        
+        # Determine element type from first element
+        first_type = self.visit_expression(node.elements[0])
+        if not first_type:
+            return None
+        
+        # Check all elements have same type
+        for i, elem in enumerate(node.elements[1:], 1):
+            elem_type = self.visit_expression(elem)
+            if elem_type and not TypeChecker.types_equal(elem_type, first_type):
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Array element {i} type mismatch: expected '{first_type}', got '{elem_type}'", elem)
+        
+        return ArrayType(first_type, len(node.elements))
+
+    def visit_index_access(self, node: IndexAccess) -> Optional[str]:
+        """Visit array index access"""
+        if isinstance(node.base, Identifier):
+            var_symbol = self.symbol_table.lookup_variable(node.base.name)
+            if not var_symbol:
+                self._add_error(SemanticErrorType.UNDECLARED_VARIABLE,
+                            f"Undeclared variable '{node.base.name}'", node.base)
+                return None
+            
+            if not isinstance(var_symbol.symbol_type, ArrayType):
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Cannot index non-array variable '{node.base.name}'", node)
+                return None
+            
+            # Check index type
+            index_type = self.visit_expression(node.index)
+            if index_type and index_type != "int":
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Array index must be int, got '{index_type}'", node.index)
+            
+            return var_symbol.symbol_type.element_type
+        else:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                        "Complex array access not supported", node)
+            return None
+
     def _add_error(self, error_type: SemanticErrorType, message: str, node: ASTNode = None):
         """Add a semantic error to the error list"""
         error = SemanticError(error_type, message, node)

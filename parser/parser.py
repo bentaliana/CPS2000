@@ -157,18 +157,40 @@ class PArLParser:
             return target
     
     def parse_variable_declaration(self) -> VariableDeclaration:
-        """Parse variable declaration: 'let' Identifier ':' Type VariableDeclSuffix"""
+        """Parse variable declaration with array support"""
         start_token = self.stream.expect(TokenType.LET)
         name_token = self.stream.expect(TokenType.IDENTIFIER, "variable name")
         self.stream.expect(TokenType.COLON, "':' after variable name")
         var_type = self.parse_type()
         
-        # Expect initializer (arrays not supported in Task 2)
-        self.stream.expect(TokenType.EQUAL, "'=' after type in variable declaration")
-        initializer = self.parse_expression()
+        # Handle initialization
+        initializer = None
+        if self.stream.match(TokenType.EQUAL):
+            self.stream.advance()  # consume '='
+            
+            if self.stream.match(TokenType.LBRACKET):
+                # Array literal initialization
+                initializer = self.parse_array_literal()
+            else:
+                # Regular expression initialization
+                initializer = self.parse_expression()
         
         return VariableDeclaration(name_token.lexeme, var_type, initializer,
-                                 start_token.line, start_token.col)
+                                start_token.line, start_token.col)
+    
+    def parse_array_literal(self) -> ArrayLiteral:
+        """Parse array literal: [expr, expr, ...]"""
+        start_token = self.stream.expect(TokenType.LBRACKET, "'[' for array literal")
+        elements = []
+        
+        if not self.stream.match(TokenType.RBRACKET):
+            elements.append(self.parse_expression())
+            while self.stream.match(TokenType.COMMA):
+                self.stream.advance()  # consume ','
+                elements.append(self.parse_expression())
+        
+        self.stream.expect(TokenType.RBRACKET, "']' after array elements")
+        return ArrayLiteral(elements, start_token.line, start_token.col)
     
     def parse_function_declaration(self) -> FunctionDeclaration:
         """Parse function declaration: 'fun' Identifier '(' [FormalParams] ')' '->' Type Block"""
@@ -428,16 +450,20 @@ class PArLParser:
         return self.parse_primary_expression()
     
     def parse_primary_expression(self) -> ASTNode:
-        """Parse primary expression: Factor"""
+        """Parse primary expression with array literal support"""
         current = self.stream.current_token()
 
         # Add this check at the start:
         if current.type.name.startswith('ERROR'):
             raise LexicalErrorInParsingError(current)
-    
+
+        # Array literals
+        if current.type == TokenType.LBRACKET:
+            return self.parse_array_literal()
+        
         # Literals
-        if current.type in [TokenType.INT_LITERAL, TokenType.FLOAT_LITERAL,
-                           TokenType.COLOUR_LITERAL, TokenType.TRUE, TokenType.FALSE]:
+        elif current.type in [TokenType.INT_LITERAL, TokenType.FLOAT_LITERAL,
+                        TokenType.COLOUR_LITERAL, TokenType.TRUE, TokenType.FALSE]:
             return self.parse_literal()
         
         # Built-in functions
@@ -538,14 +564,35 @@ class PArLParser:
         max_val = self.parse_expression()  # Back to full expression
         return PadRandI(max_val, start_token.line, start_token.col)
             
-    def parse_type(self) -> str:
-        """Parse type specification: 'int' | 'float' | 'bool' | 'colour'"""
+    def parse_type(self) -> Union[str, ArrayType]:
+        """Parse type specification including arrays: 'int' | 'int[5]' | 'int[]'"""
         token = self.stream.current_token()
         
         if token.type in [TokenType.TYPE_INT, TokenType.TYPE_FLOAT,
-                         TokenType.TYPE_BOOL, TokenType.TYPE_COLOUR]:
+                        TokenType.TYPE_BOOL, TokenType.TYPE_COLOUR]:
+            base_type = token.lexeme
             self.stream.advance()
-            return token.lexeme
+            
+            # Check for array declaration
+            if self.stream.match(TokenType.LBRACKET):
+                self.stream.advance()  # consume '['
+                
+                if self.stream.match(TokenType.RBRACKET):
+                    # Dynamic array: int[]
+                    self.stream.advance()  # consume ']'
+                    return ArrayType(base_type, None)
+                elif self.stream.match(TokenType.INT_LITERAL):
+                    # Fixed-size array: int[5]
+                    size_token = self.stream.advance()
+                    size = int(size_token.lexeme)
+                    if size <= 0:
+                        raise ParserError(f"Array size must be positive, got {size}", size_token)
+                    self.stream.expect(TokenType.RBRACKET, "']' after array size")
+                    return ArrayType(base_type, size)
+                else:
+                    raise UnexpectedTokenError("array size or ']'", self.stream.current_token())
+            
+            return base_type
         else:
             raise UnexpectedTokenError("type (int, float, bool, or colour)", token)
     
