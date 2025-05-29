@@ -1,0 +1,21 @@
+
+    fun color() -> colour
+    {
+        return (__randi 16384257 - #f9f9f9 as int) as colour;
+    }
+
+    fun cc(x:int, y:int) -> bool
+    {
+        __print x;
+        __print y;
+
+        let c:colour = color();
+        let h:int = __randi __height;
+        let w:int = __randi __width;
+        __write w,h,c;
+
+        return true;
+    }
+
+    let a:bool = cc(0, 0);
+    __delay 1000;

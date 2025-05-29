@@ -1,10 +1,10 @@
-from lexer import FSALexer, TokenType
+from lexer.lexer import FSALexer, TokenType
 
 if __name__ == "__main__":
     lexer = FSALexer()
     
     # Read the whole file in one go
-    with open("lexer/valid_test.parl", "r", encoding="utf-8") as f:
+    with open("tests/test_samples/valid_programs/lol.parl", "r", encoding="utf-8") as f:
         source = f.read()
 
     # Tokenize the entire source at once

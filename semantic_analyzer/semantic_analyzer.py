@@ -1,0 +1,741 @@
+"""
+PArL Language Semantic Analyzer - Task 3 Implementation
+Comprehensive semantic analysis with symbol table management and type checking
+FIXED: Proper binary operation type checking
+"""
+
+from typing import Dict, List, Optional, Set, Any
+from enum import Enum, auto
+from parser.ast_nodes import *
+from parser.parser_errors import ParserError
+
+
+class SemanticErrorType(Enum):
+    """Enumeration of semantic error types"""
+    REDECLARATION = auto()
+    UNDECLARED_VARIABLE = auto()
+    UNDECLARED_FUNCTION = auto()
+    TYPE_MISMATCH = auto()
+    INVALID_ASSIGNMENT = auto()
+    MISSING_RETURN = auto()
+    INVALID_CAST = auto()
+    ARGUMENT_COUNT_MISMATCH = auto()
+    ARGUMENT_TYPE_MISMATCH = auto()
+    INVALID_BUILTIN_ARGS = auto()
+
+
+class SemanticError(Exception):
+    """Semantic analysis error with detailed information"""
+    def __init__(self, error_type: SemanticErrorType, message: str, 
+                 node: ASTNode = None, line: int = 0, col: int = 0):
+        self.error_type = error_type
+        self.message = message
+        self.node = node
+        self.line = line if node is None else node.line
+        self.col = col if node is None else node.col
+        super().__init__(self.format_error())
+    
+    def format_error(self):
+        return f"Semantic Error at line {self.line}, col {self.col}: {self.message}"
+
+
+class Symbol:
+    """Symbol table entry with type and scope information"""
+    def __init__(self, name: str, symbol_type: str, scope_level: int = 0, 
+                 is_function: bool = False, is_parameter: bool = False):
+        self.name = name
+        self.symbol_type = symbol_type
+        self.scope_level = scope_level
+        self.is_function = is_function
+        self.is_parameter = is_parameter
+        self.is_initialized = False
+        self.line_declared = 0
+        self.col_declared = 0
+        
+        # For functions
+        self.parameter_types: List[str] = []
+        self.return_type: str = ""
+    
+    def __str__(self):
+        if self.is_function:
+            params = ", ".join(self.parameter_types)
+            return f"Function {self.name}({params}) -> {self.return_type}"
+        else:
+            return f"Variable {self.name}:{self.symbol_type}"
+
+
+class SymbolTable:
+    """Symbol table with scope management"""
+    def __init__(self):
+        self.scopes: List[Dict[str, Symbol]] = [{}]  # Stack of scopes
+        self.current_scope_level = 0
+        self.functions: Dict[str, Symbol] = {}  # Global function registry
+        
+        # Initialize built-in functions
+        self._initialize_builtins()
+    
+    def _initialize_builtins(self):
+        """Initialize built-in functions with their type signatures"""
+        builtins = {
+            "__print": (["int", "float", "bool", "colour"], "void"),
+            "__delay": (["int"], "void"),
+            "__write": (["int", "int", "colour"], "void"),
+            "__write_box": (["int", "int", "int", "int", "colour"], "void"),
+            "__clear": (["colour"], "void"),
+            "__width": ([], "int"),
+            "__height": ([], "int"),
+            "__read": (["int", "int"], "colour"),
+            "__randi": (["int"], "int"),
+            "__random_int": (["int"], "int")  # Support both forms
+        }
+        
+        for name, (param_types, return_type) in builtins.items():
+            symbol = Symbol(name, return_type, 0, is_function=True)
+            symbol.parameter_types = param_types
+            symbol.return_type = return_type
+            self.functions[name] = symbol
+    
+    def enter_scope(self):
+        """Enter a new scope"""
+        self.scopes.append({})
+        self.current_scope_level += 1
+    
+    def exit_scope(self):
+        """Exit current scope"""
+        if len(self.scopes) > 1:
+            self.scopes.pop()
+            self.current_scope_level -= 1
+    
+    def declare_variable(self, name: str, var_type: str, node: ASTNode = None,
+                        is_parameter: bool = False) -> Symbol:
+        """Declare a variable in the current scope"""
+        current_scope = self.scopes[-1]
+        
+        if name in current_scope:
+            raise SemanticError(
+                SemanticErrorType.REDECLARATION,
+                f"Variable '{name}' already declared in current scope",
+                node
+            )
+        
+        symbol = Symbol(name, var_type, self.current_scope_level, 
+                       is_parameter=is_parameter)
+        if node:
+            symbol.line_declared = node.line
+            symbol.col_declared = node.col
+        
+        current_scope[name] = symbol
+        return symbol
+    
+    def declare_function(self, name: str, return_type: str, 
+                        param_types: List[str], node: ASTNode = None) -> Symbol:
+        """Declare a function in the global scope"""
+        if name in self.functions:
+            raise SemanticError(
+                SemanticErrorType.REDECLARATION,
+                f"Function '{name}' already declared",
+                node
+            )
+        
+        symbol = Symbol(name, return_type, 0, is_function=True)
+        symbol.parameter_types = param_types
+        symbol.return_type = return_type
+        if node:
+            symbol.line_declared = node.line
+            symbol.col_declared = node.col
+        
+        self.functions[name] = symbol
+        return symbol
+    
+    def lookup_variable(self, name: str) -> Optional[Symbol]:
+        """Look up a variable in current and enclosing scopes"""
+        for scope in reversed(self.scopes):
+            if name in scope:
+                return scope[name]
+        return None
+    
+    def lookup_function(self, name: str) -> Optional[Symbol]:
+        """Look up a function"""
+        return self.functions.get(name)
+
+
+class TypeChecker:
+    """Static type checking utilities"""
+    
+    VALID_TYPES = {"int", "float", "bool", "colour"}
+    
+    @staticmethod
+    def is_valid_type(type_name: str) -> bool:
+        """Check if a type is valid"""
+        return type_name in TypeChecker.VALID_TYPES
+    
+    @staticmethod
+    def can_cast(from_type: str, to_type: str) -> bool:
+        """Check if a type can be cast to another type"""
+        if from_type == to_type:
+            return True
+        
+        # Define valid casts
+        valid_casts = {
+            ("int", "float"): True,
+            ("float", "int"): True,
+            ("int", "bool"): True,
+            ("bool", "int"): True,
+            ("int", "colour"): True,
+            ("colour", "int"): True,
+        }
+        
+        return valid_casts.get((from_type, to_type), False)
+    
+    @staticmethod
+    def get_binary_operation_result_type(left_type: str, operator: str, 
+                                       right_type: str) -> Optional[str]:
+        """
+        Get the result type of a binary operation
+        FIXED: Now properly handles type compatibility according to PArL rules
+        """
+        # According to assignment: Binary operators require matching types
+        # The language does not perform any implicit/automatic typecast
+        
+        # Arithmetic operators
+        if operator in ["+", "-", "*", "/"]:
+            if left_type == right_type and left_type in ["int", "float"]:
+                return left_type
+            return None
+        
+        # Comparison operators
+        if operator in ["<", ">", "<=", ">=", "==", "!="]:
+            if left_type == right_type and left_type in ["int", "float", "bool", "colour"]:
+                return "bool"
+            return None
+        
+        # Logical operators
+        if operator in ["and", "or"]:
+            if left_type == right_type and left_type == "bool":
+                return "bool"
+            return None
+        
+        return None
+    
+    @staticmethod
+    def get_unary_operation_result_type(operator: str, operand_type: str) -> Optional[str]:
+        """Get the result type of a unary operation"""
+        if operator == "-":
+            if operand_type in ["int", "float"]:
+                return operand_type
+            return None
+        
+        if operator == "not":
+            if operand_type == "bool":
+                return "bool"
+            return None
+        
+        return None
+
+
+class SemanticAnalyzer:
+    """
+    Semantic analyzer implementing the visitor pattern
+    Performs type checking, scope management, and semantic validation
+    """
+    
+    def __init__(self):
+        self.symbol_table = SymbolTable()
+        self.errors: List[SemanticError] = []
+        self.current_function: Optional[Symbol] = None
+        self.current_return_type: Optional[str] = None
+        self.function_has_return = False
+    
+    def analyze(self, ast: Program) -> bool:
+        """Main entry point for semantic analysis"""
+        try:
+            self.visit_program(ast)
+            return len(self.errors) == 0
+        except Exception as e:
+            if not isinstance(e, SemanticError):
+                error = SemanticError(
+                    SemanticErrorType.TYPE_MISMATCH,
+                    f"Internal semantic analysis error: {str(e)}"
+                )
+                self.errors.append(error)
+            return False
+    
+    def visit_program(self, node: Program):
+        """Visit program node - entry point"""
+        # First pass: collect all function declarations
+        for stmt in node.statements:
+            if isinstance(stmt, FunctionDeclaration):
+                self._declare_function(stmt)
+        
+        # Second pass: analyze function bodies and main program
+        for stmt in node.statements:
+            if isinstance(stmt, FunctionDeclaration):
+                self.visit_function_declaration(stmt)
+            else:
+                self.visit_statement(stmt)
+    
+    def _declare_function(self, node: FunctionDeclaration):
+        """Pre-declare function for forward references"""
+        param_types = [param.param_type for param in node.params]
+        
+        # Validate parameter types
+        for param in node.params:
+            if not TypeChecker.is_valid_type(param.param_type):
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                              f"Invalid parameter type '{param.param_type}'", node)
+        
+        # Validate return type
+        if not TypeChecker.is_valid_type(node.return_type):
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"Invalid return type '{node.return_type}'", node)
+        
+        try:
+            self.symbol_table.declare_function(node.name, node.return_type, 
+                                             param_types, node)
+        except SemanticError as e:
+            self.errors.append(e)
+    
+    def visit_function_declaration(self, node: FunctionDeclaration):
+        """Visit function declaration"""
+        # Set current function context
+        self.current_function = self.symbol_table.lookup_function(node.name)
+        self.current_return_type = node.return_type
+        self.function_has_return = False
+        
+        # Enter function scope
+        self.symbol_table.enter_scope()
+        
+        # Declare parameters
+        for param in node.params:
+            try:
+                symbol = self.symbol_table.declare_variable(
+                    param.name, param.param_type, param, is_parameter=True
+                )
+                symbol.is_initialized = True  # Parameters are always initialized
+            except SemanticError as e:
+                self.errors.append(e)
+        
+        # Analyze function body
+        self.visit_block(node.body)
+        
+        # Check return statement requirements
+        if node.return_type != "void" and not self.function_has_return:
+            self._add_error(SemanticErrorType.MISSING_RETURN,
+                          f"Function '{node.name}' must return a value of type '{node.return_type}'", 
+                          node)
+        
+        # Exit function scope
+        self.symbol_table.exit_scope()
+        self.current_function = None
+        self.current_return_type = None
+    
+    def visit_block(self, node: Block):
+        """Visit block statement"""
+        self.symbol_table.enter_scope()
+        
+        for stmt in node.statements:
+            self.visit_statement(stmt)
+        
+        self.symbol_table.exit_scope()
+    
+    def visit_statement(self, node: ASTNode):
+        """Dispatch statement visits"""
+        if isinstance(node, VariableDeclaration):
+            self.visit_variable_declaration(node)
+        elif isinstance(node, Assignment):
+            self.visit_assignment(node)
+        elif isinstance(node, IfStatement):
+            self.visit_if_statement(node)
+        elif isinstance(node, WhileStatement):
+            self.visit_while_statement(node)
+        elif isinstance(node, ForStatement):
+            self.visit_for_statement(node)
+        elif isinstance(node, ReturnStatement):
+            self.visit_return_statement(node)
+        elif isinstance(node, PrintStatement):
+            self.visit_print_statement(node)
+        elif isinstance(node, DelayStatement):
+            self.visit_delay_statement(node)
+        elif isinstance(node, WriteStatement):
+            self.visit_write_statement(node)
+        elif isinstance(node, WriteBoxStatement):
+            self.visit_write_box_statement(node)
+        elif isinstance(node, ClearStatement):
+            self.visit_clear_statement(node)
+        elif isinstance(node, Block):
+            self.visit_block(node)
+        elif isinstance(node, FunctionCall):
+            self.visit_function_call(node)
+        else:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"Unknown statement type: {type(node).__name__}", node)
+    
+    def visit_variable_declaration(self, node: VariableDeclaration):
+        """Visit variable declaration with parameter conflict checking"""
+        # Validate type
+        if not TypeChecker.is_valid_type(node.var_type):
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                        f"Invalid variable type '{node.var_type}'", node)
+            return
+        
+        # Check for conflict with function parameters
+        if self.current_function:
+            # Look through all scopes to see if this name exists as a parameter
+            for scope in self.symbol_table.scopes:
+                if node.name in scope and scope[node.name].is_parameter:
+                    self._add_error(SemanticErrorType.REDECLARATION,
+                                f"Variable '{node.name}' conflicts with function parameter", node)
+                    return
+        
+        # Check initializer if present
+        if node.initializer:
+            init_type = self.visit_expression(node.initializer)
+            if init_type and init_type != node.var_type:
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Cannot initialize variable '{node.name}' of type '{node.var_type}' "
+                            f"with expression of type '{init_type}'", node)
+        
+        # Declare variable
+        try:
+            symbol = self.symbol_table.declare_variable(node.name, node.var_type, node)
+            if node.initializer:
+                symbol.is_initialized = True
+        except SemanticError as e:
+            self.errors.append(e)
+    
+    def visit_assignment(self, node: Assignment):
+        """Visit assignment statement"""
+        # Get target variable (only identifiers supported in Task 3)
+        if isinstance(node.target, Identifier):
+            var_symbol = self.symbol_table.lookup_variable(node.target.name)
+            if not var_symbol:
+                self._add_error(SemanticErrorType.UNDECLARED_VARIABLE,
+                              f"Undeclared variable '{node.target.name}'", node.target)
+                return
+            
+            target_type = var_symbol.symbol_type
+        else:
+            self._add_error(SemanticErrorType.INVALID_ASSIGNMENT,
+                          "Arrays not supported in Task 3", node.target)
+            return
+        
+        # Check value expression
+        value_type = self.visit_expression(node.value)
+        
+        if target_type and value_type and target_type != value_type:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"Cannot assign expression of type '{value_type}' "
+                          f"to variable of type '{target_type}'", node)
+        
+        # Mark variable as initialized
+        if isinstance(node.target, Identifier):
+            var_symbol.is_initialized = True
+    
+    def visit_if_statement(self, node: IfStatement):
+        """Visit if statement"""
+        # Check condition
+        condition_type = self.visit_expression(node.condition)
+        if condition_type and condition_type != "bool":
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"If condition must be boolean, got '{condition_type}'", 
+                          node.condition)
+        
+        # Visit branches
+        self.visit_block(node.then_block)
+        if node.else_block:
+            self.visit_block(node.else_block)
+    
+    def visit_while_statement(self, node: WhileStatement):
+        """Visit while statement"""
+        # Check condition
+        condition_type = self.visit_expression(node.condition)
+        if condition_type and condition_type != "bool":
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"While condition must be boolean, got '{condition_type}'", 
+                          node.condition)
+        
+        # Visit body
+        self.visit_block(node.body)
+    
+    def visit_for_statement(self, node: ForStatement):
+        """Visit for statement"""
+        self.symbol_table.enter_scope()
+        
+        # Visit initialization
+        if node.init:
+            self.visit_variable_declaration(node.init)
+        
+        # Check condition
+        condition_type = self.visit_expression(node.condition)
+        if condition_type and condition_type != "bool":
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"For condition must be boolean, got '{condition_type}'", 
+                          node.condition)
+        
+        # Visit update
+        if node.update:
+            self.visit_assignment(node.update)
+        
+        # Visit body
+        self.visit_block(node.body)
+        
+        self.symbol_table.exit_scope()
+    
+    def visit_return_statement(self, node: ReturnStatement):
+        """Visit return statement"""
+        if not self.current_function:
+            self._add_error(SemanticErrorType.MISSING_RETURN,
+                          "Return statement outside function", node)
+            return
+        
+        return_value_type = self.visit_expression(node.value)
+        expected_type = self.current_return_type
+        
+        if return_value_type and expected_type and return_value_type != expected_type:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"Function must return '{expected_type}', got '{return_value_type}'", 
+                          node)
+        
+        self.function_has_return = True
+    
+    def visit_print_statement(self, node: PrintStatement):
+        """Visit print statement"""
+        expr_type = self.visit_expression(node.expression)
+        if expr_type and expr_type not in ["int", "float", "bool", "colour"]:
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__print expects printable type, got '{expr_type}'", node)
+    
+    def visit_delay_statement(self, node: DelayStatement):
+        """Visit delay statement"""
+        expr_type = self.visit_expression(node.expression)
+        if expr_type and expr_type != "int":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__delay expects int, got '{expr_type}'", node)
+    
+    def visit_write_statement(self, node: WriteStatement):
+        """Visit write statement"""
+        x_type = self.visit_expression(node.x)
+        y_type = self.visit_expression(node.y)
+        color_type = self.visit_expression(node.color)
+        
+        if x_type and x_type != "int":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__write x coordinate must be int, got '{x_type}'", node)
+        if y_type and y_type != "int":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__write y coordinate must be int, got '{y_type}'", node)
+        if color_type and color_type != "colour":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__write color must be colour, got '{color_type}'", node)
+    
+    def visit_write_box_statement(self, node: WriteBoxStatement):
+        """Visit write_box statement"""
+        x_type = self.visit_expression(node.x)
+        y_type = self.visit_expression(node.y)
+        width_type = self.visit_expression(node.width)
+        height_type = self.visit_expression(node.height)
+        color_type = self.visit_expression(node.color)
+        
+        expected_int_args = [
+            (x_type, "x coordinate"),
+            (y_type, "y coordinate"),
+            (width_type, "width"),
+            (height_type, "height")
+        ]
+        
+        for arg_type, arg_name in expected_int_args:
+            if arg_type and arg_type != "int":
+                self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                              f"__write_box {arg_name} must be int, got '{arg_type}'", node)
+        
+        if color_type and color_type != "colour":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__write_box color must be colour, got '{color_type}'", node)
+    
+    def visit_clear_statement(self, node: ClearStatement):
+        """Visit clear statement"""
+        color_type = self.visit_expression(node.color)
+        if color_type and color_type != "colour":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__clear expects colour, got '{color_type}'", node)
+    
+    def visit_expression(self, node: ASTNode) -> Optional[str]:
+        """Visit expression and return its type"""
+        if isinstance(node, BinaryOperation):
+            return self.visit_binary_operation(node)
+        elif isinstance(node, UnaryOperation):
+            return self.visit_unary_operation(node)
+        elif isinstance(node, CastExpression):
+            return self.visit_cast_expression(node)
+        elif isinstance(node, FunctionCall):
+            return self.visit_function_call(node)
+        elif isinstance(node, IndexAccess):
+            self._add_error(SemanticErrorType.INVALID_ASSIGNMENT,
+                          "Arrays not supported in Task 3", node)
+            return None
+        elif isinstance(node, Literal):
+            return self.visit_literal(node)
+        elif isinstance(node, Identifier):
+            return self.visit_identifier(node)
+        elif isinstance(node, PadWidth):
+            return "int"
+        elif isinstance(node, PadHeight):
+            return "int"
+        elif isinstance(node, PadRead):
+            return self.visit_pad_read(node)
+        elif isinstance(node, PadRandI):
+            return self.visit_pad_rand_i(node)
+        else:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"Unknown expression type: {type(node).__name__}", node)
+            return None
+    
+    def visit_binary_operation(self, node: BinaryOperation) -> Optional[str]:
+        """
+        Visit binary operation - FIXED for proper type checking
+        """
+        left_type = self.visit_expression(node.left)
+        right_type = self.visit_expression(node.right)
+
+        # Both operands must have valid types to proceed
+        if not left_type or not right_type:
+            return None
+
+        result_type = TypeChecker.get_binary_operation_result_type(
+            left_type, node.operator, right_type
+        )
+
+        if not result_type:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Invalid binary operation: '{left_type}' {node.operator} '{right_type}'. "
+                            f"Binary operators require matching operand types.", 
+                            node)
+            return None
+
+        return result_type
+    
+    def visit_unary_operation(self, node: UnaryOperation) -> Optional[str]:
+        """Visit unary operation"""
+        operand_type = self.visit_expression(node.operand)
+        
+        if not operand_type:
+            return None
+        
+        result_type = TypeChecker.get_unary_operation_result_type(
+            node.operator, operand_type
+        )
+        
+        if not result_type:
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                          f"Invalid unary operation: {node.operator} '{operand_type}'", 
+                          node)
+            return None
+        
+        return result_type
+    
+    def visit_cast_expression(self, node: CastExpression) -> Optional[str]:
+        """Visit cast expression"""
+        expr_type = self.visit_expression(node.expression)
+        target_type = node.target_type
+
+        if expr_type is None:
+            return None
+
+        # Check if cast is allowed
+        if not TypeChecker.can_cast(expr_type, target_type):
+            self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                            f"Cannot cast from '{expr_type}' to '{target_type}'",
+                            node)
+            return None
+
+        return target_type
+    
+    def visit_function_call(self, node: FunctionCall) -> Optional[str]:
+        """Visit function call"""
+        func_symbol = self.symbol_table.lookup_function(node.name)
+        
+        if not func_symbol:
+            self._add_error(SemanticErrorType.UNDECLARED_FUNCTION,
+                          f"Undeclared function '{node.name}'", node)
+            return None
+        
+        # Check argument count
+        expected_count = len(func_symbol.parameter_types)
+        actual_count = len(node.arguments)
+        
+        if actual_count != expected_count:
+            self._add_error(SemanticErrorType.ARGUMENT_COUNT_MISMATCH,
+                          f"Function '{node.name}' expects {expected_count} arguments, "
+                          f"got {actual_count}", node)
+            return func_symbol.return_type
+        
+        # Check argument types
+        for i, (arg, expected_type) in enumerate(zip(node.arguments, func_symbol.parameter_types)):
+            actual_type = self.visit_expression(arg)
+            if actual_type and actual_type != expected_type:
+                self._add_error(SemanticErrorType.ARGUMENT_TYPE_MISMATCH,
+                              f"Argument {i+1} to function '{node.name}' expects '{expected_type}', "
+                              f"got '{actual_type}'", arg)
+        
+        return func_symbol.return_type
+    
+    def visit_literal(self, node: Literal) -> str:
+        """Visit literal"""
+        return node.literal_type
+    
+    def visit_identifier(self, node: Identifier) -> Optional[str]:
+        """Visit identifier"""
+        symbol = self.symbol_table.lookup_variable(node.name)
+        
+        if not symbol:
+            self._add_error(SemanticErrorType.UNDECLARED_VARIABLE,
+                          f"Undeclared variable '{node.name}'", node)
+            return None
+        
+        return symbol.symbol_type
+    
+    def visit_pad_read(self, node: PadRead) -> Optional[str]:
+        """Visit __read built-in"""
+        x_type = self.visit_expression(node.x)
+        y_type = self.visit_expression(node.y)
+        
+        if x_type and x_type != "int":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__read x coordinate must be int, got '{x_type}'", node)
+        if y_type and y_type != "int":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__read y coordinate must be int, got '{y_type}'", node)
+        
+        return "colour"
+    
+    def visit_pad_rand_i(self, node: PadRandI) -> Optional[str]:
+        """Visit __randi built-in"""
+        max_type = self.visit_expression(node.max_val)
+        
+        if max_type and max_type != "int":
+            self._add_error(SemanticErrorType.INVALID_BUILTIN_ARGS,
+                          f"__randi max value must be int, got '{max_type}'", node)
+        
+        return "int"
+    
+    def _add_error(self, error_type: SemanticErrorType, message: str, node: ASTNode = None):
+        """Add a semantic error to the error list"""
+        error = SemanticError(error_type, message, node)
+        self.errors.append(error)
+    
+    def report_errors(self) -> bool:
+        """Report all semantic errors"""
+        if self.errors:
+            print(f"Semantic Analysis Failed: {len(self.errors)} error(s) found")
+            for i, error in enumerate(self.errors, 1):
+                print(f"  {i}. {error}")
+            return False
+        return True
+    
+    def has_errors(self) -> bool:
+        """Check if analyzer has encountered errors"""
+        return len(self.errors) > 0
+    
+    def clear_errors(self):
+        """Clear all accumulated errors"""
+        self.errors.clear()
