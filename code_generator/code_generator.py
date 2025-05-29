@@ -743,16 +743,14 @@ class PArIRGenerator:
         self._generate_expression(node.expression)
     
     def _generate_function_call(self, node: FunctionCall) -> Optional[str]:
-        """Generate function call with SYSTEMATIC parameter handling"""
+        """Generate function call - SYSTEMATIC PARAMETER ORDER FIX"""
         
-        # SYSTEMATIC ANALYSIS: Looking at expected output for cc(0, 0, 100000):
-        # Lines 67-71: push 100000, push 0, push 0, push 3, push .cc, call
-        # This means parameters are pushed in REVERSE order: last parameter first
+        # SYSTEMATIC FIX: Parameters should be pushed in the order they appear
+        # The VM expects parameters in left-to-right order on the stack
         
-        total_param_count = len(node.arguments)
+        total_param_count = 0
         
-        # SYSTEMATIC FIX: Push parameters in reverse order
-        for arg in reversed(node.arguments):
+        for arg in node.arguments:
             if isinstance(arg, Identifier):
                 # Check if this is an array being passed
                 location = self._lookup_variable(arg.name)
@@ -760,12 +758,15 @@ class PArIRGenerator:
                     # This is an array - use pusha instruction
                     self._emit(f"push {location.size}")  # array size
                     self._emit(f"pusha [{location.frame_index}:{location.frame_level}]")
+                    total_param_count += location.size
                 else:
                     # Regular variable
                     self._generate_expression(arg)
+                    total_param_count += 1
             else:
                 # Regular expression
                 self._generate_expression(arg)
+                total_param_count += 1
         
         self._emit(f"push {total_param_count}")
         self._emit(f"push .{node.name}")
