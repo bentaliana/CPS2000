@@ -1,6 +1,6 @@
 """
-PArL to PArIR Code Generator - MINIMAL SYSTEMATIC FIX
-Only fixing the specific function frame level issue, preserving all working functionality
+PArL to PArIR Code Generator - SYSTEMATIC FIXES
+Removing hardcoded logic and implementing proper frame level semantics
 """
 
 from typing import List, Dict, Optional, Tuple, Set
@@ -19,7 +19,7 @@ class MemoryLocation:
 class PArIRGenerator:
     """
     Generates PArIR instructions from PArL AST
-    MINIMAL FIX: Only fixing function context frame levels
+    SYSTEMATIC FIX: Proper frame level semantics throughout
     """
     
     def __init__(self, debug: bool = False):
@@ -208,7 +208,7 @@ class PArIRGenerator:
             if name in self.memory_stack[scope_index]:
                 stored_location = self.memory_stack[scope_index][name]
                 
-                # DERIVED FROM VM SEMANTICS:
+                # SYSTEMATIC FRAME LEVEL CALCULATION:
                 # Frame level = distance from current execution to variable storage
                 # This represents "how many frames back" to find the variable
                 current_execution_depth = len(self.memory_stack) - 1
@@ -233,7 +233,7 @@ class PArIRGenerator:
             else:
                 main_statements.append(stmt)
         
-        # Calculate main variable count
+        # Calculate main variable count with proper function call parameter reservation
         main_var_count = self._count_main_variables(main_statements)
         
         # Generate main frame allocation
@@ -253,6 +253,21 @@ class PArIRGenerator:
         # Generate main program execution
         self._enter_scope(main_var_count)
         
+        # SYSTEMATIC ALLOCATION STRATEGY:
+        # Variables are allocated from the end of the frame backwards
+        # This allows function call parameters to use the beginning of the frame
+        declared_var_count = 0
+        for stmt in main_statements:
+            if isinstance(stmt, VariableDeclaration):
+                if isinstance(stmt.var_type, ArrayType):
+                    declared_var_count += stmt.var_type.size if stmt.var_type.size else 1
+                else:
+                    declared_var_count += 1
+        
+        if declared_var_count > 0:
+            variable_start_index = main_var_count - declared_var_count
+            self.next_var_indices[-1] = variable_start_index
+        
         for stmt in main_statements:
             self._generate_statement(stmt)
         
@@ -261,7 +276,7 @@ class PArIRGenerator:
         self._exit_scope()
     
     def _count_main_variables(self, statements: List[ASTNode]) -> int:
-        """Count variables needed in main scope"""
+        """Count variables needed in main scope with systematic overlap strategy"""
         direct_vars = 0
         
         for stmt in statements:
@@ -271,12 +286,34 @@ class PArIRGenerator:
                 else:
                     direct_vars += 1
         
-        max_call_params = 0
-        for stmt in statements:
-            if isinstance(stmt, Assignment) and isinstance(stmt.value, FunctionCall):
-                max_call_params = max(max_call_params, len(stmt.value.arguments))
+        # Calculate space needed: variables can overlap with function call parameter space
+        # since parameters are consumed by call instruction before variables are accessed
+        max_call_params = self._get_max_function_call_params(statements)
         
-        return direct_vars + 2
+        # Use the maximum of the two requirements, not the sum
+        return max(direct_vars, max_call_params)
+    
+    def _get_max_function_call_params(self, statements: List[ASTNode]) -> int:
+        """Get the maximum number of parameters in any function call"""
+        max_params = 0
+        
+        def find_max_in_node(node):
+            nonlocal max_params
+            if isinstance(node, FunctionCall):
+                max_params = max(max_params, len(node.arguments))
+            elif hasattr(node, '__dict__'):
+                for child in node.__dict__.values():
+                    if isinstance(child, ASTNode):
+                        find_max_in_node(child)
+                    elif isinstance(child, list):
+                        for item in child:
+                            if isinstance(item, ASTNode):
+                                find_max_in_node(item)
+        
+        for stmt in statements:
+            find_max_in_node(stmt)
+        
+        return max_params
     
     def _generate_function_declaration(self, node: FunctionDeclaration):
         """Generate function declaration"""
@@ -341,7 +378,7 @@ class PArIRGenerator:
             self._emit("drop")
     
     def _generate_var_decl(self, node: VariableDeclaration):
-        """Generate variable declaration using VM-derived frame level semantics"""
+        """Generate variable declaration using systematic frame level semantics"""
         if isinstance(node.var_type, ArrayType):
             # Array variable
             if node.var_type.size is None:
@@ -354,7 +391,7 @@ class PArIRGenerator:
                 for elem in reversed(node.initializer.elements):
                     self._generate_expression(elem)
                 
-                # Use frame level derived from VM stack semantics
+                # Use systematic frame level lookup
                 lookup_location = self._lookup_variable(node.name)
                 if lookup_location:
                     self._emit(f"push {len(node.initializer.elements)}")
@@ -368,7 +405,7 @@ class PArIRGenerator:
             if node.initializer:
                 self._generate_expression(node.initializer)
                 
-                # Use frame level derived from VM stack distance calculation
+                # Use systematic frame level lookup
                 lookup_location = self._lookup_variable(node.name)
                 if lookup_location:
                     self._emit(f"push {lookup_location.frame_index}")
@@ -386,7 +423,7 @@ class PArIRGenerator:
                     self._generate_expression(node.target.index)
                     self._emit(f"push {location.frame_index}")
                     self._emit("add")
-                    # Use frame level from lookup
+                    # Use systematic frame level from lookup
                     self._emit(f"push {location.frame_level}")
                     self._emit("st")
         else:
@@ -397,19 +434,13 @@ class PArIRGenerator:
                     self._generate_expression(node.value)
                     self._emit(f"push {location.frame_index}")
                     
-                    # MINIMAL FIX: Different frame level logic for assignments in functions
-                    if self.current_function is None:
-                        # Main program: use original working logic  
-                        frame_level = location.frame_level
-                    else:
-                        # Function context: use current execution context depth
-                        frame_level = len(self.memory_stack) - 1
-                    
-                    self._emit(f"push {frame_level}")
+                    # SYSTEMATIC FIX: Always use the frame level from lookup
+                    # This removes the hardcoded distinction between main and function contexts
+                    self._emit(f"push {location.frame_level}")
                     self._emit("st")
 
     def _generate_for_stmt(self, node: ForStatement):
-        """Generate for loop - ORIGINAL WORKING LOGIC"""
+        """Generate for loop with systematic frame level handling"""
         # Create scope for loop variable
         var_count = 1 if node.init else 0
         if var_count > 0:
@@ -423,7 +454,7 @@ class PArIRGenerator:
             if node.init.initializer:
                 self._generate_expression(node.init.initializer)
                 self._emit(f"push {location.frame_index}")
-                self._emit("push 0")
+                self._emit("push 0")  # Frame level 0 for loop variable
                 self._emit("st")
         
         # Loop condition start
@@ -459,14 +490,14 @@ class PArIRGenerator:
         body_start = self._get_current_address()
         self._generate_block_with_frame(node.body)
         
-        # Generate update using derived frame level semantics
+        # Generate update using systematic frame level semantics
         if node.update:
             if isinstance(node.update, Assignment) and isinstance(node.update.target, Identifier):
                 location = self._lookup_variable(node.update.target.name)
                 if location:
                     self._generate_expression(node.update.value)
                     self._emit(f"push {location.frame_index}")
-                    # Use frame level derived from VM stack distance calculation
+                    # Use systematic frame level from lookup
                     self._emit(f"push {location.frame_level}")
                     self._emit("st")
         
@@ -519,7 +550,7 @@ class PArIRGenerator:
             self.instructions[else_jump_addr] = f"push #PC+{else_offset}"
     
     def _generate_while_stmt(self, node: WhileStatement):
-        """Generate while statement"""
+        """Generate while statement with corrected jump calculations"""
         loop_start = self._get_current_address()
         
         # Generate condition - handle binary operations properly
@@ -550,15 +581,15 @@ class PArIRGenerator:
         body_start_addr = self._get_current_address()
         self._generate_block_with_frame(node.body)
         
-        # Jump back to condition
+        # Jump back to condition - CORRECTED CALCULATION
         current_addr = self._get_current_address()
-        back_offset = loop_start - current_addr - 1
+        back_offset = loop_start - current_addr
         self._emit(f"push #PC{back_offset}")
         self._emit("jmp")
         
-        # Patch the exit jump
+        # Patch the exit jump - CORRECTED CALCULATION  
         end_addr = self._get_current_address()
-        exit_offset = end_addr - exit_jump_addr - 1
+        exit_offset = end_addr - exit_jump_addr
         self.instructions[exit_jump_addr] = f"push #PC+{exit_offset}"
     
     def _generate_block(self, node: Block):
@@ -665,7 +696,7 @@ class PArIRGenerator:
             self._emit("push 0")
     
     def _generate_binary_op(self, node: BinaryOperation):
-        """Generate binary operations - ORIGINAL WORKING LOGIC"""
+        """Generate binary operations"""
         
         if node.operator in ['-', '/', '<', '>', '<=', '>=']:
             # Non-commutative operations - order matters
@@ -704,19 +735,11 @@ class PArIRGenerator:
         self._generate_expression(node.expression)
     
     def _generate_function_call(self, node: FunctionCall) -> Optional[str]:
-        """Generate function call - SIMPLE DIRECT FIX"""
+        """Generate function call with systematic argument handling"""
         
-        # VERIFICATION: Add a print to ensure this code is being executed
-        if node.name == "cc":
-            print(f"GENERATING CALL TO {node.name} WITH ARGS: {[str(arg) for arg in node.arguments]}")
-        
-        # SIMPLE FIX: For function calls, generate arguments in reverse order
-        # This is required for stack-based parameter passing
-        arguments = list(node.arguments)
-        arguments.reverse()  # In-place reversal
-        
-        if node.name == "cc":
-            print(f"REVERSED ARGS: {[str(arg) for arg in arguments]}")
+        # Generate arguments in reverse order for stack-based parameter passing
+        # This is the correct systematic approach for stack-based VMs
+        arguments = list(reversed(node.arguments))
         
         for arg in arguments:
             self._generate_expression(arg)
@@ -724,9 +747,6 @@ class PArIRGenerator:
         self._emit(f"push {len(node.arguments)}")
         self._emit(f"push .{node.name}")
         self._emit("call")
-        
-        if node.name == "cc":
-            print("CALL GENERATION COMPLETE")
         
         return None
         
