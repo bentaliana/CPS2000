@@ -1,6 +1,6 @@
 """
 Abstract Syntax Tree Node Definitions for PArL Language
-REFACTORED with __str__ methods for perfect printing
+Enhanced with beautiful tree-style printing by default
 """
 
 from typing import List, Optional, Any, Union
@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 
 
 class ASTNode(ABC):
-    """Base class for all AST nodes with visitor pattern support and elegant printing"""
+    """Base class for all AST nodes with visitor pattern support and beautiful tree printing"""
     def __init__(self, line: int = 0, col: int = 0):
         self.line = line
         self.col = col
@@ -22,28 +22,43 @@ class ASTNode(ABC):
     
     @abstractmethod
     def __str__(self):
-        """Clean string representation for Task 2 printing"""
+        """Beautiful tree-style string representation"""
         pass
     
-    def _indent_children(self, children, level=1):
-        """Helper for beautiful indented child printing"""
+    def _tree_children(self, children, prefix="", is_last_list=None):
+        """Helper for beautiful tree-style child printing"""
+        if not children:
+            return ""
+        
+        if is_last_list is None:
+            is_last_list = [False] * (len(children) - 1) + [True]
+        
         result = ""
-        indent = "  " * level
-        for child in children:
+        for i, child in enumerate(children):
             if child is not None:
-                child_str = str(child)
-                for line in child_str.split('\n'):
-                    if line.strip():
-                        result += f"\n{indent}{line}"
+                is_last = is_last_list[i] if i < len(is_last_list) else True
+                
+                # Tree structure symbols
+                current_prefix = "└── " if is_last else "├── "
+                child_prefix = "    " if is_last else "│   "
+                
+                # Add this child
+                result += f"\n{prefix}{current_prefix}{child._get_node_label()}"
+                
+                # Add grandchildren
+                grandchildren = child._get_children()
+                if grandchildren:
+                    result += child._tree_children(grandchildren, prefix + child_prefix)
+        
         return result
     
-    def _format_single_child(self, child, level=1):
-        """Helper for single child formatting"""
-        if child is None:
-            return ""
-        indent = "  " * level
-        child_str = str(child)
-        return f"\n{indent}{child_str}"
+    def _get_node_label(self):
+        """Get the label for this node in the tree"""
+        return str(self)
+    
+    def _get_children(self):
+        """Get child nodes for tree printing - override in subclasses"""
+        return []
 
 
 # ===== PROGRAM STRUCTURE =====
@@ -55,8 +70,14 @@ class Program(ASTNode):
     
     def __str__(self):
         result = "Program"
-        result += self._indent_children(self.statements)
+        result += self._tree_children(self.statements)
         return result
+    
+    def _get_node_label(self):
+        return "Program"
+    
+    def _get_children(self):
+        return self.statements
 
 
 class Block(ASTNode):
@@ -67,8 +88,14 @@ class Block(ASTNode):
     
     def __str__(self):
         result = "Block"
-        result += self._indent_children(self.statements)
+        result += self._tree_children(self.statements)
         return result
+    
+    def _get_node_label(self):
+        return "Block"
+    
+    def _get_children(self):
+        return self.statements
 
 
 # ===== DECLARATIONS =====
@@ -82,10 +109,16 @@ class VariableDeclaration(ASTNode):
         self.initializer = initializer
     
     def __str__(self):
-        result = f"VarDecl: {self.name}:{self.var_type}"
+        result = f"VarDecl: {self.name} : {self.var_type}"
         if self.initializer:
-            result += f" = {self.initializer}"
+            result += self._tree_children([self.initializer])
         return result
+    
+    def _get_node_label(self):
+        return f"VarDecl: {self.name} : {self.var_type}"
+    
+    def _get_children(self):
+        return [self.initializer] if self.initializer else []
 
 
 class FunctionDeclaration(ASTNode):
@@ -99,10 +132,20 @@ class FunctionDeclaration(ASTNode):
         self.body = body
     
     def __str__(self):
-        params_str = ", ".join(str(p) for p in self.params)
-        result = f"FunctionDecl: {self.name}({params_str}) -> {self.return_type}"
-        result += self._format_single_child(self.body)
+        params_str = ", ".join(f"{p.name}:{p.param_type}" for p in self.params)
+        result = f"FuncDecl: {self.name}({params_str}) -> {self.return_type}"
+        
+        # Show parameters as children if they exist, then body
+        children = self.params + [self.body]
+        result += self._tree_children(children)
         return result
+    
+    def _get_node_label(self):
+        params_str = ", ".join(f"{p.name}:{p.param_type}" for p in self.params)
+        return f"FuncDecl: {self.name}({params_str}) -> {self.return_type}"
+    
+    def _get_children(self):
+        return self.params + [self.body]
 
 
 class FormalParameter(ASTNode):
@@ -113,7 +156,13 @@ class FormalParameter(ASTNode):
         self.param_type = param_type
     
     def __str__(self):
-        return f"{self.name}:{self.param_type}"
+        return f"Param: {self.name} : {self.param_type}"
+    
+    def _get_node_label(self):
+        return f"Param: {self.name} : {self.param_type}"
+    
+    def _get_children(self):
+        return []
 
 
 # ===== STATEMENTS =====
@@ -121,11 +170,19 @@ class Assignment(ASTNode):
     """Assignment statement: identifier = expression"""
     def __init__(self, target: ASTNode, value: ASTNode, line: int = 0, col: int = 0):
         super().__init__(line, col)
-        self.target = target  # Can be Identifier or IndexAccess
+        self.target = target
         self.value = value
     
     def __str__(self):
-        return f"Assignment: {self.target} = {self.value}"
+        result = "Assignment"
+        result += self._tree_children([self.target, self.value])
+        return result
+    
+    def _get_node_label(self):
+        return "Assignment"
+    
+    def _get_children(self):
+        return [self.target, self.value]
 
 
 class IfStatement(ASTNode):
@@ -138,11 +195,21 @@ class IfStatement(ASTNode):
         self.else_block = else_block
     
     def __str__(self):
-        result = f"If: {self.condition}"
-        result += f"\n  Then:{self._format_single_child(self.then_block)}"
+        result = "If"
+        children = [self.condition, self.then_block]
         if self.else_block:
-            result += f"\n  Else:{self._format_single_child(self.else_block)}"
+            children.append(self.else_block)
+        result += self._tree_children(children)
         return result
+    
+    def _get_node_label(self):
+        return "If"
+    
+    def _get_children(self):
+        children = [self.condition, self.then_block]
+        if self.else_block:
+            children.append(self.else_block)
+        return children
 
 
 class WhileStatement(ASTNode):
@@ -153,9 +220,15 @@ class WhileStatement(ASTNode):
         self.body = body
     
     def __str__(self):
-        result = f"While: {self.condition}"
-        result += self._format_single_child(self.body)
+        result = "While"
+        result += self._tree_children([self.condition, self.body])
         return result
+    
+    def _get_node_label(self):
+        return "While"
+    
+    def _get_children(self):
+        return [self.condition, self.body]
 
 
 class ForStatement(ASTNode):
@@ -169,11 +242,29 @@ class ForStatement(ASTNode):
         self.body = body
     
     def __str__(self):
-        init_str = str(self.init) if self.init else "none"
-        update_str = str(self.update) if self.update else "none"
-        result = f"For: init=({init_str}), condition=({self.condition}), update=({update_str})"
-        result += self._format_single_child(self.body)
+        result = "For"
+        children = []
+        if self.init:
+            children.append(self.init)
+        children.append(self.condition)
+        if self.update:
+            children.append(self.update)
+        children.append(self.body)
+        result += self._tree_children(children)
         return result
+    
+    def _get_node_label(self):
+        return "For"
+    
+    def _get_children(self):
+        children = []
+        if self.init:
+            children.append(self.init)
+        children.append(self.condition)
+        if self.update:
+            children.append(self.update)
+        children.append(self.body)
+        return children
 
 
 class ReturnStatement(ASTNode):
@@ -183,7 +274,15 @@ class ReturnStatement(ASTNode):
         self.value = value
     
     def __str__(self):
-        return f"Return: {self.value}"
+        result = "Return"
+        result += self._tree_children([self.value])
+        return result
+    
+    def _get_node_label(self):
+        return "Return"
+    
+    def _get_children(self):
+        return [self.value]
 
 
 # ===== BUILT-IN STATEMENTS =====
@@ -194,7 +293,15 @@ class PrintStatement(ASTNode):
         self.expression = expression
     
     def __str__(self):
-        return f"Print: {self.expression}"
+        result = "Print"
+        result += self._tree_children([self.expression])
+        return result
+    
+    def _get_node_label(self):
+        return "Print"
+    
+    def _get_children(self):
+        return [self.expression]
 
 
 class DelayStatement(ASTNode):
@@ -204,7 +311,15 @@ class DelayStatement(ASTNode):
         self.expression = expression
     
     def __str__(self):
-        return f"Delay: {self.expression}"
+        result = "Delay"
+        result += self._tree_children([self.expression])
+        return result
+    
+    def _get_node_label(self):
+        return "Delay"
+    
+    def _get_children(self):
+        return [self.expression]
 
 
 class WriteStatement(ASTNode):
@@ -216,7 +331,15 @@ class WriteStatement(ASTNode):
         self.color = color
     
     def __str__(self):
-        return f"Write: ({self.x}, {self.y}, {self.color})"
+        result = "Write"
+        result += self._tree_children([self.x, self.y, self.color])
+        return result
+    
+    def _get_node_label(self):
+        return "Write"
+    
+    def _get_children(self):
+        return [self.x, self.y, self.color]
 
 
 class WriteBoxStatement(ASTNode):
@@ -231,7 +354,15 @@ class WriteBoxStatement(ASTNode):
         self.color = color
     
     def __str__(self):
-        return f"WriteBox: ({self.x}, {self.y}, {self.width}x{self.height}, {self.color})"
+        result = "WriteBox"
+        result += self._tree_children([self.x, self.y, self.width, self.height, self.color])
+        return result
+    
+    def _get_node_label(self):
+        return "WriteBox"
+    
+    def _get_children(self):
+        return [self.x, self.y, self.width, self.height, self.color]
 
 
 class ClearStatement(ASTNode):
@@ -241,7 +372,15 @@ class ClearStatement(ASTNode):
         self.color = color
     
     def __str__(self):
-        return f"Clear: {self.color}"
+        result = "Clear"
+        result += self._tree_children([self.color])
+        return result
+    
+    def _get_node_label(self):
+        return "Clear"
+    
+    def _get_children(self):
+        return [self.color]
 
 
 # ===== EXPRESSIONS =====
@@ -255,7 +394,15 @@ class BinaryOperation(ASTNode):
         self.right = right
     
     def __str__(self):
-        return f"({self.left} {self.operator} {self.right})"
+        result = f"BinaryOp: {self.operator}"
+        result += self._tree_children([self.left, self.right])
+        return result
+    
+    def _get_node_label(self):
+        return f"BinaryOp: {self.operator}"
+    
+    def _get_children(self):
+        return [self.left, self.right]
 
 
 class UnaryOperation(ASTNode):
@@ -266,7 +413,15 @@ class UnaryOperation(ASTNode):
         self.operand = operand
     
     def __str__(self):
-        return f"({self.operator} {self.operand})"
+        result = f"UnaryOp: {self.operator}"
+        result += self._tree_children([self.operand])
+        return result
+    
+    def _get_node_label(self):
+        return f"UnaryOp: {self.operator}"
+    
+    def _get_children(self):
+        return [self.operand]
 
 
 class CastExpression(ASTNode):
@@ -277,7 +432,15 @@ class CastExpression(ASTNode):
         self.target_type = target_type
 
     def __str__(self):
-        return f"Cast({self.expression} as {self.target_type})"
+        result = f"Cast -> {self.target_type}"
+        result += self._tree_children([self.expression])
+        return result
+    
+    def _get_node_label(self):
+        return f"Cast -> {self.target_type}"
+    
+    def _get_children(self):
+        return [self.expression]
 
 
 class FunctionCall(ASTNode):
@@ -288,8 +451,16 @@ class FunctionCall(ASTNode):
         self.arguments = arguments
     
     def __str__(self):
-        args_str = ", ".join(str(arg) for arg in self.arguments)
-        return f"{self.name}({args_str})"
+        result = f"FuncCall: {self.name}"
+        if self.arguments:
+            result += self._tree_children(self.arguments)
+        return result
+    
+    def _get_node_label(self):
+        return f"FuncCall: {self.name}"
+    
+    def _get_children(self):
+        return self.arguments
 
 
 class IndexAccess(ASTNode):
@@ -300,7 +471,15 @@ class IndexAccess(ASTNode):
         self.index = index
     
     def __str__(self):
-        return f"{self.base}[{self.index}]"
+        result = "IndexAccess"
+        result += self._tree_children([self.base, self.index])
+        return result
+    
+    def _get_node_label(self):
+        return "IndexAccess"
+    
+    def _get_children(self):
+        return [self.base, self.index]
 
 
 # ===== LITERALS AND IDENTIFIERS =====
@@ -312,7 +491,13 @@ class Literal(ASTNode):
         self.literal_type = literal_type
     
     def __str__(self):
-        return f"{self.value}:{self.literal_type}"
+        return f"Literal: {self.value} ({self.literal_type})"
+    
+    def _get_node_label(self):
+        return f"Literal: {self.value} ({self.literal_type})"
+    
+    def _get_children(self):
+        return []
 
 
 class Identifier(ASTNode):
@@ -322,7 +507,13 @@ class Identifier(ASTNode):
         self.name = name
     
     def __str__(self):
-        return self.name
+        return f"Identifier: {self.name}"
+    
+    def _get_node_label(self):
+        return f"Identifier: {self.name}"
+    
+    def _get_children(self):
+        return []
 
 
 # ===== BUILT-IN EXPRESSIONS =====
@@ -332,7 +523,13 @@ class PadWidth(ASTNode):
         super().__init__(line, col)
     
     def __str__(self):
-        return "__width"
+        return "BuiltIn: __width"
+    
+    def _get_node_label(self):
+        return "BuiltIn: __width"
+    
+    def _get_children(self):
+        return []
 
 
 class PadHeight(ASTNode):
@@ -341,7 +538,13 @@ class PadHeight(ASTNode):
         super().__init__(line, col)
     
     def __str__(self):
-        return "__height"
+        return "BuiltIn: __height"
+    
+    def _get_node_label(self):
+        return "BuiltIn: __height"
+    
+    def _get_children(self):
+        return []
 
 
 class PadRead(ASTNode):
@@ -352,7 +555,15 @@ class PadRead(ASTNode):
         self.y = y
     
     def __str__(self):
-        return f"__read({self.x}, {self.y})"
+        result = "BuiltIn: __read"
+        result += self._tree_children([self.x, self.y])
+        return result
+    
+    def _get_node_label(self):
+        return "BuiltIn: __read"
+    
+    def _get_children(self):
+        return [self.x, self.y]
 
 
 class PadRandI(ASTNode):
@@ -362,7 +573,56 @@ class PadRandI(ASTNode):
         self.max_val = max_val
     
     def __str__(self):
-        return f"__randi({self.max_val})"
+        result = "BuiltIn: __randi"
+        result += self._tree_children([self.max_val])
+        return result
+    
+    def _get_node_label(self):
+        return "BuiltIn: __randi"
+    
+    def _get_children(self):
+        return [self.max_val]
+
+
+# ===== ARRAY SUPPORT =====
+class ArrayType:
+    """Represents array type information"""
+    def __init__(self, element_type: str, size: Optional[int] = None):
+        self.element_type = element_type
+        self.size = size  # None for dynamic arrays
+        self.is_array = True
+    
+    def __str__(self):
+        if self.size is not None:
+            return f"{self.element_type}[{self.size}]"
+        return f"{self.element_type}[]"
+    
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return False  # Arrays are never equal to primitive types
+        if not isinstance(other, ArrayType):
+            return False
+        return (self.element_type == other.element_type and 
+                self.size == other.size)
+
+
+class ArrayLiteral(ASTNode):
+    """Array literal: [expr, expr, ...]"""
+    def __init__(self, elements: List[ASTNode], line: int = 0, col: int = 0):
+        super().__init__(line, col)
+        self.elements = elements
+    
+    def __str__(self):
+        result = f"ArrayLiteral: [{len(self.elements)} elements]"
+        if self.elements:
+            result += self._tree_children(self.elements)
+        return result
+    
+    def _get_node_label(self):
+        return f"ArrayLiteral: [{len(self.elements)} elements]"
+    
+    def _get_children(self):
+        return self.elements
 
 
 # ===== UTILITY FUNCTIONS =====
@@ -392,38 +652,7 @@ def get_operator_precedence(operator: str) -> int:
         # Additive operators
         '+': 2, '-': 2, 'or': 2,
         # Multiplicative operators (highest precedence)
-        '*': 3, '/': 3, 'and': 3
+        '*': 3, '/': 3, '%': 3, 'and': 3
     }
     return precedence_map.get(operator, 0)
 
-
-class ArrayType:
-    """Represents array type information"""
-    def __init__(self, element_type: str, size: Optional[int] = None):
-        self.element_type = element_type
-        self.size = size  # None for dynamic arrays
-        self.is_array = True
-    
-    def __str__(self):
-        if self.size is not None:
-            return f"{self.element_type}[{self.size}]"
-        return f"{self.element_type}[]"
-    
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return False  # Arrays are never equal to primitive types
-        if not isinstance(other, ArrayType):
-            return False
-        return (self.element_type == other.element_type and 
-                self.size == other.size)
-
-
-class ArrayLiteral(ASTNode):
-    """Array literal: [expr, expr, ...]"""
-    def __init__(self, elements: List[ASTNode], line: int = 0, col: int = 0):
-        super().__init__(line, col)
-        self.elements = elements
-    
-    def __str__(self):
-        elements_str = ", ".join(str(elem) for elem in self.elements)
-        return f"ArrayLiteral[{elements_str}]"

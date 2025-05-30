@@ -66,6 +66,7 @@ class TokenType(Enum):
     LESS_EQUAL = auto()
     GREATER_EQUAL = auto()
     ARROW = auto()
+    MODULO = auto()  # Add this line
     
     # Special
     ERROR = auto()
@@ -130,7 +131,8 @@ class FSALexer:
             "dot",         # .
             "whitespace",  # space, tab, \r
             "newline",     # \n
-            "other"        # any other character
+            "other",        # any other character
+            "modulo",      # Add this line
         ]
         self.cat_map = {cat: idx for idx, cat in enumerate(self.categories)}
 
@@ -182,6 +184,8 @@ class FSALexer:
             return "hash"
         if c == '.': 
             return "dot"
+        if c == '%': 
+            return "modulo"
         # Improved whitespace handling
         if c.isspace() and c != '\n':
             return "whitespace"
@@ -350,6 +354,7 @@ class FSALexer:
             (41, ["colon"], TokenType.COLON),
             (42, ["comma"], TokenType.COMMA),
             (43, ["semicolon"], TokenType.SEMICOLON),
+            (46, ["modulo"], TokenType.MODULO),  # Add this line
         ]
         
         for state_num, char_cats, token_type in single_tokens:

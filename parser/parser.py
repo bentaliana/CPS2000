@@ -408,11 +408,11 @@ class PArLParser:
     
     def parse_multiplicative_expression(self) -> ASTNode:
         """Parse multiplicative expression: Factor { MultiplicativeOp Factor }"""
-        left = self.parse_cast_expression()  # Changed this line
+        left = self.parse_cast_expression()
         
-        while self.stream.match(TokenType.MULTIPLY, TokenType.SLASH, TokenType.AND):
+        while self.stream.match(TokenType.MULTIPLY, TokenType.SLASH, TokenType.MODULO, TokenType.AND):  # Add MODULO
             op_token = self.stream.advance()
-            right = self.parse_cast_expression()  # Changed this line
+            right = self.parse_cast_expression()
             left = BinaryOperation(left, op_token.lexeme, right,
                                  left.line, left.col)
         

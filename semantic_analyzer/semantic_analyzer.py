@@ -1,14 +1,12 @@
 """
-PArL Language Semantic Analyzer - Task 3 Implementation
-Comprehensive semantic analysis with symbol table management and type checking
-FIXED: Proper binary operation type checking
+PArL Language Semantic Analyzer - SYSTEMATIC FIXES
+Complete modulo support and enhanced type checking
 """
 
 from typing import Dict, List, Optional, Set, Any, Union
 from enum import Enum, auto
 from parser.ast_nodes import *
 from parser.parser_errors import ParserError
-
 
 
 class SemanticErrorType(Enum):
@@ -160,7 +158,7 @@ class SymbolTable:
 
 
 class TypeChecker:
-    """Static type checking utilities"""
+    """Static type checking utilities with SYSTEMATIC MODULO SUPPORT"""
     
     VALID_TYPES = {"int", "float", "bool", "colour"}
     
@@ -203,15 +201,9 @@ class TypeChecker:
     @staticmethod
     def get_binary_operation_result_type(left_type: str, operator: str, 
                                        right_type: str) -> Optional[str]:
-        """
-        Get the result type of a binary operation
-        FIXED: Now properly handles type compatibility according to PArL rules
-        """
-        # According to assignment: Binary operators require matching types
-        # The language does not perform any implicit/automatic typecast
-        
-        # Arithmetic operators
-        if operator in ["+", "-", "*", "/"]:
+        """Get the result type of a binary operation - SYSTEMATIC MODULO SUPPORT"""
+        # SYSTEMATIC FIX: Complete arithmetic operators including modulo
+        if operator in ["+", "-", "*", "/", "%"]:
             if left_type == right_type and left_type in ["int", "float"]:
                 return left_type
             return None
@@ -510,7 +502,7 @@ class SemanticAnalyzer:
                             "Complex array assignment not supported", node.target)
         else:
             self._add_error(SemanticErrorType.INVALID_ASSIGNMENT,
-                        "Arrays not supported in Task 3", node.target)
+                        "Invalid assignment target", node.target)
     
     def visit_if_statement(self, node: IfStatement):
         """Visit if statement"""
@@ -673,7 +665,7 @@ class SemanticAnalyzer:
         
     def visit_binary_operation(self, node: BinaryOperation) -> Optional[str]:
         """
-        Visit binary operation - FIXED for proper type checking
+        Visit binary operation - SYSTEMATIC MODULO SUPPORT
         """
         left_type = self.visit_expression(node.left)
         right_type = self.visit_expression(node.right)
@@ -687,9 +679,22 @@ class SemanticAnalyzer:
         )
 
         if not result_type:
+            # SYSTEMATIC FIX: Include modulo in error message
+            operator_categories = {
+                'arithmetic': ['+', '-', '*', '/', '%'],
+                'comparison': ['<', '>', '<=', '>=', '==', '!='],
+                'logical': ['and', 'or']
+            }
+            
+            category = "unknown"
+            for cat, ops in operator_categories.items():
+                if node.operator in ops:
+                    category = cat
+                    break
+            
             self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                            f"Invalid binary operation: '{left_type}' {node.operator} '{right_type}'. "
-                            f"Binary operators require matching operand types.", 
+                            f"Invalid {category} operation: '{left_type}' {node.operator} '{right_type}'. "
+                            f"Operands must have matching types.", 
                             node)
             return None
 
@@ -798,7 +803,6 @@ class SemanticAnalyzer:
                           f"__randi max value must be int, got '{max_type}'", node)
         
         return "int"
-    
     
     def visit_array_literal(self, node: ArrayLiteral) -> Optional[ArrayType]:
         """Visit array literal"""
