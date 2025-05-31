@@ -11,34 +11,70 @@ from datetime import datetime
 PRINT_AST_ENABLED = True
 # Global file handle for test output
 current_test_file = None
+test_counter = 0
 
 def set_ast_printing(enabled):
     """Enable or disable AST printing globally"""
     global PRINT_AST_ENABLED
     PRINT_AST_ENABLED = enabled
 
-def create_test_output_file(test_module_name):
-    """Create output file for test results"""
-    global current_test_file
+def create_test_output_file(task_name, test_name):
+    """Create output file for individual test results"""
+    global current_test_file, test_counter
+    test_counter += 1
     
-    # Create output directory if it doesn't exist
-    output_dir = "test_outputs"
+    # Create output directory structure
+    output_dir = f"test_outputs/{task_name}"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # Create timestamped filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{output_dir}/{test_module_name}_{timestamp}.txt"
+    # Clean test name for filename
+    clean_name = "".join(c for c in test_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    clean_name = clean_name.replace(' ', '_').lower()
+    
+    # Create numbered filename
+    filename = f"{output_dir}/example_{test_counter}_{clean_name}.txt"
     
     current_test_file = open(filename, 'w', encoding='utf-8')
     
     # Write header
-    current_test_file.write(f"TEST OUTPUT: {test_module_name}\n")
+    current_test_file.write(f"TEST: {test_name}\n")
+    current_test_file.write(f"TASK: {task_name.upper()}\n")
     current_test_file.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     current_test_file.write("="*80 + "\n\n")
     current_test_file.flush()
     
-    print(f"Test output will be written to: {filename}")
+    print(f"Test output: {filename}")
+    return filename
+
+def create_parir_output_file(task_name, test_name, instructions):
+    """Create PArIR output file only for simulator tests"""
+    if task_name.lower() != 'simulator':
+        return  # Only create PArIR files for simulator tests
+    
+    # Create output directory structure
+    output_dir = f"test_outputs/{task_name}"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # Clean test name for filename
+    clean_name = "".join(c for c in test_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    clean_name = clean_name.replace(' ', '_').lower()
+    
+    # Create timestamped filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{output_dir}/{clean_name}_{timestamp}.parir"
+    
+    # Write PArIR instructions
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(f"// PArIR for: {test_name}\n")
+        f.write(f"// Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("// " + "="*76 + "\n\n")
+        
+        for instruction in instructions:
+            f.write(instruction + "\n")
+    
+    print(f"PArIR saved to: {filename}")
     return filename
 
 def close_test_output_file():
@@ -56,11 +92,10 @@ def write_to_file(text):
         current_test_file.flush()
 
 def print_test_header(test_name, description):
-    """Print test header"""
-    header_text = "\n" + "="*80 + "\n"
-    header_text += f"TEST: {test_name}\n"
-    header_text += f"TESTING: {description}\n"
-    header_text += "="*80
+    """Print test header with improved formatting"""
+    header_text = f"TEST: {test_name}"
+    header_text += f"\nPURPOSE: {description}"
+    header_text += "\n" + "-"*80
     
     write_to_file(header_text)
     print(f"Running: {test_name}")
@@ -85,15 +120,31 @@ def print_ast(ast, max_lines=50):
         write_to_file(f"Error printing AST: {e}")
     write_to_file("-"*60)
 
-def print_outcome(success, details=""):
-    """Print test outcome"""
-    outcome_text = "\nTEST OUTCOME:\n"
+def print_completion_status(phase, success=True):
+    """Print phase completion status"""
     if success:
-        outcome_text += "PASS"
-        print("  PASS")
+        status_text = f"\n{phase.upper()}: Successfully completed"
+        print(f"  {phase}: Success")
     else:
-        outcome_text += f"FAIL: {details}"
-        print(f"  FAIL: {details}")
+        status_text = f"\n{phase.upper()}: Completed with issues"
+        print(f"  {phase}: Issues detected")
     
-    write_to_file(outcome_text)
+    write_to_file(status_text)
     write_to_file("\n" + "="*80 + "\n")
+
+def reset_test_counter():
+    """Reset test counter for new task"""
+    global test_counter
+    test_counter = 0
+
+# Backward compatibility
+def print_status(status, details=""):
+    """Legacy function for backward compatibility"""
+    if "SUCCESSFUL" in status or "COMPLETE" in status:
+        print_completion_status("Compilation", True)
+    else:
+        print_completion_status("Compilation", False)
+
+def print_outcome(success, details=""):
+    """Legacy function for backward compatibility"""
+    print_completion_status("Processing", success)

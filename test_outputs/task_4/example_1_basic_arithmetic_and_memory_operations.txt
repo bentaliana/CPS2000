@@ -1,0 +1,175 @@
+TEST: Basic Arithmetic and Memory Operations
+TASK: TASK_4
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Basic Arithmetic and Memory Operations
+PURPOSE: Tests variable declarations, arithmetic operations, and memory access
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    let a:int = 10;
+    let b:int = 20;
+    let c:int = a + b;
+    let d:int = c * 2;
+    let e:int = d - a;
+    let f:int = e / 5;
+    let g:int = f % 3;
+    
+    let x:float = 3.14;
+    let y:float = x * 2.0;
+    
+    let flag:bool = true;
+    let result:bool = flag and false;
+    
+    let color1:colour = #FF0000;
+    let color2:colour = 255 as colour;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: a : int
+    Literal: 10 (int)
+  VarDecl: b : int
+    Literal: 20 (int)
+  VarDecl: c : int
+    BinaryOp: +
+      Identifier: a
+      Identifier: b
+  VarDecl: d : int
+    BinaryOp: *
+      Identifier: c
+      Literal: 2 (int)
+  VarDecl: e : int
+    BinaryOp: -
+      Identifier: d
+      Identifier: a
+  VarDecl: f : int
+    BinaryOp: /
+      Identifier: e
+      Literal: 5 (int)
+  VarDecl: g : int
+    BinaryOp: %
+      Identifier: f
+      Literal: 3 (int)
+  VarDecl: x : float
+    Literal: 3.14 (float)
+  VarDecl: y : float
+    BinaryOp: *
+      Identifier: x
+      Literal: 2.0 (float)
+  VarDecl: flag : bool
+    Literal: True (bool)
+  VarDecl: result : bool
+    BinaryOp: and
+      Identifier: flag
+      Literal: False (bool)
+  VarDecl: color1 : colour
+    Literal: #FF0000 (colour)
+  VarDecl: color2 : colour
+    Cast -> colour
+      Literal: 255 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+  0: .main
+  1: push 4
+  2: jmp
+  3: halt
+  4: push 14
+  5: oframe
+  6: push 10
+  7: push 1
+  8: push 0
+  9: st
+ 10: push 20
+ 11: push 2
+ 12: push 0
+ 13: st
+ 14: push [2:0]
+ 15: push [1:0]
+ 16: add
+ 17: push 3
+ 18: push 0
+ 19: st
+ 20: push 2
+ 21: push [3:0]
+ 22: mul
+ 23: push 4
+ 24: push 0
+ 25: st
+ 26: push [1:0]
+ 27: push [4:0]
+ 28: sub
+ 29: push 5
+ 30: push 0
+ 31: st
+ 32: push 5
+ 33: push [5:0]
+ 34: div
+ 35: push 6
+ 36: push 0
+ 37: st
+ 38: push 3
+ 39: push [6:0]
+ 40: mod
+ 41: push 7
+ 42: push 0
+ 43: st
+ 44: push 3.14
+ 45: push 8
+ 46: push 0
+ 47: st
+ 48: push 2.0
+ 49: push [8:0]
+ 50: mul
+ 51: push 9
+ 52: push 0
+ 53: st
+ 54: push 1
+ 55: push 10
+ 56: push 0
+ 57: st
+ 58: push 0
+ 59: push [10:0]
+ 60: and
+ 61: push 11
+ 62: push 0
+ 63: st
+ 64: push #FF0000
+ 65: push 12
+ 66: push 0
+ 67: st
+ 68: push 255
+ 69: push 13
+ 70: push 0
+ 71: st
+ 72: cframe
+ 73: halt
+------------------------------------------------------------
+
+INSTRUCTION ANALYSIS:
+Total instructions: 74
+Instruction frequency:
+  .main: 1
+  add: 1
+  and: 1
+  cframe: 1
+  div: 1
+  halt: 2
+  jmp: 1
+  mod: 1
+  mul: 2
+  oframe: 1
+  push: 48
+  st: 13
+  sub: 1
+
+All essential operations present
+
+ARITHMETIC AND MEMORY: Successfully completed
+
+================================================================================
+

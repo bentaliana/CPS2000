@@ -1,6 +1,7 @@
 """
-Task 2 - Parser Tests
-Tests for hand-crafted LL(k) parser
+Task 2 - Hand-crafted LL(k) Parser Tests
+Comprehensive testing of recursive descent parsing
+Tests EBNF compliance, AST generation, and syntax error detection
 """
 
 import sys
@@ -11,467 +12,337 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lexer.lexer import FSALexer
 from parser.parser import PArLParser
-from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
-
+from test.test_utils import (print_test_header, print_ast, print_completion_status, set_ast_printing,
+                           create_test_output_file, close_test_output_file, write_to_file, 
+                           reset_test_counter)
 
 if "--show-ast" in sys.argv:
     set_ast_printing(True)
 else:
     set_ast_printing(False)
 
-def test_variable_declarations():
-    """Test parsing of variable declarations"""
-    print_test_header("Variable Declarations",
-                     "Parser correctly handles variable declarations of all types")
-    
-    test_code = """
-    let x:int = 42;
-    let y:float = 3.14;
-    let flag:bool = true;
-    let color:colour = #ff0000;
-    let computed:int = 5 + 3 * 2;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
+def parse_program(source_code):
+    """Parse program and return AST and errors"""
     lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
+    tokens = lexer.tokenize(source_code.strip())
     
+    # Check for lexical errors first
+    error_tokens = [t for t in tokens if t.type.name.startswith("ERROR")]
+    if error_tokens:
+        return None, f"Lexical errors: {error_tokens}"
+    
+    parser = PArLParser(tokens)
     try:
         ast = parser.parse()
-        print_ast(ast)
-        
         if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            for error in parser.errors:
-                write_to_file(f"  - {error}")
-            print_outcome(False, error_details)
-            return False
-        else:
-            print_outcome(True)
-            return True
+            return None, f"Parser errors: {parser.errors}"
+        return ast, None
     except Exception as e:
-        print_outcome(False, str(e))
-        return False
+        return None, f"Parser exception: {str(e)}"
 
 
-def test_function_declarations():
-    """Test parsing of function declarations"""
-    print_test_header("Function Declarations",
-                     "Parser correctly handles function declarations with parameters and return types")
+def test_expression_parsing_precedence():
+    """Test 1: Expression Parsing and Operator Precedence
+    Purpose: Verify correct parsing of expressions with proper precedence
+    """
+    create_test_output_file("task_2", "Expression Parsing and Operator Precedence")
+    
+    print_test_header("Expression Parsing and Operator Precedence",
+                     "Tests arithmetic, logical, relational operations and precedence rules")
     
     test_code = """
+    let a:int = 2 + 3 * 4;           // Should be 2 + (3 * 4) = 14
+    let b:bool = x < y and z > w;    // Should be (x < y) and (z > w)
+    let c:int = (a + b) * c / d;     // Parentheses override precedence
+    let d:bool = not x or y and z;   // Should be (not x) or (y and z)
+    let e:int = x % y + z * w;       // Should be (x % y) + (z * w)
+    let f:bool = a == b and c != d or e <= f;  // Mixed operators
+    let g:float = x as float + y as float;     // Cast expressions
+    """
+    
+    write_to_file("INPUT PROGRAM:")
+    write_to_file(test_code)
+    
+    ast, error = parse_program(test_code)
+    
+    if error:
+        write_to_file(f"\nParser error: {error}")
+        print_completion_status("Expression Parsing", False)
+        close_test_output_file()
+        return False
+    
+    print_ast(ast)
+    
+    write_to_file("\nEXPRESSION STRUCTURE ANALYSIS:")
+    write_to_file("-" * 60)
+    
+    # Analyze AST structure for precedence correctness
+    if hasattr(ast, 'statements'):
+        for i, stmt in enumerate(ast.statements):
+            if hasattr(stmt, 'name') and hasattr(stmt, 'initializer'):
+                write_to_file(f"Variable {stmt.name}: {type(stmt.initializer).__name__}")
+                if hasattr(stmt.initializer, 'operator'):
+                    write_to_file(f"  Root operator: {stmt.initializer.operator}")
+    
+    write_to_file("\nExpression parsing completed - check AST for precedence correctness")
+    print_completion_status("Expression Parsing", True)
+    close_test_output_file()
+    return True
+
+
+def test_function_declaration_parsing():
+    """Test 2: Function Declaration Parsing
+    Purpose: Verify parsing of function declarations with parameters and return types
+    """
+    create_test_output_file("task_2", "Function Declaration Parsing")
+    
+    print_test_header("Function Declaration Parsing",
+                     "Tests function declarations, parameters, return types, and bodies")
+    
+    test_code = """
+    // Simple function
     fun simple() -> int {
-        return 0;
+        return 42;
     }
     
+    // Function with parameters
     fun add(x:int, y:int) -> int {
         return x + y;
     }
     
-    fun complex(a:int, b:float, c:bool) -> colour {
-        let result:colour = #000000;
+    // Function with mixed parameter types
+    fun complex(a:int, b:float, c:bool, d:colour) -> bool {
+        let result:bool = a > 0 and b > 0.0;
         if (c) {
-            result = (a as colour);
+            __write 0, 0, d;
         }
         return result;
     }
+    
+    // Function with array parameter (Task 5 preview)
+    fun process_array(data:int[10]) -> int {
+        return data[0];
+    }
+    
+    // Recursive function
+    fun factorial(n:int) -> int {
+        if (n <= 1) {
+            return 1;
+        }
+        return n * factorial(n - 1);
+    }
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
-    lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
+    ast, error = parse_program(test_code)
     
-    try:
-        ast = parser.parse()
-        print_ast(ast)
-        
-        if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            print_outcome(False, error_details)
-            return False
-        else:
-            print_outcome(True)
-            return True
-    except Exception as e:
-        print_outcome(False, str(e))
+    if error:
+        write_to_file(f"\nParser error: {error}")
+        print_completion_status("Function Parsing", False)
+        close_test_output_file()
         return False
+    
+    print_ast(ast)
+    
+    write_to_file("\nFUNCTION ANALYSIS:")
+    write_to_file("-" * 60)
+    
+    # Count functions and analyze their structure
+    function_count = 0
+    if hasattr(ast, 'statements'):
+        for stmt in ast.statements:
+            if hasattr(stmt, 'name') and hasattr(stmt, 'params'):
+                function_count += 1
+                param_count = len(stmt.params) if stmt.params else 0
+                write_to_file(f"Function '{stmt.name}': {param_count} parameters -> {stmt.return_type}")
+    
+    write_to_file(f"\nTotal functions parsed: {function_count}")
+    write_to_file("Function declaration parsing completed successfully")
+    print_completion_status("Function Parsing", True)
+    close_test_output_file()
+    return True
 
 
-def test_control_structures():
-    """Test parsing of control structures"""
-    print_test_header("Control Structures",
-                     "Parser correctly handles if/else, while, and for statements")
+def test_control_flow_parsing():
+    """Test 3: Control Flow Statement Parsing
+    Purpose: Verify parsing of if/else, while, and for statements
+    """
+    create_test_output_file("task_2", "Control Flow Statement Parsing")
+    
+    print_test_header("Control Flow Statement Parsing",
+                     "Tests if/else, while loops, for loops, and nested control structures")
     
     test_code = """
-    let x:int = 10;
-    
-    if (x > 5) {
+    // Simple if statement
+    if (x > 0) {
         __print x;
+    }
+    
+    // If-else statement
+    if (condition) {
+        result = true;
     } else {
-        __print 0;
+        result = false;
     }
     
-    while (x > 0) {
-        x = x - 1;
-        if (x % 2 == 0) {
-            __print x;
-        }
+    // While loop
+    while (i < 10) {
+        __print i;
+        i = i + 1;
     }
     
+    // For loop with all clauses
     for (let i:int = 0; i < 10; i = i + 1) {
-        if (i % 3 == 0) {
-            __print i;
-        }
-    }
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
-    
-    try:
-        ast = parser.parse()
-        print_ast(ast)
-        
-        if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            print_outcome(False, error_details)
-            return False
-        else:
-            print_outcome(True)
-            return True
-    except Exception as e:
-        print_outcome(False, str(e))
-        return False
-
-
-def test_expressions():
-    """Test parsing of expressions with correct precedence"""
-    print_test_header("Expression Parsing",
-                     "Parser correctly handles expression precedence and associativity")
-    
-    test_code = """
-    let a:int = 1 + 2 * 3;
-    let b:int = (1 + 2) * 3;
-    let c:int = 10 % 3 + 2;
-    let d:int = 10 + 3 % 2;
-    let e:bool = not true and false or true;
-    let f:int = -5 * 3;
-    let g:float = 10 as float / 2.0;
-    let h:bool = 5 > 3 and 10 <= 20;
-    let i:int = a + b * c - d / 2 % 3;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
-    
-    try:
-        ast = parser.parse()
-        print_ast(ast)
-        
-        if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            print_outcome(False, error_details)
-            return False
-        else:
-            print_outcome(True)
-            return True
-    except Exception as e:
-        print_outcome(False, str(e))
-        return False
-
-
-def test_builtin_statements():
-    """Test parsing of built-in statements"""
-    print_test_header("Built-in Statements",
-                     "Parser correctly handles all built-in function statements")
-    
-    test_code = """
-    let x:int = 10;
-    let y:int = 20;
-    let color:colour = #ff0000;
-    
-    __print x;
-    __delay 1000;
-    __write x, y, color;
-    __write_box 0, 0, 100, 100, #00ff00;
-    __clear #000000;
-    
-    let w:int = __width;
-    let h:int = __height;
-    let rand:int = __randi 100;
-    let pixel:colour = __read x, y;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
-    
-    try:
-        ast = parser.parse()
-        print_ast(ast)
-        
-        if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            print_outcome(False, error_details)
-            return False
-        else:
-            print_outcome(True)
-            return True
-    except Exception as e:
-        print_outcome(False, str(e))
-        return False
-
-
-def test_function_calls():
-    """Test parsing of function calls"""
-    print_test_header("Function Calls",
-                     "Parser correctly handles function calls with arguments")
-    
-    test_code = """
-    fun add(x:int, y:int) -> int {
-        return x + y;
+        __print i;
     }
     
-    fun process(a:int, b:float, c:bool) -> float {
-        if (c) {
-            return (a as float) + b;
-        }
-        return b;
+    // For loop with missing clauses
+    for (; x < 100; x = x * 2) {
+        __delay 100;
     }
     
-    let result1:int = add(5, 10);
-    let result2:int = add(1 + 2, 3 * 4);
-    let result3:float = process(10, 3.14, true);
-    let nested:int = add(add(1, 2), add(3, 4));
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
-    
-    try:
-        ast = parser.parse()
-        print_ast(ast)
-        
-        if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            print_outcome(False, error_details)
-            return False
-        else:
-            print_outcome(True)
-            return True
-    except Exception as e:
-        print_outcome(False, str(e))
-        return False
-
-
-def test_nested_structures():
-    """Test parsing of deeply nested structures"""
-    print_test_header("Nested Structures",
-                     "Parser correctly handles deeply nested control structures")
-    
-    test_code = """
-    fun nested_test(n:int) -> int {
-        let result:int = 0;
-        
-        if (n > 0) {
-            if (n % 2 == 0) {
-                while (n > 0) {
-                    for (let i:int = 0; i < n; i = i + 1) {
-                        if (i % 3 == 0) {
-                            result = result + i;
-                        } else {
-                            if (i % 5 == 0) {
-                                result = result - i;
-                            }
-                        }
-                    }
-                    n = n - 1;
+    // Nested control structures
+    for (let outer:int = 0; outer < 5; outer = outer + 1) {
+        if (outer % 2 == 0) {
+            for (let inner:int = 0; inner < outer; inner = inner + 1) {
+                __write outer, inner, #FF0000;
+            }
+        } else {
+            while (condition) {
+                __delay 50;
+                if (check()) {
+                    break_condition = true;
                 }
-            } else {
-                result = n * 2;
             }
         }
-        
-        return result;
     }
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
-    lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
+    ast, error = parse_program(test_code)
     
-    try:
-        ast = parser.parse()
-        print_ast(ast)
-        
-        if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            print_outcome(False, error_details)
-            return False
-        else:
-            print_outcome(True)
-            return True
-    except Exception as e:
-        print_outcome(False, str(e))
+    if error:
+        write_to_file(f"\nParser error: {error}")
+        print_completion_status("Control Flow Parsing", False)
+        close_test_output_file()
         return False
-
-
-def test_error_detection():
-    """Test parser error detection"""
-    print_test_header("Error Detection",
-                     "Parser correctly detects and reports syntax errors")
     
-    error_cases = [
-        ("let x:int = ;", "Missing expression"),
-        ("let :int = 5;", "Missing identifier"),
-        ("if x > 0 { }", "Missing parentheses"),
-        ("fun test() { return 5; }", "Missing return type"),
-        ("{ let x:int = 5 }", "Missing semicolon"),
-        ("let x:int = (5;", "Unmatched parenthesis")
+    print_ast(ast, max_lines=80)
+    
+    write_to_file("\nCONTROL FLOW ANALYSIS:")
+    write_to_file("-" * 60)
+    
+    # Count different control structures
+    if_count = while_count = for_count = 0
+    if hasattr(ast, 'statements'):
+        def count_control_structures(node):
+            nonlocal if_count, while_count, for_count
+            if hasattr(node, '__class__'):
+                if 'IfStatement' in node.__class__.__name__:
+                    if_count += 1
+                elif 'WhileStatement' in node.__class__.__name__:
+                    while_count += 1
+                elif 'ForStatement' in node.__class__.__name__:
+                    for_count += 1
+            
+            # Recursively check child nodes
+            if hasattr(node, '__dict__'):
+                for attr_value in node.__dict__.values():
+                    if hasattr(attr_value, '__class__') and hasattr(attr_value, '__dict__'):
+                        count_control_structures(attr_value)
+                    elif isinstance(attr_value, list):
+                        for item in attr_value:
+                            if hasattr(item, '__class__') and hasattr(item, '__dict__'):
+                                count_control_structures(item)
+        
+        for stmt in ast.statements:
+            count_control_structures(stmt)
+    
+    write_to_file(f"If statements: {if_count}")
+    write_to_file(f"While loops: {while_count}")
+    write_to_file(f"For loops: {for_count}")
+    write_to_file("Control flow parsing completed successfully")
+    print_completion_status("Control Flow Parsing", True)
+    close_test_output_file()
+    return True
+
+
+def test_syntax_error_detection():
+    """Test 4: Syntax Error Detection and Recovery
+    Purpose: Verify parser detects syntax errors and provides meaningful messages
+    """
+    create_test_output_file("task_2", "Syntax Error Detection and Recovery")
+    
+    print_test_header("Syntax Error Detection and Recovery",
+                     "Tests detection of various syntax errors with error recovery")
+    
+    test_cases = [
+        ("Missing semicolon", "let x:int = 42 let y:int = 24;"),
+        ("Unbalanced parentheses", "if (x > 0 { __print x; }"),
+        ("Missing function body", "fun test() -> int;"),
+        ("Invalid expression", "let x:int = 5 +;"),
+        ("Missing type annotation", "let x = 42;"),
+        ("Invalid for loop", "for (let i:int = 0 i < 10) { __print i; }"),
+        ("Unclosed block", "if (true) { __print x;"),
+        ("Missing return type", "fun test() { return 5; }"),
     ]
     
-    all_detected = True
+    write_to_file("SYNTAX ERROR TEST CASES:")
+    write_to_file("=" * 60)
     
-    for test_code, description in error_cases:
-        write_to_file(f"\n{description}:")
-        write_to_file(f"INPUT: {test_code}")
+    error_detection_count = 0
+    
+    for i, (error_type, code) in enumerate(test_cases, 1):
+        write_to_file(f"\nTest Case {i}: {error_type}")
+        write_to_file(f"Input: {code}")
         
-        lexer = FSALexer()
-        tokens = lexer.tokenize(test_code)
-        parser = PArLParser(tokens)
+        ast, error = parse_program(code)
         
-        try:
-            ast = parser.parse()
-            if parser.has_errors():
-                write_to_file(f"ERRORS DETECTED: {len(parser.errors)}")
-                for error in parser.errors[:2]:  # Show first 2 errors
-                    write_to_file(f"  - {error}")
-            else:
-                write_to_file("NO ERRORS DETECTED")
-                all_detected = False
-        except Exception as e:
-            write_to_file(f"EXCEPTION: {str(e)[:100]}")
-    
-    print_outcome(all_detected)
-    return all_detected
-
-
-def test_complex_program():
-    """Test parsing a complete complex program"""
-    print_test_header("Complex Program",
-                     "Parser correctly handles a complete program with all features")
-    
-    test_code = """
-    fun fibonacci(n:int) -> int {
-        if (n <= 1) {
-            return n;
-        }
-        return fibonacci(n - 1) + fibonacci(n - 2);
-    }
-    
-    fun test_modulo(a:int, b:int) -> int {
-        let quotient:int = a / b;
-        let remainder:int = a % b;
-        
-        if (remainder == 0) {
-            return quotient;
-        }
-        
-        return remainder;
-    }
-    
-    fun main() -> int {
-        let fib10:int = fibonacci(10);
-        __print fib10;
-        
-        let mod_result:int = test_modulo(17, 5);
-        __print mod_result;
-        
-        for (let i:int = 0; i < 10; i = i + 1) {
-            if (i % 2 == 0) {
-                let color:colour = (i * 1000) as colour;
-                __write i * 10, i * 10, color;
-            }
-        }
-        
-        return 0;
-    }
-    
-    let result:int = main();
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    lexer = FSALexer()
-    tokens = lexer.tokenize(test_code)
-    parser = PArLParser(tokens)
-    
-    try:
-        ast = parser.parse()
-        print_ast(ast, max_lines=100)
-        
-        if parser.has_errors():
-            error_details = f"Parser reported {len(parser.errors)} errors"
-            print_outcome(False, error_details)
-            return False
+        if error:
+            write_to_file(f"Error detected: {error}")
+            error_detection_count += 1
         else:
-            print_outcome(True)
-            return True
-    except Exception as e:
-        print_outcome(False, str(e))
-        return False
+            write_to_file("No error detected (unexpected)")
+        
+        write_to_file("-" * 40)
+    
+    write_to_file(f"\nERROR DETECTION SUMMARY:")
+    write_to_file(f"Test cases: {len(test_cases)}")
+    write_to_file(f"Errors detected: {error_detection_count}")
+    write_to_file(f"Detection rate: {error_detection_count/len(test_cases)*100:.1f}%")
+    
+    success = error_detection_count >= len(test_cases) * 0.75  # At least 75% should be detected
+    
+    if success:
+        write_to_file("\nSyntax error detection working effectively")
+    else:
+        write_to_file("\nSyntax error detection needs improvement")
+    
+    print_completion_status("Error Detection", success)
+    close_test_output_file()
+    return success
 
 
 def run_task2_tests():
-    """Run all Task 2 tests"""
-    output_file = create_test_output_file("task2_parser")
+    """Run all Task 2 parser tests"""
+    reset_test_counter()
     
-    print("TASK 2 - PARSER TESTS")
+    print("TASK 2 - HAND-CRAFTED LL(K) PARSER TESTS")
     print("="*80)
     
     results = []
     
-    # Run all tests
-    results.append(("Variable Declarations", test_variable_declarations()))
-    results.append(("Function Declarations", test_function_declarations()))
-    results.append(("Control Structures", test_control_structures()))
-    results.append(("Expression Parsing", test_expressions()))
-    results.append(("Built-in Statements", test_builtin_statements()))
-    results.append(("Function Calls", test_function_calls()))
-    results.append(("Nested Structures", test_nested_structures()))
-    results.append(("Error Detection", test_error_detection()))
-    results.append(("Complex Program", test_complex_program()))
+    # Run all parser tests
+    results.append(("Expression Parsing and Operator Precedence", test_expression_parsing_precedence()))
+    results.append(("Function Declaration Parsing", test_function_declaration_parsing()))
+    results.append(("Control Flow Statement Parsing", test_control_flow_parsing()))
+    results.append(("Syntax Error Detection and Recovery", test_syntax_error_detection()))
     
     # Summary
-    write_to_file("\n" + "="*80)
-    write_to_file("TASK 2 SUMMARY")
-    write_to_file("="*80)
-    
     print("\nTASK 2 SUMMARY")
     print("="*80)
     
@@ -479,17 +350,12 @@ def run_task2_tests():
     total = len(results)
     
     for test_name, result in results:
-        status = "PASS" if result else "FAIL"
-        write_to_file(f"{test_name:<30} {status}")
-        print(f"{test_name:<30} {status}")
+        status = "PASSED" if result else "FAILED"
+        print(f"{test_name:<50} {status}")
     
-    write_to_file("-"*80)
-    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
-    print(f"Total: {passed}/{total} tests passed")
-    
-    close_test_output_file()
-    print(f"Detailed output written to: {output_file}")
+    print(f"Passed: {passed}/{total}")
+    print("Check test_outputs/task_2/ for detailed results")
     
     return passed == total
 

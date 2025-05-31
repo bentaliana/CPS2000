@@ -1,0 +1,169 @@
+TEST: Page 15 MaxInArray Example
+TASK: ASSIGNMENT
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Assignment Page 15 MaxInArray
+PURPOSE: Complete array example with PArIR reference
+--------------------------------------------------------------------------------
+ASSIGNMENT EXAMPLE: MaxInArray from page 15 with PArIR reference
+
+INPUT PROGRAM:
+
+    //x is an array of 8 +ve integers
+    fun MaxInArray(x:int[8]) -> int {
+        let m:int = 0;
+        for (let i:int = 0; i < 8; i = i+1) {
+            if (x[i] > m) { m = x[i]; }
+        }
+        return m;
+    }
+
+    let list_of_integers:int[] = [23, 54, 3, 65, 99, 120, 34, 21];
+    let max:int = MaxInArray(list_of_integers);
+    __print max;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: MaxInArray(x:int[8]) -> int
+    Param: x : int[8]
+    Block
+      VarDecl: m : int
+        Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 8 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          If
+            BinaryOp: >
+              IndexAccess
+                Identifier: x
+                Identifier: i
+              Identifier: m
+            Block
+              Assignment
+                Identifier: m
+                IndexAccess
+                  Identifier: x
+                  Identifier: i
+      Return
+        Identifier: m
+  VarDecl: list_of_integers : int[8]
+    ArrayLiteral: [8 elements]
+      Literal: 23 (int)
+      Literal: 54 (int)
+      Literal: 3 (int)
+      Literal: 65 (int)
+      Literal: 99 (int)
+      Literal: 120 (int)
+      Literal: 34 (int)
+      Literal: 21 (int)
+  VarDecl: max : int
+    FuncCall: MaxInArray
+      Identifier: list_of_integers
+  Print
+    Identifier: max
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 10
+oframe
+push #PC+52
+jmp
+.MaxInArray
+push 9
+alloc
+push 0
+push 8
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 8
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+29
+jmp
+push 0
+oframe
+push [8:2]
+push [0:1]
+push +[0:2]
+gt
+push #PC+4
+cjmp
+push #PC+10
+jmp
+push 0
+oframe
+push [0:2]
+push +[0:3]
+push 8
+push 3
+st
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-33
+jmp
+cframe
+push [8:0]
+ret
+push 21
+push 34
+push 120
+push 99
+push 65
+push 3
+push 54
+push 23
+push 8
+push 1
+push 0
+sta
+push 8
+pusha [1:0]
+push 8
+push .MaxInArray
+call
+push 9
+push 0
+st
+push [9:0]
+print
+cframe
+halt
+------------------------------------------------------------
+
+Successfully compiled 82 PArIR instructions
+
+COMPILATION: Successfully completed
+
+================================================================================
+

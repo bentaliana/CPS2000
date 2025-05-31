@@ -1,0 +1,243 @@
+TEST: Function Calls and Parameter Passing
+TASK: TASK_4
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Function Calls and Parameter Passing
+PURPOSE: Tests function definitions, calls, parameter passing, and returns
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    fun add(x:int, y:int) -> int {
+        return x + y;
+    }
+    
+    fun multiply_and_check(a:int, b:int) -> bool {
+        let result:int = a * b;
+        if (result > 100) {
+            return true;
+        }
+        return false;
+    }
+    
+    fun complex_calculation(base:int, factor:float) -> float {
+        let temp:float = base as float;
+        let result:float = temp * factor;
+        if (result > 50.0) {
+            result = result / 2.0;
+        }
+        return result;
+    }
+    
+    // Function calls in main
+    let sum:int = add(5, 3);
+    let is_large:bool = multiply_and_check(12, 9);
+    let calc_result:float = complex_calculation(20, 2.5);
+    
+    __print sum;
+    __print is_large;
+    __print calc_result as int;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: add(x:int, y:int) -> int
+    Param: x : int
+    Param: y : int
+    Block
+      Return
+        BinaryOp: +
+          Identifier: x
+          Identifier: y
+  FuncDecl: multiply_and_check(a:int, b:int) -> bool
+    Param: a : int
+    Param: b : int
+    Block
+      VarDecl: result : int
+        BinaryOp: *
+          Identifier: a
+          Identifier: b
+      If
+        BinaryOp: >
+          Identifier: result
+          Literal: 100 (int)
+        Block
+          Return
+            Literal: True (bool)
+      Return
+        Literal: False (bool)
+  FuncDecl: complex_calculation(base:int, factor:float) -> float
+    Param: base : int
+    Param: factor : float
+    Block
+      VarDecl: temp : float
+        Cast -> float
+          Identifier: base
+      VarDecl: result : float
+        BinaryOp: *
+          Identifier: temp
+          Identifier: factor
+      If
+        BinaryOp: >
+          Identifier: result
+          Literal: 50.0 (float)
+        Block
+          Assignment
+            Identifier: result
+            BinaryOp: /
+              Identifier: result
+              Literal: 2.0 (float)
+      Return
+        Identifier: result
+  VarDecl: sum : int
+    FuncCall: add
+      Literal: 5 (int)
+      Literal: 3 (int)
+  VarDecl: is_large : bool
+    FuncCall: multiply_and_check
+      Literal: 12 (int)
+      Literal: 9 (int)
+  VarDecl: calc_result : float
+    FuncCall: complex_calculation
+      Literal: 20 (int)
+      Literal: 2.5 (float)
+  Print
+    Identifier: sum
+  Print
+    Identifier: is_large
+  Print
+    Cast -> int
+      Identifier: calc_result
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+  0: .main
+  1: push 4
+  2: jmp
+  3: halt
+  4: push 4
+  5: oframe
+  6: push #PC+9
+  7: jmp
+  8: .add
+  9: push 2
+ 10: alloc
+ 11: push [1:0]
+ 12: push [0:0]
+ 13: add
+ 14: ret
+ 15: push #PC+25
+ 16: jmp
+ 17: .multiply_and_check
+ 18: push 3
+ 19: alloc
+ 20: push [1:0]
+ 21: push [0:0]
+ 22: mul
+ 23: push 2
+ 24: push 0
+ 25: st
+ 26: push 100
+ 27: push [2:0]
+ 28: gt
+ 29: push #PC+4
+ 30: cjmp
+ 31: push #PC+7
+ 32: jmp
+ 33: push 0
+ 34: oframe
+ 35: push 1
+ 36: ret
+ 37: cframe
+ 38: push 0
+ 39: ret
+ 40: push #PC+33
+ 41: jmp
+ 42: .complex_calculation
+ 43: push 4
+ 44: alloc
+ 45: push [0:0]
+ 46: push 2
+ 47: push 0
+ 48: st
+ 49: push [1:0]
+ 50: push [2:0]
+ 51: mul
+ 52: push 3
+ 53: push 0
+ 54: st
+ 55: push 50.0
+ 56: push [3:0]
+ 57: gt
+ 58: push #PC+4
+ 59: cjmp
+ 60: push #PC+11
+ 61: jmp
+ 62: push 0
+ 63: oframe
+ 64: push 2.0
+ 65: push [3:1]
+ 66: div
+ 67: push 3
+ 68: push 1
+ 69: st
+ 70: cframe
+ 71: push [3:0]
+ 72: ret
+ 73: push 3
+ 74: push 5
+ 75: push 2
+ 76: push .add
+ 77: call
+ 78: push 1
+ 79: push 0
+ 80: st
+ 81: push 9
+ 82: push 12
+ 83: push 2
+ 84: push .multiply_and_check
+ 85: call
+ 86: push 2
+ 87: push 0
+ 88: st
+ 89: push 2.5
+ 90: push 20
+ 91: push 2
+ 92: push .complex_calculation
+ 93: call
+ 94: push 3
+ 95: push 0
+ 96: st
+ 97: push [1:0]
+ 98: print
+ 99: push [2:0]
+100: print
+101: push [3:0]
+102: print
+103: cframe
+104: halt
+------------------------------------------------------------
+
+FUNCTION ANALYSIS:
+Function labels: 4
+  .main
+  .add
+  .multiply_and_check
+  .complex_calculation
+
+Function calls: 3
+  call
+  call
+  call
+
+Return statements: 4
+Memory allocations: 3
+
+Function call generation successful
+
+FUNCTION CALLS AND PARAMETERS: Successfully completed
+
+================================================================================
+

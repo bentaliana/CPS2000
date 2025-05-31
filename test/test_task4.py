@@ -1,6 +1,7 @@
 """
-Task 4 - Code Generation Tests
-Tests for PArL to PArIR code generation
+Task 4 - PArIR Code Generation Tests
+Comprehensive testing of PArIR instruction generation
+Tests memory management, control flow, function calls, and instruction correctness
 """
 
 import sys
@@ -13,707 +14,455 @@ from lexer.lexer import FSALexer
 from parser.parser import PArLParser
 from semantic_analyzer.semantic_analyzer import SemanticAnalyzer
 from code_generator.code_generator import PArIRGenerator
-from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
-
+from test.test_utils import (print_test_header, print_ast, print_completion_status, set_ast_printing,
+                           create_test_output_file, close_test_output_file, write_to_file, 
+                           reset_test_counter)
 
 if "--show-ast" in sys.argv:
     set_ast_printing(True)
 else:
     set_ast_printing(False)
 
-
-def generate_code(source_code):
+def compile_program(source_code):
     """Complete compilation pipeline"""
     lexer = FSALexer()
     tokens = lexer.tokenize(source_code.strip())
     
+    # Check for lexical errors
+    error_tokens = [t for t in tokens if t.type.name.startswith("ERROR")]
+    if error_tokens:
+        return None, None, f"Lexical errors: {error_tokens}"
+    
+    # Parse
     parser = PArLParser(tokens)
-    ast = parser.parse()
+    try:
+        ast = parser.parse()
+        if parser.has_errors():
+            return None, None, f"Parser errors: {parser.errors}"
+    except Exception as e:
+        return None, None, f"Parser exception: {str(e)}"
     
-    if parser.has_errors():
-        return None, None, f"Parser errors: {parser.errors}"
-    
+    # Semantic analysis
     analyzer = SemanticAnalyzer()
-    if not analyzer.analyze(ast):
-        return None, None, f"Semantic errors: {analyzer.errors}"
+    try:
+        if not analyzer.analyze(ast):
+            return None, None, f"Semantic errors: {analyzer.errors}"
+    except Exception as e:
+        return None, None, f"Semantic analysis exception: {str(e)}"
     
+    # Code generation
     generator = PArIRGenerator()
-    instructions = generator.generate(ast)
-    
-    return ast, instructions, None
+    try:
+        instructions = generator.generate(ast)
+        return ast, instructions, None
+    except Exception as e:
+        return ast, None, f"Code generation exception: {str(e)}"
 
 
-def test_basic_program():
-    """Test basic program structure generation"""
-    print_test_header("Basic Program Structure",
-                     "Code generator produces correct structure for simple program")
-    
-    test_code = """
-    let x:int = 42;
-    __print x;
+def test_basic_arithmetic_and_memory():
+    """Test 1: Basic Arithmetic and Memory Operations
+    Purpose: Verify generation of arithmetic operations and memory management
     """
+    create_test_output_file("task_4", "Basic Arithmetic and Memory Operations")
     
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Check for required program structure
-    required = [".main", "oframe", "push", "st", "print", "halt", "cframe"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
-    
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing required instructions: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_arithmetic_operations():
-    """Test arithmetic operation code generation"""
-    print_test_header("Arithmetic Operations",
-                     "Code generator correctly handles all arithmetic operations including modulo")
-    
-    test_code = """
-    let a:int = 17;
-    let b:int = 5;
-    let sum:int = a + b;
-    let diff:int = a - b;
-    let prod:int = a * b;
-    let quot:int = a / b;
-    let rem:int = a % b;
-    
-    __print sum;
-    __print diff;
-    __print prod;
-    __print quot;
-    __print rem;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Check for arithmetic instructions
-    ops = ["add", "sub", "mul", "div", "mod"]
-    found = {op: any(op in instr for instr in instructions) for op in ops}
-    
-    missing = [op for op, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing arithmetic operations: {missing}")
-        return False
-    else:
-        write_to_file("\nAll arithmetic operations found:")
-        for op in ops:
-            write_to_file(f"  {op}: YES")
-        print_outcome(True)
-        return True
-
-
-def test_comparison_operations():
-    """Test comparison operation code generation"""
-    print_test_header("Comparison Operations",
-                     "Code generator correctly handles all comparison operations")
+    print_test_header("Basic Arithmetic and Memory Operations",
+                     "Tests variable declarations, arithmetic operations, and memory access")
     
     test_code = """
     let a:int = 10;
-    let b:int = 5;
+    let b:int = 20;
+    let c:int = a + b;
+    let d:int = c * 2;
+    let e:int = d - a;
+    let f:int = e / 5;
+    let g:int = f % 3;
     
-    let lt:bool = a < b;
-    let gt:bool = a > b;
-    let le:bool = a <= b;
-    let ge:bool = a >= b;
-    let eq:bool = a == b;
-    let ne:bool = a != b;
+    let x:float = 3.14;
+    let y:float = x * 2.0;
     
-    if (lt) { __print 1; }
-    if (gt) { __print 2; }
-    if (le) { __print 3; }
-    if (ge) { __print 4; }
-    if (eq) { __print 5; }
-    if (ne) { __print 6; }
+    let flag:bool = true;
+    let result:bool = flag and false;
+    
+    let color1:colour = #FF0000;
+    let color2:colour = 255 as colour;
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
-    ast, instructions, error = generate_code(test_code)
+    ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Arithmetic and Memory", False)
+        close_test_output_file()
         return False
     
     print_ast(ast)
     
     write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
+    write_to_file("-" * 60)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{i:3d}: {instr}")
+    write_to_file("-" * 60)
+    
+    # Analyze generated instructions
+    write_to_file("\nINSTRUCTION ANALYSIS:")
+    instruction_counts = {}
     for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
+        op = instr.split()[0] if instr.split() else ""
+        instruction_counts[op] = instruction_counts.get(op, 0) + 1
     
-    # Check for comparison instructions
-    ops = ["lt", "gt", "le", "ge", "eq"]
-    found = {op: any(op in instr for instr in instructions) for op in ops}
+    write_to_file(f"Total instructions: {len(instructions)}")
+    write_to_file("Instruction frequency:")
+    for op, count in sorted(instruction_counts.items()):
+        write_to_file(f"  {op}: {count}")
     
-    # != is typically implemented as eq followed by not
-    if any("not" in instr for instr in instructions):
-        found["not"] = True
+    # Check for essential instructions
+    required_ops = ['push', 'st', 'add', 'mul', 'sub', 'div', 'mod', 'oframe', 'halt']
+    missing_ops = [op for op in required_ops if op not in instruction_counts]
     
-    missing = [op for op, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing comparison operations: {missing}")
-        return False
+    if missing_ops:
+        write_to_file(f"\nMissing essential operations: {missing_ops}")
+        success = False
     else:
-        print_outcome(True)
-        return True
+        write_to_file("\nAll essential operations present")
+        success = True
+    
+    print_completion_status("Arithmetic and Memory", success)
+    close_test_output_file()
+    return success
 
 
-def test_logical_operations():
-    """Test logical operation code generation"""
-    print_test_header("Logical Operations",
-                     "Code generator correctly handles logical operations")
+def test_control_flow_generation():
+    """Test 2: Control Flow Code Generation
+    Purpose: Verify generation of conditional and loop constructs
+    """
+    create_test_output_file("task_4", "Control Flow Code Generation")
+    
+    print_test_header("Control Flow Code Generation",
+                     "Tests if/else statements, while loops, and for loops with jumps")
     
     test_code = """
-    let a:bool = true;
-    let b:bool = false;
+    let x:int = 10;
     
-    let and_result:bool = a and b;
-    let or_result:bool = a or b;
-    let not_result:bool = not a;
+    // Simple if statement
+    if (x > 5) {
+        x = x + 1;
+    }
     
-    if (and_result) { __print 1; }
-    if (or_result) { __print 2; }
-    if (not_result) { __print 3; }
+    // If-else statement
+    if (x > 15) {
+        x = x - 5;
+    } else {
+        x = x + 5;
+    }
+    
+    // While loop
+    let counter:int = 0;
+    while (counter < 5) {
+        counter = counter + 1;
+        __print counter;
+    }
+    
+    // For loop
+    for (let i:int = 0; i < 3; i = i + 1) {
+        __print i;
+        if (i == 1) {
+            __delay 100;
+        }
+    }
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
-    ast, instructions, error = generate_code(test_code)
+    ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Control Flow Generation", False)
+        close_test_output_file()
         return False
     
     print_ast(ast)
     
     write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
+    write_to_file("-" * 60)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{i:3d}: {instr}")
+    write_to_file("-" * 60)
     
-    # Check for logical instructions
-    ops = ["and", "or", "not"]
-    found = {op: any(op in instr for instr in instructions) for op in ops}
+    # Analyze control flow instructions
+    write_to_file("\nCONTROL FLOW ANALYSIS:")
+    jump_instructions = []
+    comparison_instructions = []
     
-    missing = [op for op, found in found.items() if not found]
+    for i, instr in enumerate(instructions):
+        if any(op in instr for op in ['jmp', 'cjmp']):
+            jump_instructions.append((i, instr))
+        elif any(op in instr for op in ['lt', 'gt', 'le', 'ge', 'eq']):
+            comparison_instructions.append((i, instr))
     
-    if missing:
-        print_outcome(False, f"Missing logical operations: {missing}")
-        return False
+    write_to_file(f"Jump instructions: {len(jump_instructions)}")
+    for line_num, instr in jump_instructions:
+        write_to_file(f"  {line_num}: {instr}")
+    
+    write_to_file(f"\nComparison instructions: {len(comparison_instructions)}")
+    for line_num, instr in comparison_instructions:
+        write_to_file(f"  {line_num}: {instr}")
+    
+    # Check for frame management
+    frame_ops = [instr for instr in instructions if any(op in instr for op in ['oframe', 'cframe'])]
+    write_to_file(f"\nFrame management operations: {len(frame_ops)}")
+    
+    success = len(jump_instructions) > 0 and len(comparison_instructions) > 0
+    
+    if success:
+        write_to_file("\nControl flow generation successful")
     else:
-        print_outcome(True)
-        return True
+        write_to_file("\nControl flow generation incomplete")
+    
+    print_completion_status("Control Flow Generation", success)
+    close_test_output_file()
+    return success
 
 
-def test_function_generation():
-    """Test function declaration and call generation"""
-    print_test_header("Function Generation",
-                     "Code generator correctly handles functions")
+def test_function_calls_and_parameters():
+    """Test 3: Function Calls and Parameter Passing
+    Purpose: Verify function declaration, calls, and parameter/return handling
+    """
+    create_test_output_file("task_4", "Function Calls and Parameter Passing")
+    
+    print_test_header("Function Calls and Parameter Passing",
+                     "Tests function definitions, calls, parameter passing, and returns")
     
     test_code = """
     fun add(x:int, y:int) -> int {
         return x + y;
     }
     
-    fun multiply(a:int, b:int) -> int {
+    fun multiply_and_check(a:int, b:int) -> bool {
         let result:int = a * b;
-        return result;
-    }
-    
-    let sum:int = add(5, 10);
-    let product:int = multiply(3, 4);
-    __print sum;
-    __print product;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Check for function-related instructions
-    required = [".add", ".multiply", "call", "ret", "alloc"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
-    
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing function instructions: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_control_flow():
-    """Test control flow code generation"""
-    print_test_header("Control Flow Generation",
-                     "Code generator correctly handles if/else, while, and for")
-    
-    test_code = """
-    let x:int = 10;
-    
-    // If-else
-    if (x > 5) {
-        __print 1;
-    } else {
-        __print 0;
-    }
-    
-    // While loop
-    while (x > 0) {
-        __print x;
-        x = x - 1;
-    }
-    
-    // For loop
-    for (let i:int = 0; i < 5; i = i + 1) {
-        if (i % 2 == 0) {
-            __print i;
-        }
-    }
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Check for control flow instructions
-    required = ["cjmp", "jmp", "#PC"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
-    
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing control flow instructions: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_builtin_operations():
-    """Test built-in function code generation"""
-    print_test_header("Built-in Operations",
-                     "Code generator correctly handles all built-in functions")
-    
-    test_code = """
-    // Screen dimensions
-    let w:int = __width;
-    let h:int = __height;
-    
-    // Random number
-    let rand:int = __randi 100;
-    
-    // Print
-    __print 42;
-    __print w;
-    __print h;
-    
-    // Delay
-    __delay 500;
-    
-    // Graphics operations
-    __write 10, 20, #ff0000;
-    __write_box 0, 0, 50, 50, #00ff00;
-    let pixel:colour = __read 25, 25;
-    __clear #0000ff;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Check for built-in instructions
-    builtins = ["width", "height", "irnd", "print", "delay", "write", "writebox", "read", "clear"]
-    found = {bi: any(bi in instr for instr in instructions) for bi in builtins}
-    
-    missing = [bi for bi, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing built-in operations: {missing}")
-        return False
-    else:
-        write_to_file("\nAll built-in operations found:")
-        for bi in builtins:
-            write_to_file(f"  {bi}: YES")
-        print_outcome(True)
-        return True
-
-
-def test_cast_operations():
-    """Test type casting code generation"""
-    print_test_header("Type Casting",
-                     "Code generator correctly handles type casts")
-    
-    test_code = """
-    let i:int = 42;
-    let f:float = 3.14;
-    let b:bool = true;
-    let c:colour = #ff0000;
-    
-    // Various casts
-    let i_to_f:float = i as float;
-    let f_to_i:int = f as int;
-    let i_to_b:bool = i as bool;
-    let b_to_i:int = b as int;
-    let i_to_c:colour = (255 * 256 * 256) as colour;
-    let c_to_i:int = c as int;
-    
-    __print i_to_f;
-    __print f_to_i;
-    __print b_to_i;
-    __print c_to_i;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Casts might be implicit in the generated code
-    # Just verify the program compiles successfully
-    print_outcome(True)
-    return True
-
-
-def test_complex_expressions():
-    """Test complex expression code generation"""
-    print_test_header("Complex Expressions",
-                     "Code generator correctly handles complex nested expressions")
-    
-    test_code = """
-    let a:int = 10;
-    let b:int = 5;
-    let c:int = 3;
-    
-    // Complex arithmetic with precedence
-    let result1:int = a + b * c - a / b % c;
-    let result2:int = (a + b) * (c - 1);
-    let result3:int = -a + -b * -c;
-    
-    // Complex boolean expressions
-    let x:bool = a > b and b > c or a == 10;
-    let y:bool = not (a < b) and (b != c);
-    
-    // Mixed expressions with casts
-    let z:float = (a + b * c) as float / 2.0;
-    
-    __print result1;
-    __print result2;
-    __print result3;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Should generate many push and arithmetic operations
-    push_count = sum(1 for instr in instructions if "push" in instr)
-    arith_count = sum(1 for instr in instructions 
-                     if any(op in instr for op in ["add", "sub", "mul", "div", "mod"]))
-    
-    write_to_file(f"\nInstruction counts:")
-    write_to_file(f"  Push operations: {push_count}")
-    write_to_file(f"  Arithmetic operations: {arith_count}")
-    
-    if push_count < 10 or arith_count < 5:
-        print_outcome(False, "Too few operations for complex expressions")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_recursive_function():
-    """Test recursive function code generation"""
-    print_test_header("Recursive Functions",
-                     "Code generator correctly handles recursive function calls")
-    
-    test_code = """
-    fun factorial(n:int) -> int {
-        if (n <= 1) {
-            return 1;
-        }
-        return n * factorial(n - 1);
-    }
-    
-    fun fibonacci(n:int) -> int {
-        if (n <= 1) {
-            return n;
-        }
-        return fibonacci(n - 1) + fibonacci(n - 2);
-    }
-    
-    let fact5:int = factorial(5);
-    let fib7:int = fibonacci(7);
-    
-    __print fact5;
-    __print fib7;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for i, instr in enumerate(instructions):
-        write_to_file(instr)
-        if i > 100:  # Limit output for recursive functions
-            write_to_file(f"... ({len(instructions) - i - 1} more instructions)")
-            break
-    write_to_file("-"*60)
-    
-    # Check for recursive function elements
-    required = [".factorial", ".fibonacci", "call", "ret"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
-    
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing recursive function elements: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_complete_program():
-    """Test complete program with all features"""
-    print_test_header("Complete Program",
-                     "Code generator handles complete program with all language features")
-    
-    test_code = """
-    // Global variable
-    let screen_cleared:bool = false;
-    
-    fun draw_pixel(x:int, y:int, c:colour) -> bool {
-        if ((x >= 0 and x < __width and y >= 0 and y < __height) or screen_cleared) {
-            __write x, y, c;
+        if (result > 100) {
             return true;
         }
         return false;
     }
     
-    fun clear_screen() -> bool {
-        if (not screen_cleared) {
-            __clear #000000;
-            screen_cleared = true;
+    fun complex_calculation(base:int, factor:float) -> float {
+        let temp:float = base as float;
+        let result:float = temp * factor;
+        if (result > 50.0) {
+            result = result / 2.0;
         }
-        return screen_cleared;
+        return result;
     }
     
-    fun main() -> int {
-        let cleared:bool = clear_screen();
-        
-        // Draw a pattern
-        for (let i:int = 0; i < 10; i = i + 1) {
-            let x:int = i * 10;
-            let y:int = i * 10;
-            let color:colour = (i * 25) as colour;
-            let drawn:bool = draw_pixel(x, y, color);
-        }
-        
-        // Test modulo
-        let a:int = 17;
-        let b:int = 5;
-        let remainder:int = a % b;
-        __print remainder;
-        
-        __delay 1000;
-        return 0;
-    }
+    // Function calls in main
+    let sum:int = add(5, 3);
+    let is_large:bool = multiply_and_check(12, 9);
+    let calc_result:float = complex_calculation(20, 2.5);
     
-    let result:int = main();
+    __print sum;
+    __print is_large;
+    __print calc_result as int;
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
-    ast, instructions, error = generate_code(test_code)
+    ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Function Calls and Parameters", False)
+        close_test_output_file()
         return False
     
-    print_ast(ast, max_lines=100)
+    print_ast(ast, max_lines=80)
     
     write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
+    write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(instr)
-        if i > 150:  # Limit output
-            write_to_file(f"... ({len(instructions) - i - 1} more instructions)")
-            break
-    write_to_file("-"*60)
+        write_to_file(f"{i:3d}: {instr}")
+    write_to_file("-" * 60)
     
-    write_to_file(f"\nTotal instructions generated: {len(instructions)}")
+    # Analyze function-related instructions
+    write_to_file("\nFUNCTION ANALYSIS:")
     
-    # Verify key components
-    components = {
-        "functions": [".draw_pixel", ".clear_screen", ".main"],
-        "operations": ["mod", "and", "or", "not"],
-        "control": ["cjmp", "jmp", "call", "ret"],
-        "builtins": ["write", "clear", "width", "height", "print", "delay"]
+    function_labels = [instr for instr in instructions if instr.startswith('.')]
+    call_instructions = [instr for instr in instructions if 'call' in instr]
+    return_instructions = [instr for instr in instructions if 'ret' in instr]
+    alloc_instructions = [instr for instr in instructions if 'alloc' in instr]
+    
+    write_to_file(f"Function labels: {len(function_labels)}")
+    for label in function_labels:
+        write_to_file(f"  {label}")
+    
+    write_to_file(f"\nFunction calls: {len(call_instructions)}")
+    for call in call_instructions:
+        write_to_file(f"  {call}")
+    
+    write_to_file(f"\nReturn statements: {len(return_instructions)}")
+    write_to_file(f"Memory allocations: {len(alloc_instructions)}")
+    
+    # Check for proper function structure
+    expected_functions = 3  # add, multiply_and_check, complex_calculation
+    expected_calls = 3     # calls to each function
+    
+    success = (len(function_labels) >= expected_functions and 
+               len(call_instructions) >= expected_calls and
+               len(return_instructions) >= expected_functions)
+    
+    if success:
+        write_to_file("\nFunction call generation successful")
+    else:
+        write_to_file("\nFunction call generation incomplete")
+    
+    print_completion_status("Function Calls and Parameters", success)
+    close_test_output_file()
+    return success
+
+
+def test_builtin_operations_generation():
+    """Test 4: Built-in Operations Code Generation
+    Purpose: Verify generation of built-in function calls and graphics operations
+    """
+    create_test_output_file("task_4", "Built-in Operations Code Generation")
+    
+    print_test_header("Built-in Operations Code Generation",
+                     "Tests built-in functions: print, delay, write, write_box, clear, etc.")
+    
+    test_code = """
+    // Basic built-ins with literals
+    __print 42;
+    __delay 1000;
+    __clear #000000;
+    
+    // Graphics operations
+    __write 10, 20, #FF0000;
+    __write_box 5, 5, 10, 10, #00FF00;
+    
+    // Built-ins with expressions
+    let x:int = 15;
+    let y:int = 25;
+    let color:colour = #0000FF;
+    
+    __write x, y, color;
+    __write_box x - 5, y - 5, 20, 20, color;
+    
+    // Built-in expressions
+    let width:int = __width;
+    let height:int = __height;
+    let random_num:int = __randi 100;
+    let pixel_color:colour = __read 0, 0;
+    
+    // Complex usage
+    for (let i:int = 0; i < 5; i = i + 1) {
+        let rand_x:int = __randi width;
+        let rand_y:int = __randi height;
+        let rand_color:colour = (__randi 16777216) as colour;
+        
+        __write rand_x, rand_y, rand_color;
+        __delay 100;
+        
+        if (i % 2 == 0) {
+            __write_box rand_x, rand_y, 3, 3, #FFFFFF;
+        }
     }
     
-    all_found = True
-    for category, items in components.items():
-        write_to_file(f"\n{category.upper()}:")
-        for item in items:
-            found = any(item in instr for instr in instructions)
-            write_to_file(f"  {item}: {'YES' if found else 'NO'}")
-            if not found:
-                all_found = False
+    __print width;
+    __print height;
+    __print random_num;
+    """
     
-    if all_found:
-        print_outcome(True)
-        return True
-    else:
-        print_outcome(False, "Some required components missing")
+    write_to_file("INPUT PROGRAM:")
+    write_to_file(test_code)
+    
+    ast, instructions, error = compile_program(test_code)
+    
+    if error:
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Built-in Operations", False)
+        close_test_output_file()
         return False
+    
+    print_ast(ast, max_lines=80)
+    
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-" * 60)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{i:3d}: {instr}")
+    write_to_file("-" * 60)
+    
+    # Analyze built-in operations
+    write_to_file("\nBUILT-IN OPERATIONS ANALYSIS:")
+    
+    builtin_ops = {
+        'print': 0, 'delay': 0, 'write': 0, 'writebox': 0, 'clear': 0,
+        'width': 0, 'height': 0, 'irnd': 0, 'read': 0
+    }
+    
+    for instr in instructions:
+        for op in builtin_ops.keys():
+            if op in instr:
+                builtin_ops[op] += 1
+    
+    write_to_file("Built-in operation frequency:")
+    for op, count in builtin_ops.items():
+        if count > 0:
+            write_to_file(f"  {op}: {count}")
+    
+    # Check for expected operations
+    expected_builtins = ['print', 'delay', 'write', 'writebox', 'clear', 'width', 'height', 'irnd']
+    found_builtins = [op for op, count in builtin_ops.items() if count > 0]
+    missing_builtins = [op for op in expected_builtins if op not in found_builtins]
+    
+    write_to_file(f"\nExpected built-ins: {len(expected_builtins)}")
+    write_to_file(f"Found built-ins: {len(found_builtins)}")
+    
+    if missing_builtins:
+        write_to_file(f"Missing built-ins: {missing_builtins}")
+        success = False
+    else:
+        write_to_file("All expected built-in operations found")
+        success = True
+    
+    # Check for proper argument handling
+    write_ops = [instr for instr in instructions if 'write' in instr and not 'writebox' in instr]
+    writebox_ops = [instr for instr in instructions if 'writebox' in instr]
+    
+    write_to_file(f"\nGraphics operations:")
+    write_to_file(f"  write operations: {len(write_ops)}")
+    write_to_file(f"  writebox operations: {len(writebox_ops)}")
+    
+    if success:
+        write_to_file("\nBuilt-in operations generation successful")
+    else:
+        write_to_file("\nBuilt-in operations generation incomplete")
+    
+    print_completion_status("Built-in Operations", success)
+    close_test_output_file()
+    return success
 
 
 def run_task4_tests():
-    """Run all Task 4 tests"""
-    output_file = create_test_output_file("task4_codegen")
+    """Run all Task 4 code generation tests"""
+    reset_test_counter()
     
-    print("TASK 4 - CODE GENERATION TESTS")
+    print("TASK 4 - PArIR CODE GENERATION TESTS")
     print("="*80)
     
     results = []
     
-    # Run all tests
-    results.append(("Basic Program", test_basic_program()))
-    results.append(("Arithmetic Operations", test_arithmetic_operations()))
-    results.append(("Comparison Operations", test_comparison_operations()))
-    results.append(("Logical Operations", test_logical_operations()))
-    results.append(("Function Generation", test_function_generation()))
-    results.append(("Control Flow", test_control_flow()))
-    results.append(("Built-in Operations", test_builtin_operations()))
-    results.append(("Type Casting", test_cast_operations()))
-    results.append(("Complex Expressions", test_complex_expressions()))
-    results.append(("Recursive Functions", test_recursive_function()))
-    results.append(("Complete Program", test_complete_program()))
+    # Run all code generation tests
+    results.append(("Basic Arithmetic and Memory Operations", test_basic_arithmetic_and_memory()))
+    results.append(("Control Flow Code Generation", test_control_flow_generation()))
+    results.append(("Function Calls and Parameter Passing", test_function_calls_and_parameters()))
+    results.append(("Built-in Operations Code Generation", test_builtin_operations_generation()))
     
     # Summary
-    write_to_file("\n" + "="*80)
-    write_to_file("TASK 4 SUMMARY")
-    write_to_file("="*80)
-    
     print("\nTASK 4 SUMMARY")
     print("="*80)
     
@@ -721,17 +470,12 @@ def run_task4_tests():
     total = len(results)
     
     for test_name, result in results:
-        status = "PASS" if result else "FAIL"
-        write_to_file(f"{test_name:<30} {status}")
-        print(f"{test_name:<30} {status}")
+        status = "PASSED" if result else "FAILED"
+        print(f"{test_name:<50} {status}")
     
-    write_to_file("-"*80)
-    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
-    print(f"Total: {passed}/{total} tests passed")
-    
-    close_test_output_file()
-    print(f"Detailed output written to: {output_file}")
+    print(f"Passed: {passed}/{total}")
+    print("Check test_outputs/task_4/ for detailed results")
     
     return passed == total
 

@@ -1,0 +1,61 @@
+TEST: Page 3 Built-in Statements
+TASK: ASSIGNMENT
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Assignment Page 3 Built-ins
+PURPOSE: Graphics and delay statements from assignment
+--------------------------------------------------------------------------------
+ASSIGNMENT EXAMPLE: Built-in statements from page 3
+
+INPUT PROGRAM:
+
+    __write 10, 14, #00ff00;
+    __delay 100;
+    __write_box 10, 14, 2, 2, #0000ff;
+
+    for (let i:int = 0; i<10; i=i+1) {
+        __print i;
+        __delay 1000;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  Write
+    Literal: 10 (int)
+    Literal: 14 (int)
+    Literal: #00ff00 (colour)
+  Delay
+    Literal: 100 (int)
+  WriteBox
+    Literal: 10 (int)
+    Literal: 14 (int)
+    Literal: 2 (int)
+    Literal: 2 (int)
+    Literal: #0000ff (colour)
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 10 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Print
+        Identifier: i
+      Delay
+        Literal: 1000 (int)
+------------------------------------------------------------
+
+Successfully compiled 49 PArIR instructions
+
+COMPILATION: Successfully completed
+
+================================================================================
+

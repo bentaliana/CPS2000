@@ -1,0 +1,59 @@
+TEST: Lexical Error Detection
+TASK: TASK_1
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Lexical Error Detection
+PURPOSE: Tests detection of invalid tokens and error classification
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Valid tokens
+    let x:int = 42;
+    
+    // Invalid float - ends with dot
+    let bad_float:float = 123.;
+    
+    // Invalid colour - wrong format
+    let bad_colour:colour = #ZZZ123;
+    
+    // Unterminated block comment
+    /* This comment never ends
+    let y:int = 5;
+    
+    // Stray comment close
+    */ let z:int = 6;
+    
+    // Nested comment attempt
+    /* outer /* inner */ still in comment
+    
+
+ERROR TOKEN ANALYSIS:
+------------------------------------------------------------
+Total tokens: 34
+Valid tokens: 30
+Error tokens: 4
+
+DETECTED ERRORS:
+Line 6, Col 27: ERROR_INVALID_FLOAT - '123.'
+Line 9, Col 29: ERROR_INVALID_COLOUR - '#ZZZ123'
+Line 19, Col 5: ERROR_NESTED_COMMENT - '/* outer /*'
+Line 19, Col 23: ERROR_STRAY_COMMENT_CLOSE - '*/'
+
+ERROR TYPE VERIFICATION:
+invalid_float: ERROR_INVALID_FLOAT correctly detected
+invalid_colour: ERROR_INVALID_COLOUR correctly detected
+comment_issues: ERROR_NESTED_COMMENT correctly detected
+stray_close: ERROR_STRAY_COMMENT_CLOSE correctly detected
+
+ERROR DETECTION SUMMARY:
+Error patterns detected: 4/4
+Detection rate: 100.0%
+
+Lexical error detection working effectively
+Note: Sophisticated error classification (e.g., NESTED_COMMENT) is a strength
+
+ERROR DETECTION: Successfully completed
+
+================================================================================
+

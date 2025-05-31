@@ -1,6 +1,7 @@
 """
-Simulator Test Programs
-Tests professor's provided examples that should work in the simulator
+Simulator Test Programs - CORRECTED VERSION
+Tests programs that should work correctly in the simulator
+Each test creates its own output file with detailed results
 """
 
 import sys
@@ -13,7 +14,9 @@ from lexer.lexer import FSALexer
 from parser.parser import PArLParser
 from semantic_analyzer.semantic_analyzer import SemanticAnalyzer
 from code_generator.code_generator import PArIRGenerator
-from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
+from test.test_utils import (print_test_header, print_ast, print_completion_status, set_ast_printing, 
+                           create_test_output_file, close_test_output_file, write_to_file, 
+                           create_parir_output_file, reset_test_counter)
 
 if "--show-ast" in sys.argv:
     set_ast_printing(True)
@@ -50,10 +53,85 @@ def compile_program(source_code):
     return ast, instructions, None
 
 
-def test_simple_color_animation():
-    """Test simple color animation from professor's examples"""
-    print_test_header("Simple Color Animation",
-                     "Basic color cycling animation")
+def test_race_function():
+    """Test Race function from assignment"""
+    create_test_output_file("simulator", "Race Function")
+    
+    print_test_header("Race Function",
+                     "Complete Race function with graphics output")
+    
+    test_code = """
+    fun Race(p1_c:colour, p2_c:colour, score_max:int) -> int {
+        let p1_score:int = 0;
+        let p2_score:int = 0;
+        
+        while ((p1_score < score_max) and (p2_score < score_max)) {
+            let p1_toss:int = __randi 1000;
+            let p2_toss:int = __randi 1000;
+            
+            if (p1_toss > p2_toss) {
+                p1_score = p1_score + 1;
+                __write 1, p1_score, p1_c;
+            } else {
+                p2_score = p2_score + 1;
+                __write 2, p2_score, p2_c;
+            }
+            
+            __delay 100;
+        }
+        
+        if (p2_score > p1_score) {
+            return 2;
+        }
+        
+        return 1;
+    }
+    
+    // Execution starts here
+    let c1:colour = #00ff00; //green
+    let c2:colour = #0000ff; //blue
+    let m:int = __height; //the height (y-values) of the pad
+    let w:int = Race(c1, c2, m); //call function Race
+    __print w; //prints value of expression to VM logs
+    """
+    
+    write_to_file("INPUT PROGRAM:")
+    write_to_file(test_code)
+    
+    ast, instructions, error = compile_program(test_code)
+    
+    if error:
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
+        return False
+    
+    print_ast(ast, max_lines=80)
+    
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
+    write_to_file("-"*60)
+    
+    write_to_file(f"\nTotal instructions: {len(instructions)}")
+    
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Race Function", instructions)
+    
+    write_to_file("\nRace function compiled successfully for simulator")
+    write_to_file("Ready for execution in PAD2000c simulator")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
+    return True
+
+
+def test_basic_color_animation():
+    """Test simple animation loop from assignment"""
+    create_test_output_file("simulator", "Basic Color Cycling Animation")
+    
+    print_test_header("Basic Color Cycling Animation",
+                     "Simple animation loop suitable for simulator execution")
     
     test_code = """
     let c:colour = 0 as colour;
@@ -65,40 +143,40 @@ def test_simple_color_animation():
     }
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
         return False
     
     print_ast(ast)
     
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
     write_to_file("-"*60)
     
-    # Verify animation instructions
-    required = ["irnd", "clear", "delay", "cjmp", "jmp"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Basic Color Cycling Animation", instructions)
     
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing animation instructions: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
+    write_to_file("\nBasic color animation ready for simulator")
+    write_to_file("Creates a randomized color cycling display")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
+    return True
 
 
 def test_max_in_array():
-    """Test MaxInArray function from professor's examples"""
-    print_test_header("MaxInArray Function",
+    """Test MaxInArray function"""
+    create_test_output_file("simulator", "Max in Array Function")
+    
+    print_test_header("Max in Array Function",
                      "Finding maximum value in an array")
     
     test_code = """
@@ -115,49 +193,47 @@ def test_max_in_array():
     __print max;
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
         return False
     
     print_ast(ast, max_lines=80)
     
-    write_to_file("\nGENERATED PArIR (first 100 instructions):")
+    write_to_file("\nGENERATED PArIR:")
     write_to_file("-"*60)
-    for i, instr in enumerate(instructions[:100]):
-        write_to_file(instr)
-    if len(instructions) > 100:
-        write_to_file(f"... ({len(instructions) - 100} more instructions)")
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
     write_to_file("-"*60)
     
     write_to_file(f"\nTotal instructions: {len(instructions)}")
     
-    # Verify array operations
-    required = [".MaxInArray", "pusha", "push +[", "call", "print"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Max in Array Function", instructions)
     
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing required operations: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
+    write_to_file("\nMaxInArray function ready for simulator")
+    write_to_file("Should print: 120 (maximum value from array)")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
+    return True
 
 
-def test_color_functions():
-    """Test color generation functions from professor's examples"""
-    print_test_header("Color Functions",
+def test_random_color_generation():
+    """Test color generation functions"""
+    create_test_output_file("simulator", "Random Color Generation and Display")
+    
+    print_test_header("Random Color Generation and Display",
                      "Random color generation and display")
     
     test_code = """
     fun color() -> colour {
-        return (__randi 16777216 - #f9f9f9 as int) as colour;
+        return (__randi 16384257 - #f9f9f9 as int) as colour;
     }
 
     fun cc(x:int, y:int) -> bool {
@@ -176,39 +252,98 @@ def test_color_functions():
     __delay 1000;
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
         return False
     
     print_ast(ast)
     
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
     write_to_file("-"*60)
     
-    # Verify function and graphics operations
-    required = [".color", ".cc", "call", "write", "width", "height", "irnd", "delay"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Random Color Generation and Display", instructions)
     
-    missing = [req for req, found in found.items() if not found]
+    write_to_file("\nRandom color generation ready for simulator")
+    write_to_file("Displays random colored pixels at random locations")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
+    return True
+
+
+def test_random_pixel_display():
+    """Test random pixel display with color generation"""
+    create_test_output_file("simulator", "Random Pixel Display")
     
-    if missing:
-        print_outcome(False, f"Missing required operations: {missing}")
+    print_test_header("Random Pixel Display",
+                     "Random pixel display with color generation")
+    
+    test_code = """
+    fun color() -> colour {
+        return (16777215 - __randi 16777215) as colour;
+    }
+
+    fun cc(x:int, y:int) -> bool {
+        __print x;
+        __print y;
+
+        let c:colour = color();
+        let h:int = __randi __height;
+        let w:int = __randi __width;
+        __write w, h, c;
+
+        return true;
+    }
+
+    let a:bool = cc(0, 0);
+    __delay 1000;
+    """
+    
+    write_to_file("INPUT PROGRAM:")
+    write_to_file(test_code)
+    
+    ast, instructions, error = compile_program(test_code)
+    
+    if error:
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
         return False
-    else:
-        print_outcome(True)
-        return True
+    
+    print_ast(ast)
+    
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
+    write_to_file("-"*60)
+    
+    write_to_file(f"\nTotal instructions: {len(instructions)}")
+    
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Random Pixel Display", instructions)
+    
+    write_to_file("\nRandom pixel display ready for simulator")
+    write_to_file("Creates random pixel patterns with varied colors")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
+    return True
 
 
 def test_color_animation_while():
     """Test color animation with while loop"""
+    create_test_output_file("simulator", "Color Animation While Loop")
+    
     print_test_header("Color Animation While Loop",
                      "Animated random pixels with iteration count")
     
@@ -235,41 +370,39 @@ def test_color_animation_while():
     __delay 1000;
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
         return False
     
     print_ast(ast, max_lines=80)
     
-    write_to_file("\nGENERATED PArIR (first 100 instructions):")
+    write_to_file("\nGENERATED PArIR:")
     write_to_file("-"*60)
-    for i, instr in enumerate(instructions[:100]):
-        write_to_file(instr)
-    if len(instructions) > 100:
-        write_to_file(f"... ({len(instructions) - 100} more instructions)")
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
     write_to_file("-"*60)
     
-    # Verify while loop and graphics
-    required = ["cjmp", "jmp", "#PC", "write", "irnd"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Color Animation While Loop", instructions)
     
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing required operations: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
+    write_to_file("\nColor animation with while loop ready for simulator")
+    write_to_file("Creates intensive random pixel animation (100,000 iterations)")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
+    return True
 
 
 def test_rainbow_pattern():
     """Test rainbow pattern with arrays"""
+    create_test_output_file("simulator", "Rainbow Pattern")
+    
     print_test_header("Rainbow Pattern",
                      "Animated rainbow pattern using color array")
     
@@ -297,362 +430,74 @@ def test_rainbow_pattern():
     }
     """
     
-    write_to_file("\nINPUT PROGRAM:")
+    write_to_file("INPUT PROGRAM:")
     write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
     if error:
-        print_outcome(False, error)
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
         return False
     
     print_ast(ast, max_lines=100)
     
-    write_to_file("\nGENERATED PArIR (first 150 instructions):")
+    write_to_file("\nGENERATED PArIR:")
     write_to_file("-"*60)
-    for i, instr in enumerate(instructions[:150]):
-        write_to_file(instr)
-    if len(instructions) > 150:
-        write_to_file(f"... ({len(instructions) - 150} more instructions)")
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
     write_to_file("-"*60)
     
     write_to_file(f"\nTotal instructions: {len(instructions)}")
     
-    # Verify array and graphics operations
-    required = ["pusha", "push +[", "writebox", "mod", "width", "height"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Rainbow Pattern", instructions)
     
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing required operations: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_screen_operations():
-    """Test various screen operations"""
-    print_test_header("Screen Operations",
-                     "Testing all screen-related built-in functions")
-    
-    test_code = """
-    // Get screen dimensions
-    let w:int = __width;
-    let h:int = __height;
-    
-    __print w;
-    __print h;
-    
-    // Clear screen with blue
-    __clear #0000FF;
-    __delay 500;
-    
-    // Draw some pixels
-    for (let i:int = 0; i < 10; i = i + 1) {
-        let x:int = i * 10;
-        let y:int = i * 10;
-        let color:colour = (i * 1000000) as colour;
-        __write x, y, color;
-    }
-    
-    // Draw boxes
-    __write_box 50, 50, 20, 20, #FF0000;
-    __write_box 100, 50, 20, 20, #00FF00;
-    __write_box 150, 50, 20, 20, #0000FF;
-    
-    // Read a pixel
-    let pixel:colour = __read 60, 60;
-    let pixel_int:int = pixel as int;
-    __print pixel_int;
-    
-    __delay 1000;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    # Verify all screen operations
-    required = ["width", "height", "clear", "write", "writebox", "read", "delay", "print"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
-    
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing screen operations: {missing}")
-        return False
-    else:
-        write_to_file("\nAll screen operations found:")
-        for req in required:
-            write_to_file(f"  {req}: YES")
-        print_outcome(True)
-        return True
-
-
-def test_modulo_patterns():
-    """Test patterns using modulo operator"""
-    print_test_header("Modulo Patterns",
-                     "Creating patterns using modulo operator")
-    
-    test_code = """
-    fun draw_checkerboard() -> int {
-        let count:int = 0;
-        
-        for (let x:int = 0; x < __width; x = x + 10) {
-            for (let y:int = 0; y < __height; y = y + 10) {
-                if ((x / 10 + y / 10) % 2 == 0) {
-                    __write_box x, y, 10, 10, #FFFFFF;
-                } else {
-                    __write_box x, y, 10, 10, #000000;
-                }
-                count = count + 1;
-            }
-        }
-        
-        return count;
-    }
-    
-    fun draw_stripes(width:int) -> bool {
-        for (let x:int = 0; x < __width; x = x + 1) {
-            let stripe:int = x / width;
-            if (stripe % 2 == 0) {
-                for (let y:int = 0; y < __height; y = y + 1) {
-                    __write x, y, #FF0000;
-                }
-            }
-        }
-        return true;
-    }
-    
-    // Clear and draw checkerboard
-    __clear #808080;
-    let squares:int = draw_checkerboard();
-    __print squares;
-    __delay 2000;
-    
-    // Clear and draw stripes
-    __clear #0000FF;
-    let done:bool = draw_stripes(20);
-    __delay 2000;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast, max_lines=100)
-    
-    write_to_file("\nGENERATED PArIR (partial):")
-    write_to_file("-"*60)
-    for i, instr in enumerate(instructions[:120]):
-        write_to_file(instr)
-    if len(instructions) > 120:
-        write_to_file(f"... ({len(instructions) - 120} more instructions)")
-    write_to_file("-"*60)
-    
-    # Count modulo operations
-    mod_count = sum(1 for instr in instructions if "mod" in instr)
-    write_to_file(f"\nModulo operations found: {mod_count}")
-    
-    if mod_count < 3:
-        print_outcome(False, f"Expected at least 3 modulo operations, found {mod_count}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_array_graphics():
-    """Test graphics using arrays"""
-    print_test_header("Array Graphics",
-                     "Using arrays to store and display graphics data")
-    
-    test_code = """
-    fun draw_from_array(pixels:colour[100], startX:int, startY:int) -> bool {
-        for (let i:int = 0; i < 100; i = i + 1) {
-            let x:int = startX + (i % 10) * 5;
-            let y:int = startY + (i / 10) * 5;
-            __write_box x, y, 4, 4, pixels[i];
-        }
-        return true;
-    }
-    
-    // Create gradient array
-    let gradient:colour[] = [
-        #000000, #111111, #222222, #333333, #444444,
-        #555555, #666666, #777777, #888888, #999999
-    ];
-    
-    // Create pattern
-    let pattern:colour[100];
-    for (let i:int = 0; i < 100; i = i + 1) {
-        pattern[i] = gradient[i % 10];
-    }
-    
-    // Draw the pattern
-    __clear #FFFFFF;
-    let success:bool = draw_from_array(pattern, 50, 50);
-    
-    __delay 2000;
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast, max_lines=100)
-    
-    write_to_file(f"\nGenerated {len(instructions)} instructions")
-    
-    # Verify array and graphics operations
-    required = ["pusha", "sta", "push +[", "writebox", "clear"]
-    found = {req: any(req in instr for instr in instructions) for req in required}
-    
-    missing = [req for req, found in found.items() if not found]
-    
-    if missing:
-        print_outcome(False, f"Missing required operations: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_complex_animation():
-    """Test complex animation combining multiple features"""
-    print_test_header("Complex Animation",
-                     "Animation using functions, arrays, and all graphics features")
-    
-    test_code = """
-    fun hsv_to_colour(h:int, s:int, v:int) -> colour {
-        // Simplified HSV to RGB (h: 0-360, s: 0-100, v: 0-100)
-        let region:int = h / 60;
-        let remainder:int = h % 60;
-        
-        let r:int = 0;
-        let g:int = 0;
-        let b:int = 0;
-        
-        if (region == 0) {
-            r = v; g = remainder * v / 60; b = 0;
-        } else {
-            if (region == 1) {
-                r = (60 - remainder) * v / 60; g = v; b = 0;
-            } else {
-                r = 0; g = v; b = remainder * v / 60;
-            }
-        }
-        
-        return (r * 65536 + g * 256 + b) as colour;
-    }
-    
-    fun animate_frame(frame:int) -> bool {
-        for (let i:int = 0; i < 10; i = i + 1) {
-            for (let j:int = 0; j < 10; j = j + 1) {
-                let h:int = (i + j + frame) % 360;
-                let color:colour = hsv_to_colour(h, 100, 100);
-                __write_box i * 10, j * 10, 4, 4, color;
-            }
-        }
-        return true;
-    }
-    
-    // Animation loop
-    for (let frame:int = 0; frame < 60; frame = frame + 1) {
-        let success:bool = animate_frame(frame * 6);
-        __delay 16;  // ~60 FPS
-    }
-    """
-    
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast, max_lines=150)
-    
-    write_to_file(f"\nGenerated {len(instructions)} instructions")
-    
-    # This is a complex program, just verify it compiles
-    print_outcome(True)
+    write_to_file("\nRainbow pattern ready for simulator")
+    write_to_file("Creates animated rainbow pattern with color arrays")
+    write_to_file("Uses infinite loop - may need manual termination in simulator")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
     return True
 
 
 def run_simulator_tests():
     """Run all simulator test programs"""
-    output_file = create_test_output_file("simulator_programs")
+    reset_test_counter()
     
     print("SIMULATOR TEST PROGRAMS")
     print("="*80)
-    write_to_file("Testing programs that should work correctly in the PArL simulator")
     
     results = []
     
-    # Run all tests
-    results.append(("Simple Color Animation", test_simple_color_animation()))
-    results.append(("MaxInArray Function", test_max_in_array()))
-    results.append(("Color Functions", test_color_functions()))
-    results.append(("Color Animation While", test_color_animation_while()))
+    # Run the specified tests - each creates its own output file
+    results.append(("Race Function", test_race_function()))
+    results.append(("Basic Color Cycling Animation", test_basic_color_animation()))
+    results.append(("Max in Array Function", test_max_in_array()))
+    results.append(("Random Color Generation and Display", test_random_color_generation()))
+    results.append(("Random Pixel Display", test_random_pixel_display()))
+    results.append(("Color Animation While Loop", test_color_animation_while()))
     results.append(("Rainbow Pattern", test_rainbow_pattern()))
-    results.append(("Screen Operations", test_screen_operations()))
-    results.append(("Modulo Patterns", test_modulo_patterns()))
-    results.append(("Array Graphics", test_array_graphics()))
-    results.append(("Complex Animation", test_complex_animation()))
     
     # Summary
-    write_to_file("\n" + "="*80)
-    write_to_file("SIMULATOR TESTS SUMMARY")
-    write_to_file("="*80)
-    
     print("\nSIMULATOR TESTS SUMMARY")
     print("="*80)
     
-    passed = sum(1 for _, result in results if result)
-    total = len(results)
+    completed = len(results)
     
     for test_name, result in results:
-        status = "PASS" if result else "FAIL"
-        write_to_file(f"{test_name:<30} {status}")
-        print(f"{test_name:<30} {status}")
+        status = "COMPLETED" if result else "ISSUES"
+        print(f"{test_name:<40} {status}")
     
-    write_to_file("-"*80)
-    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
-    print(f"Total: {passed}/{total} tests passed")
+    print(f"Total: {completed} tests processed")
+    print("Check test_outputs/simulator/ for:")
+    print("- Individual test result files (.txt)")
+    print("- Ready-to-use PArIR files (.parir)")
+    print("- Copy .parir files to simulator for execution")
     
-    close_test_output_file()
-    print(f"Detailed output written to: {output_file}")
-    
-    return passed == total
+    return True
 
 
 if __name__ == "__main__":

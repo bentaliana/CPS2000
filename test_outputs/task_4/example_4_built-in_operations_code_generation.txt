@@ -1,0 +1,306 @@
+TEST: Built-in Operations Code Generation
+TASK: TASK_4
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Built-in Operations Code Generation
+PURPOSE: Tests built-in functions: print, delay, write, write_box, clear, etc.
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Basic built-ins with literals
+    __print 42;
+    __delay 1000;
+    __clear #000000;
+    
+    // Graphics operations
+    __write 10, 20, #FF0000;
+    __write_box 5, 5, 10, 10, #00FF00;
+    
+    // Built-ins with expressions
+    let x:int = 15;
+    let y:int = 25;
+    let color:colour = #0000FF;
+    
+    __write x, y, color;
+    __write_box x - 5, y - 5, 20, 20, color;
+    
+    // Built-in expressions
+    let width:int = __width;
+    let height:int = __height;
+    let random_num:int = __randi 100;
+    let pixel_color:colour = __read 0, 0;
+    
+    // Complex usage
+    for (let i:int = 0; i < 5; i = i + 1) {
+        let rand_x:int = __randi width;
+        let rand_y:int = __randi height;
+        let rand_color:colour = (__randi 16777216) as colour;
+        
+        __write rand_x, rand_y, rand_color;
+        __delay 100;
+        
+        if (i % 2 == 0) {
+            __write_box rand_x, rand_y, 3, 3, #FFFFFF;
+        }
+    }
+    
+    __print width;
+    __print height;
+    __print random_num;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  Print
+    Literal: 42 (int)
+  Delay
+    Literal: 1000 (int)
+  Clear
+    Literal: #000000 (colour)
+  Write
+    Literal: 10 (int)
+    Literal: 20 (int)
+    Literal: #FF0000 (colour)
+  WriteBox
+    Literal: 5 (int)
+    Literal: 5 (int)
+    Literal: 10 (int)
+    Literal: 10 (int)
+    Literal: #00FF00 (colour)
+  VarDecl: x : int
+    Literal: 15 (int)
+  VarDecl: y : int
+    Literal: 25 (int)
+  VarDecl: color : colour
+    Literal: #0000FF (colour)
+  Write
+    Identifier: x
+    Identifier: y
+    Identifier: color
+  WriteBox
+    BinaryOp: -
+      Identifier: x
+      Literal: 5 (int)
+    BinaryOp: -
+      Identifier: y
+      Literal: 5 (int)
+    Literal: 20 (int)
+    Literal: 20 (int)
+    Identifier: color
+  VarDecl: width : int
+    BuiltIn: __width
+  VarDecl: height : int
+    BuiltIn: __height
+  VarDecl: random_num : int
+    BuiltIn: __randi
+      Literal: 100 (int)
+  VarDecl: pixel_color : colour
+    BuiltIn: __read
+      Literal: 0 (int)
+      Literal: 0 (int)
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 5 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      VarDecl: rand_x : int
+        BuiltIn: __randi
+          Identifier: width
+      VarDecl: rand_y : int
+        BuiltIn: __randi
+          Identifier: height
+      VarDecl: rand_color : colour
+        Cast -> colour
+          BuiltIn: __randi
+            Literal: 16777216 (int)
+      Write
+        Identifier: rand_x
+        Identifier: rand_y
+        Identifier: rand_color
+      Delay
+        Literal: 100 (int)
+      If
+        BinaryOp: ==
+          BinaryOp: %
+            Identifier: i
+... (15 more lines)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+  0: .main
+  1: push 4
+  2: jmp
+  3: halt
+  4: push 8
+  5: oframe
+  6: push 42
+  7: print
+  8: push 1000
+  9: delay
+ 10: push #000000
+ 11: clear
+ 12: push #FF0000
+ 13: push 20
+ 14: push 10
+ 15: write
+ 16: push #00FF00
+ 17: push 10
+ 18: push 10
+ 19: push 5
+ 20: push 5
+ 21: writebox
+ 22: push 15
+ 23: push 1
+ 24: push 0
+ 25: st
+ 26: push 25
+ 27: push 2
+ 28: push 0
+ 29: st
+ 30: push #0000FF
+ 31: push 3
+ 32: push 0
+ 33: st
+ 34: push [3:0]
+ 35: push [2:0]
+ 36: push [1:0]
+ 37: write
+ 38: push [3:0]
+ 39: push 20
+ 40: push 20
+ 41: push 5
+ 42: push [2:0]
+ 43: sub
+ 44: push 5
+ 45: push [1:0]
+ 46: sub
+ 47: writebox
+ 48: width
+ 49: push 4
+ 50: push 0
+ 51: st
+ 52: height
+ 53: push 5
+ 54: push 0
+ 55: st
+ 56: push 100
+ 57: irnd
+ 58: push 6
+ 59: push 0
+ 60: st
+ 61: push 0
+ 62: push 0
+ 63: read
+ 64: push 7
+ 65: push 0
+ 66: st
+ 67: push 1
+ 68: oframe
+ 69: push 0
+ 70: push 0
+ 71: push 0
+ 72: st
+ 73: push 5
+ 74: push [0:0]
+ 75: lt
+ 76: push #PC+4
+ 77: cjmp
+ 78: push #PC+52
+ 79: jmp
+ 80: push 3
+ 81: oframe
+ 82: push [4:2]
+ 83: irnd
+ 84: push 0
+ 85: push 0
+ 86: st
+ 87: push [5:2]
+ 88: irnd
+ 89: push 1
+ 90: push 0
+ 91: st
+ 92: push 16777216
+ 93: irnd
+ 94: push 2
+ 95: push 0
+ 96: st
+ 97: push [2:0]
+ 98: push [1:0]
+ 99: push [0:0]
+100: write
+101: push 100
+102: delay
+103: push 0
+104: push 2
+105: push [0:1]
+106: mod
+107: eq
+108: push #PC+4
+109: cjmp
+110: push #PC+11
+111: jmp
+112: push 0
+113: oframe
+114: push #FFFFFF
+115: push 3
+116: push 3
+117: push [1:1]
+118: push [0:1]
+119: writebox
+120: cframe
+121: cframe
+122: push 1
+123: push [0:0]
+124: add
+125: push 0
+126: push 0
+127: st
+128: push #PC-56
+129: jmp
+130: cframe
+131: push [4:0]
+132: print
+133: push [5:0]
+134: print
+135: push [6:0]
+136: print
+137: cframe
+138: halt
+------------------------------------------------------------
+
+BUILT-IN OPERATIONS ANALYSIS:
+Built-in operation frequency:
+  print: 4
+  delay: 2
+  write: 6
+  writebox: 3
+  clear: 1
+  width: 1
+  height: 1
+  irnd: 4
+  read: 1
+
+Expected built-ins: 8
+Found built-ins: 9
+All expected built-in operations found
+
+Graphics operations:
+  write operations: 3
+  writebox operations: 3
+
+Built-in operations generation successful
+
+BUILT-IN OPERATIONS: Successfully completed
+
+================================================================================
+

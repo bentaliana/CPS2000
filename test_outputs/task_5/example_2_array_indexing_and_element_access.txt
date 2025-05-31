@@ -1,0 +1,366 @@
+TEST: Array Indexing and Element Access
+TASK: TASK_5
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Array Indexing and Element Access
+PURPOSE: Tests array element reading, writing, and index expressions
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    let numbers:int[5] = [10, 20, 30, 40, 50];
+    let colors:colour[3] = [#FF0000, #00FF00, #0000FF];
+    
+    // Simple array access
+    let first:int = numbers[0];
+    let last:int = numbers[4];
+    let middle:int = numbers[2];
+    
+    // Array element assignment
+    numbers[0] = 100;
+    numbers[1] = numbers[2] + 5;
+    numbers[3] = first * 2;
+    
+    // Complex indexing with expressions
+    let index:int = 1;
+    numbers[index] = 200;
+    numbers[index + 1] = 300;
+    
+    // Array access in expressions
+    let sum:int = numbers[0] + numbers[1];
+    let product:int = numbers[2] * numbers[3];
+    
+    // Color array operations
+    let red:colour = colors[0];
+    colors[1] = #FFFFFF;
+    colors[2] = red;
+    
+    // Array access in function calls and control structures
+    __print numbers[0];
+    __write 0, 0, colors[0];
+    
+    if (numbers[1] > 100) {
+        numbers[1] = numbers[1] / 2;
+    }
+    
+    for (let i:int = 0; i < 5; i = i + 1) {
+        __print numbers[i];
+        if (i < 3) {
+            __write i, 0, colors[i % 3];
+        }
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: numbers : int[5]
+    ArrayLiteral: [5 elements]
+      Literal: 10 (int)
+      Literal: 20 (int)
+      Literal: 30 (int)
+      Literal: 40 (int)
+      Literal: 50 (int)
+  VarDecl: colors : colour[3]
+    ArrayLiteral: [3 elements]
+      Literal: #FF0000 (colour)
+      Literal: #00FF00 (colour)
+      Literal: #0000FF (colour)
+  VarDecl: first : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  VarDecl: last : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 4 (int)
+  VarDecl: middle : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 2 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+    Literal: 100 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 1 (int)
+    BinaryOp: +
+      IndexAccess
+        Identifier: numbers
+        Literal: 2 (int)
+      Literal: 5 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 3 (int)
+    BinaryOp: *
+      Identifier: first
+      Literal: 2 (int)
+  VarDecl: index : int
+    Literal: 1 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Identifier: index
+    Literal: 200 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      BinaryOp: +
+        Identifier: index
+        Literal: 1 (int)
+    Literal: 300 (int)
+  VarDecl: sum : int
+    BinaryOp: +
+      IndexAccess
+        Identifier: numbers
+        Literal: 0 (int)
+      IndexAccess
+        Identifier: numbers
+        Literal: 1 (int)
+  VarDecl: product : int
+    BinaryOp: *
+      IndexAccess
+        Identifier: numbers
+        Literal: 2 (int)
+      IndexAccess
+        Identifier: numbers
+        Literal: 3 (int)
+  VarDecl: red : colour
+    IndexAccess
+      Identifier: colors
+      Literal: 0 (int)
+  Assignment
+    IndexAccess
+      Identifier: colors
+      Literal: 1 (int)
+    Literal: #FFFFFF (colour)
+  Assignment
+    IndexAccess
+      Identifier: colors
+      Literal: 2 (int)
+    Identifier: red
+  Print
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  Write
+    Literal: 0 (int)
+    Literal: 0 (int)
+    IndexAccess
+      Identifier: colors
+      Literal: 0 (int)
+... (45 more lines)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+  0: .main
+  1: push 4
+  2: jmp
+  3: halt
+  4: push 16
+  5: oframe
+  6: push 50
+  7: push 40
+  8: push 30
+  9: push 20
+ 10: push 10
+ 11: push 5
+ 12: push 1
+ 13: push 0
+ 14: sta
+ 15: push #0000FF
+ 16: push #00FF00
+ 17: push #FF0000
+ 18: push 3
+ 19: push 6
+ 20: push 0
+ 21: sta
+ 22: push 0
+ 23: push +[1:0]
+ 24: push 9
+ 25: push 0
+ 26: st
+ 27: push 4
+ 28: push +[1:0]
+ 29: push 10
+ 30: push 0
+ 31: st
+ 32: push 2
+ 33: push +[1:0]
+ 34: push 11
+ 35: push 0
+ 36: st
+ 37: push 100
+ 38: push 0
+ 39: push 1
+ 40: add
+ 41: push 0
+ 42: st
+ 43: push 5
+ 44: push 2
+ 45: push +[1:0]
+ 46: add
+ 47: push 1
+ 48: push 1
+ 49: add
+ 50: push 0
+ 51: st
+ 52: push 2
+ 53: push [9:0]
+ 54: mul
+ 55: push 3
+ 56: push 1
+ 57: add
+ 58: push 0
+ 59: st
+ 60: push 1
+ 61: push 12
+ 62: push 0
+ 63: st
+ 64: push 200
+ 65: push [12:0]
+ 66: push 1
+ 67: add
+ 68: push 0
+ 69: st
+ 70: push 300
+ 71: push 1
+ 72: push [12:0]
+ 73: add
+ 74: push 1
+ 75: add
+ 76: push 0
+ 77: st
+ 78: push 1
+ 79: push +[1:0]
+ 80: push 0
+ 81: push +[1:0]
+ 82: add
+ 83: push 13
+ 84: push 0
+ 85: st
+ 86: push 3
+ 87: push +[1:0]
+ 88: push 2
+ 89: push +[1:0]
+ 90: mul
+ 91: push 14
+ 92: push 0
+ 93: st
+ 94: push 0
+ 95: push +[6:0]
+ 96: push 15
+ 97: push 0
+ 98: st
+ 99: push #FFFFFF
+100: push 1
+101: push 6
+102: add
+103: push 0
+104: st
+105: push [15:0]
+106: push 2
+107: push 6
+108: add
+109: push 0
+110: st
+111: push 0
+112: push +[1:0]
+113: print
+114: push 0
+115: push +[6:0]
+116: push 0
+117: push 0
+118: write
+119: push 100
+120: push 1
+121: push +[1:0]
+122: gt
+123: push #PC+4
+124: cjmp
+125: push #PC+14
+126: jmp
+127: push 0
+128: oframe
+129: push 2
+130: push 1
+131: push +[1:1]
+132: div
+133: push 1
+134: push 1
+135: add
+136: push 1
+137: st
+138: cframe
+139: push 1
+140: oframe
+141: push 0
+142: push 0
+143: push 0
+144: st
+145: push 5
+146: push [0:0]
+147: lt
+148: push #PC+4
+149: cjmp
+150: push #PC+33
+151: jmp
+152: push 0
+153: oframe
+154: push [0:1]
+155: push +[1:2]
+156: print
+157: push 3
+158: push [0:1]
+159: lt
+160: push #PC+4
+161: cjmp
+162: push #PC+12
+163: jmp
+164: push 0
+165: oframe
+166: push 3
+167: push [0:2]
+168: mod
+169: push +[6:3]
+170: push 0
+171: push [0:2]
+172: write
+173: cframe
+174: cframe
+175: push 1
+176: push [0:0]
+177: add
+178: push 0
+179: push 0
+180: st
+181: push #PC-37
+182: jmp
+183: cframe
+184: cframe
+185: halt
+------------------------------------------------------------
+
+ARRAY ACCESS ANALYSIS:
+Array element reads (push +[...]): 15
+  push +[1:0]
+  push +[1:0]
+  push +[1:0]
+  push +[1:0]
+  push +[1:0]
+  ... and 10 more
+
+Array element writes: 19
+Index calculations (add operations): 12
+
+Array indexing and access successful
+
+ARRAY INDEXING: Successfully completed
+
+================================================================================
+

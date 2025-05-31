@@ -1,0 +1,54 @@
+TEST: Page 3-4 Function Examples
+TASK: ASSIGNMENT
+Generated: 2025-05-31 22:26:54
+================================================================================
+
+TEST: Assignment Page 3-4 Functions
+PURPOSE: XGreaterY, AverageOfTwo, Max functions from assignment
+--------------------------------------------------------------------------------
+ASSIGNMENT EXAMPLE: Function definitions from pages 3-4
+
+INPUT PROGRAM:
+
+    /* This function takes two integers and return true if
+     * the first argument is greater than the second.
+     * Otherwise it returns false. */
+    fun XGreaterY(x:int, y:int) -> bool {
+        let ans:bool = true;
+        if (y > x) { ans = false; }
+        return ans;
+    }
+
+    // Same functionality as function above but using less code
+    fun XGreaterY_2(x:int, y:int) -> bool {
+        return x > y;
+    }
+
+    //Allocates memory space for 4 variables (x,y,t0,t1).
+    fun AverageOfTwo(x:int, y:int) -> float {
+        let t0:int = x + y;
+        let t1:float = t0 / 2 as float; //casting expression to a float
+        return t1;
+    }
+
+    /* Same functionality as function above but using less code.
+     * Note the use of the brackets in the expression following
+     * the return statement. Allocates space for 2 variables. */
+    fun AverageOfTwo_2(x:int, y:int) -> float {
+        return (x + y) / 2 as float;
+    }
+
+    //Takes two integers and returns the max of the two.
+    fun Max(x:int, y:int) -> int {
+        let m:int = x;
+        if (y > m) { m = y; }
+        return m;
+    }
+    
+
+Compilation error: Semantic errors: [SemanticError("Semantic Error at line 18, col 24: Invalid arithmetic operation: 'int' / 'float'. Operands must have matching types."), SemanticError("Semantic Error at line 26, col 17: Invalid arithmetic operation: 'int' / 'float'. Operands must have matching types.")]
+
+COMPILATION: Completed with issues
+
+================================================================================
+
