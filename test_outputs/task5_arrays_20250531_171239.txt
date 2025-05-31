@@ -1,0 +1,1340 @@
+TEST OUTPUT: task5_arrays
+Generated: 2025-05-31 17:12:39
+================================================================================
+
+
+================================================================================
+TEST: Array Lexing
+TESTING: Lexer correctly tokenizes array declarations and operations
+================================================================================
+
+INPUT PROGRAM:
+
+    let numbers:int[] = [1, 2, 3, 4, 5];
+    let colors:colour[] = [#ff0000, #00ff00, #0000ff];
+    let value:int = numbers[0];
+    numbers[1] = 10;
+    fun process(data:int[10]) -> int { return data[0]; }
+    
+
+TOKENS:
+let -> LET
+numbers -> IDENTIFIER
+: -> COLON
+int -> TYPE_INT
+[ -> LBRACKET
+] -> RBRACKET
+= -> EQUAL
+[ -> LBRACKET
+1 -> INT_LITERAL
+, -> COMMA
+2 -> INT_LITERAL
+, -> COMMA
+3 -> INT_LITERAL
+, -> COMMA
+4 -> INT_LITERAL
+, -> COMMA
+5 -> INT_LITERAL
+] -> RBRACKET
+; -> SEMICOLON
+let -> LET
+colors -> IDENTIFIER
+: -> COLON
+colour -> TYPE_COLOUR
+[ -> LBRACKET
+] -> RBRACKET
+= -> EQUAL
+[ -> LBRACKET
+#ff0000 -> COLOUR_LITERAL
+, -> COMMA
+#00ff00 -> COLOUR_LITERAL
+, -> COMMA
+#0000ff -> COLOUR_LITERAL
+] -> RBRACKET
+; -> SEMICOLON
+let -> LET
+value -> IDENTIFIER
+: -> COLON
+int -> TYPE_INT
+= -> EQUAL
+numbers -> IDENTIFIER
+[ -> LBRACKET
+0 -> INT_LITERAL
+] -> RBRACKET
+; -> SEMICOLON
+numbers -> IDENTIFIER
+[ -> LBRACKET
+1 -> INT_LITERAL
+] -> RBRACKET
+= -> EQUAL
+10 -> INT_LITERAL
+; -> SEMICOLON
+fun -> FUN
+process -> IDENTIFIER
+( -> LPAREN
+data -> IDENTIFIER
+: -> COLON
+int -> TYPE_INT
+[ -> LBRACKET
+10 -> INT_LITERAL
+] -> RBRACKET
+) -> RPAREN
+-> -> ARROW
+int -> TYPE_INT
+{ -> LBRACE
+return -> RETURN
+data -> IDENTIFIER
+[ -> LBRACKET
+0 -> INT_LITERAL
+] -> RBRACKET
+; -> SEMICOLON
+} -> RBRACE
+ -> END
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Declaration Parsing
+TESTING: Parser correctly handles array variable declarations
+================================================================================
+
+INPUT PROGRAM:
+
+    let empty:int[] = [];
+    let numbers:int[] = [1, 2, 3, 4, 5];
+    let floats:float[] = [1.1, 2.2, 3.3];
+    let bools:bool[] = [true, false, true];
+    let colors:colour[] = [#ff0000, #00ff00, #0000ff];
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: empty : int[]
+    ArrayLiteral: [0 elements]
+  VarDecl: numbers : int[]
+    ArrayLiteral: [5 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: 3 (int)
+      Literal: 4 (int)
+      Literal: 5 (int)
+  VarDecl: floats : float[]
+    ArrayLiteral: [3 elements]
+      Literal: 1.1 (float)
+      Literal: 2.2 (float)
+      Literal: 3.3 (float)
+  VarDecl: bools : bool[]
+    ArrayLiteral: [3 elements]
+      Literal: True (bool)
+      Literal: False (bool)
+      Literal: True (bool)
+  VarDecl: colors : colour[]
+    ArrayLiteral: [3 elements]
+      Literal: #ff0000 (colour)
+      Literal: #00ff00 (colour)
+      Literal: #0000ff (colour)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Access Parsing
+TESTING: Parser correctly handles array element access
+================================================================================
+
+INPUT PROGRAM:
+
+    let numbers:int[] = [10, 20, 30, 40, 50];
+    let first:int = numbers[0];
+    let last:int = numbers[4];
+    let computed:int = numbers[2 + 1];
+    
+    // Array element assignment
+    numbers[0] = 100;
+    numbers[1 + 1] = 200;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: numbers : int[]
+    ArrayLiteral: [5 elements]
+      Literal: 10 (int)
+      Literal: 20 (int)
+      Literal: 30 (int)
+      Literal: 40 (int)
+      Literal: 50 (int)
+  VarDecl: first : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  VarDecl: last : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 4 (int)
+  VarDecl: computed : int
+    IndexAccess
+      Identifier: numbers
+      BinaryOp: +
+        Literal: 2 (int)
+        Literal: 1 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+    Literal: 100 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      BinaryOp: +
+        Literal: 1 (int)
+        Literal: 1 (int)
+    Literal: 200 (int)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Function Parameter Parsing
+TESTING: Parser correctly handles arrays as function parameters
+================================================================================
+
+INPUT PROGRAM:
+
+    fun sum_array(arr:int[5]) -> int {
+        let sum:int = 0;
+        for (let i:int = 0; i < 5; i = i + 1) {
+            sum = sum + arr[i];
+        }
+        return sum;
+    }
+    
+    fun process_colors(colors:colour[3]) -> colour {
+        return colors[1];
+    }
+    
+    let numbers:int[] = [1, 2, 3, 4, 5];
+    let total:int = sum_array(numbers);
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: sum_array(arr:int[5]) -> int
+    Param: arr : int[5]
+    Block
+      VarDecl: sum : int
+        Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 5 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          Assignment
+            Identifier: sum
+            BinaryOp: +
+              Identifier: sum
+              IndexAccess
+                Identifier: arr
+                Identifier: i
+      Return
+        Identifier: sum
+  FuncDecl: process_colors(colors:colour[3]) -> colour
+    Param: colors : colour[3]
+    Block
+      Return
+        IndexAccess
+          Identifier: colors
+          Literal: 1 (int)
+  VarDecl: numbers : int[]
+    ArrayLiteral: [5 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: 3 (int)
+      Literal: 4 (int)
+      Literal: 5 (int)
+  VarDecl: total : int
+    FuncCall: sum_array
+      Identifier: numbers
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Type Checking
+TESTING: Semantic analyzer correctly validates array types
+================================================================================
+
+INPUT PROGRAM:
+
+    // Valid array operations
+    let numbers:int[] = [1, 2, 3, 4, 5];
+    let first:int = numbers[0];
+    numbers[1] = 10;
+    
+    // Type consistency in array literals
+    let floats:float[] = [1.1, 2.2, 3.3];
+    let mixed_valid:float[] = [1.0, 2.0, 3.0];  // int literals can be float
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: numbers : int[]
+    ArrayLiteral: [5 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: 3 (int)
+      Literal: 4 (int)
+      Literal: 5 (int)
+  VarDecl: first : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 1 (int)
+    Literal: 10 (int)
+  VarDecl: floats : float[]
+    ArrayLiteral: [3 elements]
+      Literal: 1.1 (float)
+      Literal: 2.2 (float)
+      Literal: 3.3 (float)
+  VarDecl: mixed_valid : float[]
+    ArrayLiteral: [3 elements]
+      Literal: 1.0 (float)
+      Literal: 2.0 (float)
+      Literal: 3.0 (float)
+------------------------------------------------------------
+
+Array type checking passed
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Type Error Detection
+TESTING: Semantic analyzer detects array type mismatches
+================================================================================
+
+INPUT PROGRAM:
+
+    // Mixed types in array literal
+    let mixed:int[] = [1, 2, true, 4];
+    
+    // Wrong element type access
+    let numbers:int[] = [1, 2, 3];
+    let wrong:bool = numbers[0];
+    
+    // Wrong type assignment
+    numbers[1] = true;
+    
+    // Non-integer index
+    let value:int = numbers[1.5];
+    
+    // Indexing non-array
+    let x:int = 5;
+    let y:int = x[0];
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: mixed : int[]
+    ArrayLiteral: [4 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: True (bool)
+      Literal: 4 (int)
+  VarDecl: numbers : int[]
+    ArrayLiteral: [3 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: 3 (int)
+  VarDecl: wrong : bool
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 1 (int)
+    Literal: True (bool)
+  VarDecl: value : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 1.5 (float)
+  VarDecl: x : int
+    Literal: 5 (int)
+  VarDecl: y : int
+    IndexAccess
+      Identifier: x
+      Literal: 0 (int)
+------------------------------------------------------------
+
+Detected 5 array type errors:
+  - Semantic Error at line 3, col 30: Array element 2 type mismatch: expected 'int', got 'bool'
+  - Semantic Error at line 7, col 5: Cannot initialize variable 'wrong' of type 'bool' with expression of type 'int'
+  - Semantic Error at line 10, col 5: Cannot assign 'bool' to array element of type 'int'
+  - Semantic Error at line 13, col 29: Array index must be int, got 'float'
+  - Semantic Error at line 17, col 17: Cannot index non-array variable 'x'
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Function Semantics
+TESTING: Semantic analyzer validates array function parameters
+================================================================================
+
+INPUT PROGRAM:
+
+    fun process_array(data:int[5]) -> int {
+        return data[0] + data[4];
+    }
+    
+    fun find_max(arr:int[8]) -> int {
+        let max:int = arr[0];
+        for (let i:int = 1; i < 8; i = i + 1) {
+            if (arr[i] > max) {
+                max = arr[i];
+            }
+        }
+        return max;
+    }
+    
+    // Valid calls
+    let numbers:int[] = [1, 2, 3, 4, 5];
+    let result1:int = process_array(numbers);
+    
+    let big_array:int[] = [10, 20, 30, 40, 50, 60, 70, 80];
+    let max_val:int = find_max(big_array);
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: process_array(data:int[5]) -> int
+    Param: data : int[5]
+    Block
+      Return
+        BinaryOp: +
+          IndexAccess
+            Identifier: data
+            Literal: 0 (int)
+          IndexAccess
+            Identifier: data
+            Literal: 4 (int)
+  FuncDecl: find_max(arr:int[8]) -> int
+    Param: arr : int[8]
+    Block
+      VarDecl: max : int
+        IndexAccess
+          Identifier: arr
+          Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 1 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 8 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          If
+            BinaryOp: >
+              IndexAccess
+                Identifier: arr
+                Identifier: i
+              Identifier: max
+            Block
+              Assignment
+                Identifier: max
+                IndexAccess
+                  Identifier: arr
+                  Identifier: i
+      Return
+        Identifier: max
+  VarDecl: numbers : int[]
+    ArrayLiteral: [5 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: 3 (int)
+... (18 more lines)
+------------------------------------------------------------
+
+Array function semantics passed
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Code Generation
+TESTING: Code generator produces correct PArIR for array operations
+================================================================================
+
+INPUT PROGRAM:
+
+    fun get_element(arr:int[5], index:int) -> int {
+        return arr[index];
+    }
+
+    let numbers:int[] = [10, 20, 30, 40, 50];
+    let first:int = numbers[0];
+    let third:int = numbers[2];
+
+    numbers[1] = 25;
+    numbers[3] = 45;
+
+    let element:int = get_element(numbers, 1);
+
+    __print first;
+    __print third;
+    __print element;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: get_element(arr:int[5], index:int) -> int
+    Param: arr : int[5]
+    Param: index : int
+    Block
+      Return
+        IndexAccess
+          Identifier: arr
+          Identifier: index
+  VarDecl: numbers : int[]
+    ArrayLiteral: [5 elements]
+      Literal: 10 (int)
+      Literal: 20 (int)
+      Literal: 30 (int)
+      Literal: 40 (int)
+      Literal: 50 (int)
+  VarDecl: first : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  VarDecl: third : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 2 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 1 (int)
+    Literal: 25 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 3 (int)
+    Literal: 45 (int)
+  VarDecl: element : int
+    FuncCall: get_element
+      Identifier: numbers
+      Literal: 1 (int)
+  Print
+    Identifier: first
+  Print
+    Identifier: third
+  Print
+    Identifier: element
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 9
+oframe
+push #PC+8
+jmp
+.get_element
+push 6
+alloc
+push [5:0]
+push +[0:0]
+ret
+push 50
+push 40
+push 30
+push 20
+push 10
+push 5
+push 1
+push 0
+sta
+push 0
+push +[1:0]
+push 6
+push 0
+st
+push 2
+push +[1:0]
+push 7
+push 0
+st
+push 25
+push 1
+push 1
+add
+push 0
+st
+push 45
+push 3
+push 1
+add
+push 0
+st
+push 1
+push 5
+pusha [1:0]
+push 6
+push .get_element
+call
+push 8
+push 0
+st
+push [6:0]
+print
+push [7:0]
+print
+push [8:0]
+print
+cframe
+halt
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Function Code Generation
+TESTING: Code generator handles arrays in functions
+================================================================================
+
+INPUT PROGRAM:
+
+    fun sum_array(arr:int[5]) -> int {
+        let sum:int = 0;
+        for (let i:int = 0; i < 5; i = i + 1) {
+            sum = sum + arr[i];
+        }
+        return sum;
+    }
+    
+    let numbers:int[] = [1, 2, 3, 4, 5];
+    let total:int = sum_array(numbers);
+    __print total;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: sum_array(arr:int[5]) -> int
+    Param: arr : int[5]
+    Block
+      VarDecl: sum : int
+        Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 5 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          Assignment
+            Identifier: sum
+            BinaryOp: +
+              Identifier: sum
+              IndexAccess
+                Identifier: arr
+                Identifier: i
+      Return
+        Identifier: sum
+  VarDecl: numbers : int[]
+    ArrayLiteral: [5 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: 3 (int)
+      Literal: 4 (int)
+      Literal: 5 (int)
+  VarDecl: total : int
+    FuncCall: sum_array
+      Identifier: numbers
+  Print
+    Identifier: total
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 7
+oframe
+push #PC+43
+jmp
+.sum_array
+push 6
+alloc
+push 0
+push 5
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 5
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+20
+jmp
+push 0
+oframe
+push [0:1]
+push +[0:2]
+push [5:2]
+add
+push 5
+push 2
+st
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-24
+jmp
+cframe
+push [5:0]
+ret
+push 5
+push 4
+push 3
+push 2
+push 1
+push 5
+push 1
+push 0
+sta
+push 5
+pusha [1:0]
+push 5
+push .sum_array
+call
+push 6
+push 0
+st
+push [6:0]
+print
+cframe
+halt
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: MaxInArray Complete Test
+TESTING: Complete compilation of MaxInArray function
+================================================================================
+
+INPUT PROGRAM:
+
+    fun MaxInArray(x:int[8]) -> int {
+        let m:int = 0;
+        for (let i:int = 0; i < 8; i = i+1) {
+            if (x[i] > m) { 
+                m = x[i]; 
+            }
+        }
+        return m;
+    }
+
+    let list_of_integers:int[] = [23, 54, 3, 65, 99, 120, 34, 21];
+    let max:int = MaxInArray(list_of_integers);
+    __print max;
+    
+
+LEXICAL ANALYSIS: Success
+PARSING: Success
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: MaxInArray(x:int[8]) -> int
+    Param: x : int[8]
+    Block
+      VarDecl: m : int
+        Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 8 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          If
+            BinaryOp: >
+              IndexAccess
+                Identifier: x
+                Identifier: i
+              Identifier: m
+            Block
+              Assignment
+                Identifier: m
+                IndexAccess
+                  Identifier: x
+                  Identifier: i
+      Return
+        Identifier: m
+  VarDecl: list_of_integers : int[]
+    ArrayLiteral: [8 elements]
+      Literal: 23 (int)
+      Literal: 54 (int)
+      Literal: 3 (int)
+      Literal: 65 (int)
+      Literal: 99 (int)
+      Literal: 120 (int)
+      Literal: 34 (int)
+      Literal: 21 (int)
+  VarDecl: max : int
+    FuncCall: MaxInArray
+      Identifier: list_of_integers
+  Print
+    Identifier: max
+------------------------------------------------------------
+SEMANTIC ANALYSIS: Success
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 10
+oframe
+push #PC+52
+jmp
+.MaxInArray
+push 9
+alloc
+push 0
+push 8
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 8
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+29
+jmp
+push 0
+oframe
+push [8:2]
+push [0:1]
+push +[0:2]
+gt
+push #PC+4
+cjmp
+push #PC+10
+jmp
+push 0
+oframe
+push [0:2]
+push +[0:3]
+push 8
+push 3
+st
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-33
+jmp
+cframe
+push [8:0]
+ret
+push 21
+push 34
+push 120
+push 99
+push 65
+push 3
+push 54
+push 23
+push 8
+push 1
+push 0
+sta
+push 8
+pusha [1:0]
+push 8
+push .MaxInArray
+call
+push 9
+push 0
+st
+push [9:0]
+print
+cframe
+halt
+------------------------------------------------------------
+
+Total instructions: 82
+
+Verifying components:
+  Function definition (.MaxInArray): YES
+  Array operations (pusha): YES
+  Array indexing (push +[): YES
+  Function call (call): YES
+  Print result (print): YES
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Multidimensional Array Simulation
+TESTING: Simulating 2D arrays using 1D arrays with index calculation
+================================================================================
+
+INPUT PROGRAM:
+
+    // Simulate a 3x3 matrix using a 1D array
+    fun get_matrix_element(matrix:int[9], row:int, col:int) -> int {
+        let index:int = row * 3 + col;
+        return matrix[index];
+    }
+    
+    fun set_matrix_element(matrix:int[9], row:int, col:int, value:int) -> int {
+        let index:int = row * 3 + col;
+        matrix[index] = value;
+        return value;
+    }
+    
+    // Create identity matrix
+    let matrix:int[] = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+    
+    // Access elements
+    let diag1:int = get_matrix_element(matrix, 0, 0);
+    let diag2:int = get_matrix_element(matrix, 1, 1);
+    let diag3:int = get_matrix_element(matrix, 2, 2);
+    
+    __print diag1;
+    __print diag2;
+    __print diag3;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: get_matrix_element(matrix:int[9], row:int, col:int) -> int
+    Param: matrix : int[9]
+    Param: row : int
+    Param: col : int
+    Block
+      VarDecl: index : int
+        BinaryOp: +
+          BinaryOp: *
+            Identifier: row
+            Literal: 3 (int)
+          Identifier: col
+      Return
+        IndexAccess
+          Identifier: matrix
+          Identifier: index
+  FuncDecl: set_matrix_element(matrix:int[9], row:int, col:int, value:int) -> int
+    Param: matrix : int[9]
+    Param: row : int
+    Param: col : int
+    Param: value : int
+    Block
+      VarDecl: index : int
+        BinaryOp: +
+          BinaryOp: *
+            Identifier: row
+            Literal: 3 (int)
+          Identifier: col
+      Assignment
+        IndexAccess
+          Identifier: matrix
+          Identifier: index
+        Identifier: value
+      Return
+        Identifier: value
+  VarDecl: matrix : int[]
+    ArrayLiteral: [9 elements]
+      Literal: 1 (int)
+      Literal: 0 (int)
+      Literal: 0 (int)
+      Literal: 0 (int)
+      Literal: 1 (int)
+      Literal: 0 (int)
+      Literal: 0 (int)
+      Literal: 0 (int)
+      Literal: 1 (int)
+  VarDecl: diag1 : int
+    FuncCall: get_matrix_element
+      Identifier: matrix
+      Literal: 0 (int)
+      Literal: 0 (int)
+  VarDecl: diag2 : int
+    FuncCall: get_matrix_element
+      Identifier: matrix
+      Literal: 1 (int)
+      Literal: 1 (int)
+  VarDecl: diag3 : int
+    FuncCall: get_matrix_element
+      Identifier: matrix
+      Literal: 2 (int)
+      Literal: 2 (int)
+  Print
+    Identifier: diag1
+  Print
+    Identifier: diag2
+  Print
+    Identifier: diag3
+------------------------------------------------------------
+
+GENERATED PArIR (partial):
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 13
+oframe
+push #PC+16
+jmp
+.get_matrix_element
+push 12
+alloc
+push [10:0]
+push 3
+push [9:0]
+mul
+add
+push 11
+push 0
+st
+push [11:0]
+push +[0:0]
+ret
+push #PC+21
+jmp
+.set_matrix_element
+push 13
+alloc
+push [10:0]
+push 3
+push [9:0]
+mul
+add
+push 12
+push 0
+st
+push [11:0]
+push [12:0]
+push 0
+add
+push 0
+st
+push [11:0]
+ret
+push 1
+push 0
+push 0
+push 0
+push 1
+push 0
+push 0
+push 0
+push 1
+push 9
+push 1
+push 0
+sta
+push 0
+push 0
+push 9
+pusha [1:0]
+push 11
+push .get_matrix_element
+call
+push 10
+push 0
+st
+push 1
+push 1
+push 9
+pusha [1:0]
+push 11
+push .get_matrix_element
+call
+push 11
+push 0
+st
+push 2
+push 2
+push 9
+pusha [1:0]
+... (14 more instructions)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Array Algorithms
+TESTING: Implementing array algorithms like finding min/max
+================================================================================
+
+INPUT PROGRAM:
+
+    fun find_min_max(arr:int[10]) -> int {
+        let min:int = arr[0];
+        let max:int = arr[0];
+        
+        for (let i:int = 1; i < 10; i = i + 1) {
+            if (arr[i] < min) {
+                min = arr[i];
+            }
+            if (arr[i] > max) {
+                max = arr[i];
+            }
+        }
+        
+        __print min;
+        __print max;
+        return max - min;  // Return range
+    }
+    
+    fun count_evens(arr:int[10]) -> int {
+        let count:int = 0;
+        for (let i:int = 0; i < 10; i = i + 1) {
+            if (arr[i] % 2 == 0) {
+                count = count + 1;
+            }
+        }
+        return count;
+    }
+    
+    let data:int[] = [15, 3, 27, 8, 42, 19, 6, 31, 12, 25];
+    let range:int = find_min_max(data);
+    let evens:int = count_evens(data);
+    
+    __print range;
+    __print evens;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: find_min_max(arr:int[10]) -> int
+    Param: arr : int[10]
+    Block
+      VarDecl: min : int
+        IndexAccess
+          Identifier: arr
+          Literal: 0 (int)
+      VarDecl: max : int
+        IndexAccess
+          Identifier: arr
+          Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 1 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 10 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          If
+            BinaryOp: <
+              IndexAccess
+                Identifier: arr
+                Identifier: i
+              Identifier: min
+            Block
+              Assignment
+                Identifier: min
+                IndexAccess
+                  Identifier: arr
+                  Identifier: i
+          If
+            BinaryOp: >
+              IndexAccess
+                Identifier: arr
+                Identifier: i
+              Identifier: max
+            Block
+              Assignment
+                Identifier: max
+                IndexAccess
+                  Identifier: arr
+                  Identifier: i
+      Print
+        Identifier: min
+      Print
+        Identifier: max
+      Return
+        BinaryOp: -
+          Identifier: max
+          Identifier: min
+  FuncDecl: count_evens(arr:int[10]) -> int
+    Param: arr : int[10]
+    Block
+      VarDecl: count : int
+        Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 10 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          If
+            BinaryOp: ==
+              BinaryOp: %
+                IndexAccess
+                  Identifier: arr
+                  Identifier: i
+                Literal: 2 (int)
+              Literal: 0 (int)
+            Block
+              Assignment
+                Identifier: count
+                BinaryOp: +
+                  Identifier: count
+                  Literal: 1 (int)
+      Return
+        Identifier: count
+  VarDecl: data : int[]
+    ArrayLiteral: [10 elements]
+      Literal: 15 (int)
+      Literal: 3 (int)
+      Literal: 27 (int)
+      Literal: 8 (int)
+      Literal: 42 (int)
+      Literal: 19 (int)
+      Literal: 6 (int)
+      Literal: 31 (int)
+      Literal: 12 (int)
+... (11 more lines)
+------------------------------------------------------------
+
+Generated 177 instructions
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TASK 5 SUMMARY
+================================================================================
+Array Lexing                        PASS
+Array Declaration Parsing           PASS
+Array Access Parsing                PASS
+Array Function Parsing              PASS
+Array Type Checking                 PASS
+Array Type Errors                   PASS
+Array Function Semantics            PASS
+Array Code Generation               PASS
+Array Function CodeGen              PASS
+MaxInArray Complete                 PASS
+Multidimensional Simulation         PASS
+Array Algorithms                    PASS
+--------------------------------------------------------------------------------
+Total: 12/12 tests passed

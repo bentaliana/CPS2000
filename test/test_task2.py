@@ -11,41 +11,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lexer.lexer import FSALexer
 from parser.parser import PArLParser
+from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
 
 
-def print_test_header(test_name, description):
-    """Print test header"""
-    print("\n" + "="*80)
-    print(f"TEST: {test_name}")
-    print(f"TESTING: {description}")
-    print("="*80)
-
-
-def print_ast(ast, max_lines=50):
-    """Print AST structure"""
-    print("\nPROGRAM AST:")
-    print("-"*60)
-    try:
-        ast_str = str(ast)
-        lines = ast_str.split('\n')
-        for i, line in enumerate(lines[:max_lines]):
-            # Handle unicode characters for Windows console
-            print(line.encode('utf-8', errors='replace').decode('utf-8'))
-        if len(lines) > max_lines:
-            print(f"... ({len(lines) - max_lines} more lines)")
-    except Exception as e:
-        print(f"Error printing AST: {e}")
-    print("-"*60)
-
-
-def print_outcome(success, details=""):
-    """Print test outcome"""
-    print("\nTEST OUTCOME:")
-    if success:
-        print("PASS")
-    else:
-        print(f"FAIL: {details}")
-
+if "--show-ast" in sys.argv:
+    set_ast_printing(True)
+else:
+    set_ast_printing(False)
 
 def test_variable_declarations():
     """Test parsing of variable declarations"""
@@ -60,8 +32,8 @@ def test_variable_declarations():
     let computed:int = 5 + 3 * 2;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -72,9 +44,10 @@ def test_variable_declarations():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
             for error in parser.errors:
-                print(f"  - {error}")
+                write_to_file(f"  - {error}")
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -107,8 +80,8 @@ def test_function_declarations():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -119,7 +92,8 @@ def test_function_declarations():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -157,8 +131,8 @@ def test_control_structures():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -169,7 +143,8 @@ def test_control_structures():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -196,8 +171,8 @@ def test_expressions():
     let i:int = a + b * c - d / 2 % 3;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -208,7 +183,8 @@ def test_expressions():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -240,8 +216,8 @@ def test_builtin_statements():
     let pixel:colour = __read x, y;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -252,7 +228,8 @@ def test_builtin_statements():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -285,8 +262,8 @@ def test_function_calls():
     let nested:int = add(add(1, 2), add(3, 4));
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -297,7 +274,8 @@ def test_function_calls():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -339,8 +317,8 @@ def test_nested_structures():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -351,7 +329,8 @@ def test_nested_structures():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -378,8 +357,8 @@ def test_error_detection():
     all_detected = True
     
     for test_code, description in error_cases:
-        print(f"\n{description}:")
-        print(f"INPUT: {test_code}")
+        write_to_file(f"\n{description}:")
+        write_to_file(f"INPUT: {test_code}")
         
         lexer = FSALexer()
         tokens = lexer.tokenize(test_code)
@@ -388,14 +367,14 @@ def test_error_detection():
         try:
             ast = parser.parse()
             if parser.has_errors():
-                print(f"ERRORS DETECTED: {len(parser.errors)}")
+                write_to_file(f"ERRORS DETECTED: {len(parser.errors)}")
                 for error in parser.errors[:2]:  # Show first 2 errors
-                    print(f"  - {error}")
+                    write_to_file(f"  - {error}")
             else:
-                print("NO ERRORS DETECTED")
+                write_to_file("NO ERRORS DETECTED")
                 all_detected = False
         except Exception as e:
-            print(f"EXCEPTION: {str(e)[:100]}")
+            write_to_file(f"EXCEPTION: {str(e)[:100]}")
     
     print_outcome(all_detected)
     return all_detected
@@ -445,8 +424,8 @@ def test_complex_program():
     let result:int = main();
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -457,7 +436,8 @@ def test_complex_program():
         print_ast(ast, max_lines=100)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser reported {len(parser.errors)} errors")
+            error_details = f"Parser reported {len(parser.errors)} errors"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -469,6 +449,8 @@ def test_complex_program():
 
 def run_task2_tests():
     """Run all Task 2 tests"""
+    output_file = create_test_output_file("task2_parser")
+    
     print("TASK 2 - PARSER TESTS")
     print("="*80)
     
@@ -486,8 +468,11 @@ def run_task2_tests():
     results.append(("Complex Program", test_complex_program()))
     
     # Summary
-    print("\n" + "="*80)
-    print("TASK 2 SUMMARY")
+    write_to_file("\n" + "="*80)
+    write_to_file("TASK 2 SUMMARY")
+    write_to_file("="*80)
+    
+    print("\nTASK 2 SUMMARY")
     print("="*80)
     
     passed = sum(1 for _, result in results if result)
@@ -495,10 +480,16 @@ def run_task2_tests():
     
     for test_name, result in results:
         status = "PASS" if result else "FAIL"
+        write_to_file(f"{test_name:<30} {status}")
         print(f"{test_name:<30} {status}")
     
+    write_to_file("-"*80)
+    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
     print(f"Total: {passed}/{total} tests passed")
+    
+    close_test_output_file()
+    print(f"Detailed output written to: {output_file}")
     
     return passed == total
 

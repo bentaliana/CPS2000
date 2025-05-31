@@ -13,41 +13,12 @@ from lexer.lexer import FSALexer
 from parser.parser import PArLParser
 from semantic_analyzer.semantic_analyzer import SemanticAnalyzer
 from code_generator.code_generator import PArIRGenerator
+from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
 
-
-def print_test_header(test_name, description):
-    """Print test header"""
-    print("\n" + "="*80)
-    print(f"TEST: {test_name}")
-    print(f"TESTING: {description}")
-    print("="*80)
-
-
-def print_ast(ast, max_lines=50):
-    """Print AST structure"""
-    print("\nPROGRAM AST:")
-    print("-"*60)
-    try:
-        ast_str = str(ast)
-        lines = ast_str.split('\n')
-        for i, line in enumerate(lines[:max_lines]):
-            # Handle unicode characters for Windows console
-            print(line.encode('utf-8', errors='replace').decode('utf-8'))
-        if len(lines) > max_lines:
-            print(f"... ({len(lines) - max_lines} more lines)")
-    except Exception as e:
-        print(f"Error printing AST: {e}")
-    print("-"*60)
-
-
-def print_outcome(success, details=""):
-    """Print test outcome"""
-    print("\nTEST OUTCOME:")
-    if success:
-        print("PASS")
-    else:
-        print(f"FAIL: {details}")
-
+if "--show-ast" in sys.argv:
+    set_ast_printing(True)
+else:
+    set_ast_printing(False)
 
 def compile_program(source_code):
     """Complete compilation pipeline"""
@@ -94,8 +65,8 @@ def test_simple_color_animation():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -105,11 +76,11 @@ def test_simple_color_animation():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Verify animation instructions
     required = ["irnd", "clear", "delay", "cjmp", "jmp"]
@@ -144,8 +115,8 @@ def test_max_in_array():
     __print max;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -155,15 +126,15 @@ def test_max_in_array():
     
     print_ast(ast, max_lines=80)
     
-    print("\nGENERATED PArIR (first 100 instructions):")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR (first 100 instructions):")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions[:100]):
-        print(instr)
+        write_to_file(instr)
     if len(instructions) > 100:
-        print(f"... ({len(instructions) - 100} more instructions)")
-    print("-"*60)
+        write_to_file(f"... ({len(instructions) - 100} more instructions)")
+    write_to_file("-"*60)
     
-    print(f"\nTotal instructions: {len(instructions)}")
+    write_to_file(f"\nTotal instructions: {len(instructions)}")
     
     # Verify array operations
     required = [".MaxInArray", "pusha", "push +[", "call", "print"]
@@ -205,8 +176,8 @@ def test_color_functions():
     __delay 1000;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -216,11 +187,11 @@ def test_color_functions():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Verify function and graphics operations
     required = [".color", ".cc", "call", "write", "width", "height", "irnd", "delay"]
@@ -264,8 +235,8 @@ def test_color_animation_while():
     __delay 1000;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -275,13 +246,13 @@ def test_color_animation_while():
     
     print_ast(ast, max_lines=80)
     
-    print("\nGENERATED PArIR (first 100 instructions):")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR (first 100 instructions):")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions[:100]):
-        print(instr)
+        write_to_file(instr)
     if len(instructions) > 100:
-        print(f"... ({len(instructions) - 100} more instructions)")
-    print("-"*60)
+        write_to_file(f"... ({len(instructions) - 100} more instructions)")
+    write_to_file("-"*60)
     
     # Verify while loop and graphics
     required = ["cjmp", "jmp", "#PC", "write", "irnd"]
@@ -326,8 +297,8 @@ def test_rainbow_pattern():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -337,15 +308,15 @@ def test_rainbow_pattern():
     
     print_ast(ast, max_lines=100)
     
-    print("\nGENERATED PArIR (first 150 instructions):")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR (first 150 instructions):")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions[:150]):
-        print(instr)
+        write_to_file(instr)
     if len(instructions) > 150:
-        print(f"... ({len(instructions) - 150} more instructions)")
-    print("-"*60)
+        write_to_file(f"... ({len(instructions) - 150} more instructions)")
+    write_to_file("-"*60)
     
-    print(f"\nTotal instructions: {len(instructions)}")
+    write_to_file(f"\nTotal instructions: {len(instructions)}")
     
     # Verify array and graphics operations
     required = ["pusha", "push +[", "writebox", "mod", "width", "height"]
@@ -399,8 +370,8 @@ def test_screen_operations():
     __delay 1000;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -410,11 +381,11 @@ def test_screen_operations():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Verify all screen operations
     required = ["width", "height", "clear", "write", "writebox", "read", "delay", "print"]
@@ -426,9 +397,9 @@ def test_screen_operations():
         print_outcome(False, f"Missing screen operations: {missing}")
         return False
     else:
-        print("\nAll screen operations found:")
+        write_to_file("\nAll screen operations found:")
         for req in required:
-            print(f"  {req}: YES")
+            write_to_file(f"  {req}: YES")
         print_outcome(True)
         return True
 
@@ -480,8 +451,8 @@ def test_modulo_patterns():
     __delay 2000;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -491,17 +462,17 @@ def test_modulo_patterns():
     
     print_ast(ast, max_lines=100)
     
-    print("\nGENERATED PArIR (partial):")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR (partial):")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions[:120]):
-        print(instr)
+        write_to_file(instr)
     if len(instructions) > 120:
-        print(f"... ({len(instructions) - 120} more instructions)")
-    print("-"*60)
+        write_to_file(f"... ({len(instructions) - 120} more instructions)")
+    write_to_file("-"*60)
     
     # Count modulo operations
     mod_count = sum(1 for instr in instructions if "mod" in instr)
-    print(f"\nModulo operations found: {mod_count}")
+    write_to_file(f"\nModulo operations found: {mod_count}")
     
     if mod_count < 3:
         print_outcome(False, f"Expected at least 3 modulo operations, found {mod_count}")
@@ -545,8 +516,8 @@ def test_array_graphics():
     __delay 2000;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -556,7 +527,7 @@ def test_array_graphics():
     
     print_ast(ast, max_lines=100)
     
-    print(f"\nGenerated {len(instructions)} instructions")
+    write_to_file(f"\nGenerated {len(instructions)} instructions")
     
     # Verify array and graphics operations
     required = ["pusha", "sta", "push +[", "writebox", "clear"]
@@ -601,11 +572,11 @@ def test_complex_animation():
     }
     
     fun animate_frame(frame:int) -> bool {
-        for (let x:int = 0; x < __width; x = x + 5) {
-            for (let y:int = 0; y < __height; y = y + 5) {
-                let h:int = (x + y + frame) % 360;
+        for (let i:int = 0; i < 10; i = i + 1) {
+            for (let j:int = 0; j < 10; j = j + 1) {
+                let h:int = (i + j + frame) % 360;
                 let color:colour = hsv_to_colour(h, 100, 100);
-                __write_box x, y, 4, 4, color;
+                __write_box i * 10, j * 10, 4, 4, color;
             }
         }
         return true;
@@ -618,8 +589,8 @@ def test_complex_animation():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = compile_program(test_code)
     
@@ -629,7 +600,7 @@ def test_complex_animation():
     
     print_ast(ast, max_lines=150)
     
-    print(f"\nGenerated {len(instructions)} instructions")
+    write_to_file(f"\nGenerated {len(instructions)} instructions")
     
     # This is a complex program, just verify it compiles
     print_outcome(True)
@@ -638,9 +609,11 @@ def test_complex_animation():
 
 def run_simulator_tests():
     """Run all simulator test programs"""
+    output_file = create_test_output_file("simulator_programs")
+    
     print("SIMULATOR TEST PROGRAMS")
     print("="*80)
-    print("Testing programs that should work correctly in the PArL simulator")
+    write_to_file("Testing programs that should work correctly in the PArL simulator")
     
     results = []
     
@@ -656,8 +629,11 @@ def run_simulator_tests():
     results.append(("Complex Animation", test_complex_animation()))
     
     # Summary
-    print("\n" + "="*80)
-    print("SIMULATOR TESTS SUMMARY")
+    write_to_file("\n" + "="*80)
+    write_to_file("SIMULATOR TESTS SUMMARY")
+    write_to_file("="*80)
+    
+    print("\nSIMULATOR TESTS SUMMARY")
     print("="*80)
     
     passed = sum(1 for _, result in results if result)
@@ -665,10 +641,16 @@ def run_simulator_tests():
     
     for test_name, result in results:
         status = "PASS" if result else "FAIL"
+        write_to_file(f"{test_name:<30} {status}")
         print(f"{test_name:<30} {status}")
     
+    write_to_file("-"*80)
+    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
     print(f"Total: {passed}/{total} tests passed")
+    
+    close_test_output_file()
+    print(f"Detailed output written to: {output_file}")
     
     return passed == total
 

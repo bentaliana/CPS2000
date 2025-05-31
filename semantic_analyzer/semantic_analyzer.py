@@ -186,7 +186,7 @@ class TypeChecker:
         if from_type == to_type:
             return True
         
-        # Define valid casts
+        # Define valid casts according to assignment spec
         valid_casts = {
             ("int", "float"): True,
             ("float", "int"): True,
@@ -202,21 +202,22 @@ class TypeChecker:
     def get_binary_operation_result_type(left_type: str, operator: str, 
                                        right_type: str) -> Optional[str]:
         """Get the result type of a binary operation - SYSTEMATIC MODULO SUPPORT"""
-        # SYSTEMATIC FIX: Complete arithmetic operators including modulo
+        # Arithmetic operators including modulo
         if operator in ["+", "-", "*", "/", "%"]:
             if left_type == right_type and left_type in ["int", "float"]:
                 return left_type
             return None
         
-        # Comparison operators
+        # SYSTEMATIC FIX: Comparison operators ALWAYS return bool
         if operator in ["<", ">", "<=", ">=", "==", "!="]:
+            # Check operands are compatible for comparison
             if left_type == right_type and left_type in ["int", "float", "bool", "colour"]:
-                return "bool"
+                return "bool"  # ALWAYS return bool for comparisons
             return None
         
-        # Logical operators
+        # Logical operators require bool operands and return bool
         if operator in ["and", "or"]:
-            if left_type == right_type and left_type == "bool":
+            if left_type == "bool" and right_type == "bool":
                 return "bool"
             return None
         

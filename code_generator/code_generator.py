@@ -774,6 +774,8 @@ class PArIRGenerator:
             self._emit("height")
         elif isinstance(node, PadRandI):
             self._generate_pad_randi(node)
+        elif isinstance(node, PadRead):
+            self._generate_pad_read(node)
         
     def _generate_literal(self, node: Literal):
         """Generate literal values"""
@@ -888,7 +890,13 @@ class PArIRGenerator:
                 
                 # Use push +[i:l] instruction for array element access
                 self._emit(f"push +[{location.frame_index}:{location.frame_level}]")
-        
+    
+    def _generate_pad_read(self, node: PadRead):
+        """Generate read pixel operation"""
+        self._generate_expression(node.y)
+        self._generate_expression(node.x)
+        self._emit("read")
+            
     # ===== UTILITY METHODS =====
     
     def _count_variable_declarations(self, statements: List[ASTNode]) -> int:

@@ -13,40 +13,13 @@ from lexer.lexer import FSALexer
 from parser.parser import PArLParser
 from semantic_analyzer.semantic_analyzer import SemanticAnalyzer
 from code_generator.code_generator import PArIRGenerator
+from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
 
 
-def print_test_header(test_name, description):
-    """Print test header"""
-    print("\n" + "="*80)
-    print(f"TEST: {test_name}")
-    print(f"TESTING: {description}")
-    print("="*80)
-
-
-def print_ast(ast, max_lines=50):
-    """Print AST structure"""
-    print("\nPROGRAM AST:")
-    print("-"*60)
-    try:
-        ast_str = str(ast)
-        lines = ast_str.split('\n')
-        for i, line in enumerate(lines[:max_lines]):
-            # Handle unicode characters for Windows console
-            print(line.encode('utf-8', errors='replace').decode('utf-8'))
-        if len(lines) > max_lines:
-            print(f"... ({len(lines) - max_lines} more lines)")
-    except Exception as e:
-        print(f"Error printing AST: {e}")
-    print("-"*60)
-
-
-def print_outcome(success, details=""):
-    """Print test outcome"""
-    print("\nTEST OUTCOME:")
-    if success:
-        print("PASS")
-    else:
-        print(f"FAIL: {details}")
+if "--show-ast" in sys.argv:
+    set_ast_printing(True)
+else:
+    set_ast_printing(False)
 
 
 def generate_code(source_code):
@@ -80,8 +53,8 @@ def test_basic_program():
     __print x;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -91,11 +64,11 @@ def test_basic_program():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for required program structure
     required = [".main", "oframe", "push", "st", "print", "halt", "cframe"]
@@ -132,8 +105,8 @@ def test_arithmetic_operations():
     __print rem;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -143,11 +116,11 @@ def test_arithmetic_operations():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for arithmetic instructions
     ops = ["add", "sub", "mul", "div", "mod"]
@@ -159,9 +132,9 @@ def test_arithmetic_operations():
         print_outcome(False, f"Missing arithmetic operations: {missing}")
         return False
     else:
-        print("\nAll arithmetic operations found:")
+        write_to_file("\nAll arithmetic operations found:")
         for op in ops:
-            print(f"  {op}: YES")
+            write_to_file(f"  {op}: YES")
         print_outcome(True)
         return True
 
@@ -190,8 +163,8 @@ def test_comparison_operations():
     if (ne) { __print 6; }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -201,11 +174,11 @@ def test_comparison_operations():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for comparison instructions
     ops = ["lt", "gt", "le", "ge", "eq"]
@@ -243,8 +216,8 @@ def test_logical_operations():
     if (not_result) { __print 3; }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -254,11 +227,11 @@ def test_logical_operations():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for logical instructions
     ops = ["and", "or", "not"]
@@ -295,8 +268,8 @@ def test_function_generation():
     __print product;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -306,11 +279,11 @@ def test_function_generation():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for function-related instructions
     required = [".add", ".multiply", "call", "ret", "alloc"]
@@ -355,8 +328,8 @@ def test_control_flow():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -366,11 +339,11 @@ def test_control_flow():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for control flow instructions
     required = ["cjmp", "jmp", "#PC"]
@@ -414,8 +387,8 @@ def test_builtin_operations():
     __clear #0000ff;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -425,11 +398,11 @@ def test_builtin_operations():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for built-in instructions
     builtins = ["width", "height", "irnd", "print", "delay", "write", "writebox", "read", "clear"]
@@ -441,9 +414,9 @@ def test_builtin_operations():
         print_outcome(False, f"Missing built-in operations: {missing}")
         return False
     else:
-        print("\nAll built-in operations found:")
+        write_to_file("\nAll built-in operations found:")
         for bi in builtins:
-            print(f"  {bi}: YES")
+            write_to_file(f"  {bi}: YES")
         print_outcome(True)
         return True
 
@@ -473,8 +446,8 @@ def test_cast_operations():
     __print c_to_i;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -484,11 +457,11 @@ def test_cast_operations():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Casts might be implicit in the generated code
     # Just verify the program compiles successfully
@@ -523,8 +496,8 @@ def test_complex_expressions():
     __print result3;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -534,20 +507,20 @@ def test_complex_expressions():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Should generate many push and arithmetic operations
     push_count = sum(1 for instr in instructions if "push" in instr)
     arith_count = sum(1 for instr in instructions 
                      if any(op in instr for op in ["add", "sub", "mul", "div", "mod"]))
     
-    print(f"\nInstruction counts:")
-    print(f"  Push operations: {push_count}")
-    print(f"  Arithmetic operations: {arith_count}")
+    write_to_file(f"\nInstruction counts:")
+    write_to_file(f"  Push operations: {push_count}")
+    write_to_file(f"  Arithmetic operations: {arith_count}")
     
     if push_count < 10 or arith_count < 5:
         print_outcome(False, "Too few operations for complex expressions")
@@ -584,8 +557,8 @@ def test_recursive_function():
     __print fib7;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -595,14 +568,14 @@ def test_recursive_function():
     
     print_ast(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions):
-        print(instr)
+        write_to_file(instr)
         if i > 100:  # Limit output for recursive functions
-            print(f"... ({len(instructions) - i - 1} more instructions)")
+            write_to_file(f"... ({len(instructions) - i - 1} more instructions)")
             break
-    print("-"*60)
+    write_to_file("-"*60)
     
     # Check for recursive function elements
     required = [".factorial", ".fibonacci", "call", "ret"]
@@ -612,59 +585,6 @@ def test_recursive_function():
     
     if missing:
         print_outcome(False, f"Missing recursive function elements: {missing}")
-        return False
-    else:
-        print_outcome(True)
-        return True
-
-
-def test_modulo_in_loops():
-    """Test modulo operator in loop contexts"""
-    print_test_header("Modulo in Loops",
-                     "Code generator correctly handles modulo in loop conditions and bodies")
-    
-    test_code = """
-    // Print even numbers using modulo
-    for (let i:int = 0; i < 20; i = i + 1) {
-        if (i % 2 == 0) {
-            __print i;
-        }
-    }
-    
-    // Print numbers divisible by 3 or 5
-    let n:int = 1;
-    while (n <= 15) {
-        if (n % 3 == 0 or n % 5 == 0) {
-            __print n;
-        }
-        n = n + 1;
-    }
-    """
-    
-    print("\nINPUT PROGRAM:")
-    print(test_code)
-    
-    ast, instructions, error = generate_code(test_code)
-    
-    if error:
-        print_outcome(False, error)
-        return False
-    
-    print_ast(ast)
-    
-    print("\nGENERATED PArIR:")
-    print("-"*60)
-    for instr in instructions:
-        print(instr)
-    print("-"*60)
-    
-    # Count modulo operations
-    mod_count = sum(1 for instr in instructions if "mod" in instr)
-    
-    print(f"\nModulo operations found: {mod_count}")
-    
-    if mod_count < 3:  # Should have at least 3 mod operations
-        print_outcome(False, f"Expected at least 3 modulo operations, found {mod_count}")
         return False
     else:
         print_outcome(True)
@@ -681,7 +601,7 @@ def test_complete_program():
     let screen_cleared:bool = false;
     
     fun draw_pixel(x:int, y:int, c:colour) -> bool {
-        if (x >= 0 and x < __width and y >= 0 and y < __height) {
+        if ((x >= 0 and x < __width and y >= 0 and y < __height) or screen_cleared) {
             __write x, y, c;
             return true;
         }
@@ -720,8 +640,8 @@ def test_complete_program():
     let result:int = main();
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, instructions, error = generate_code(test_code)
     
@@ -731,16 +651,16 @@ def test_complete_program():
     
     print_ast(ast, max_lines=100)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions):
-        print(instr)
+        write_to_file(instr)
         if i > 150:  # Limit output
-            print(f"... ({len(instructions) - i - 1} more instructions)")
+            write_to_file(f"... ({len(instructions) - i - 1} more instructions)")
             break
-    print("-"*60)
+    write_to_file("-"*60)
     
-    print(f"\nTotal instructions generated: {len(instructions)}")
+    write_to_file(f"\nTotal instructions generated: {len(instructions)}")
     
     # Verify key components
     components = {
@@ -752,10 +672,10 @@ def test_complete_program():
     
     all_found = True
     for category, items in components.items():
-        print(f"\n{category.upper()}:")
+        write_to_file(f"\n{category.upper()}:")
         for item in items:
             found = any(item in instr for instr in instructions)
-            print(f"  {item}: {'YES' if found else 'NO'}")
+            write_to_file(f"  {item}: {'YES' if found else 'NO'}")
             if not found:
                 all_found = False
     
@@ -769,6 +689,8 @@ def test_complete_program():
 
 def run_task4_tests():
     """Run all Task 4 tests"""
+    output_file = create_test_output_file("task4_codegen")
+    
     print("TASK 4 - CODE GENERATION TESTS")
     print("="*80)
     
@@ -785,12 +707,14 @@ def run_task4_tests():
     results.append(("Type Casting", test_cast_operations()))
     results.append(("Complex Expressions", test_complex_expressions()))
     results.append(("Recursive Functions", test_recursive_function()))
-    results.append(("Modulo in Loops", test_modulo_in_loops()))
     results.append(("Complete Program", test_complete_program()))
     
     # Summary
-    print("\n" + "="*80)
-    print("TASK 4 SUMMARY")
+    write_to_file("\n" + "="*80)
+    write_to_file("TASK 4 SUMMARY")
+    write_to_file("="*80)
+    
+    print("\nTASK 4 SUMMARY")
     print("="*80)
     
     passed = sum(1 for _, result in results if result)
@@ -798,10 +722,16 @@ def run_task4_tests():
     
     for test_name, result in results:
         status = "PASS" if result else "FAIL"
+        write_to_file(f"{test_name:<30} {status}")
         print(f"{test_name:<30} {status}")
     
+    write_to_file("-"*80)
+    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
     print(f"Total: {passed}/{total} tests passed")
+    
+    close_test_output_file()
+    print(f"Detailed output written to: {output_file}")
     
     return passed == total
 

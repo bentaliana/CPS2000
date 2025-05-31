@@ -1,0 +1,904 @@
+TEST OUTPUT: task3_semantic
+Generated: 2025-05-31 17:12:24
+================================================================================
+
+
+================================================================================
+TEST: Type Checking
+TESTING: Semantic analyzer correctly validates types in all operations
+================================================================================
+
+INPUT PROGRAM:
+
+    fun type_test() -> int {
+        // Arithmetic operations on compatible types
+        let a:int = 10;
+        let b:int = 5;
+        let c:float = 3.14;
+        let d:float = 2.0;
+        
+        let int_add:int = a + b;
+        let int_sub:int = a - b;
+        let int_mul:int = a * b;
+        let int_div:int = a / b;
+        let int_mod:int = a % b;
+        
+        let float_add:float = c + d;
+        let float_sub:float = c - d;
+        let float_mul:float = c * d;
+        let float_div:float = c / d;
+        let float_mod:float = c % d;
+        
+        // Comparison operations
+        let cmp1:bool = a < b;
+        let cmp2:bool = a > b;
+        let cmp3:bool = a <= b;
+        let cmp4:bool = a >= b;
+        let cmp5:bool = a == b;
+        let cmp6:bool = a != b;
+        
+        // Logical operations
+        let flag1:bool = true;
+        let flag2:bool = false;
+        let log1:bool = flag1 and flag2;
+        let log2:bool = flag1 or flag2;
+        let log3:bool = not flag1;
+        
+        // Unary operations
+        let neg_int:int = -a;
+        let neg_float:float = -c;
+        
+        return int_add;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: type_test() -> int
+    Block
+      VarDecl: a : int
+        Literal: 10 (int)
+      VarDecl: b : int
+        Literal: 5 (int)
+      VarDecl: c : float
+        Literal: 3.14 (float)
+      VarDecl: d : float
+        Literal: 2.0 (float)
+      VarDecl: int_add : int
+        BinaryOp: +
+          Identifier: a
+          Identifier: b
+      VarDecl: int_sub : int
+        BinaryOp: -
+          Identifier: a
+          Identifier: b
+      VarDecl: int_mul : int
+        BinaryOp: *
+          Identifier: a
+          Identifier: b
+      VarDecl: int_div : int
+        BinaryOp: /
+          Identifier: a
+          Identifier: b
+      VarDecl: int_mod : int
+        BinaryOp: %
+          Identifier: a
+          Identifier: b
+      VarDecl: float_add : float
+        BinaryOp: +
+          Identifier: c
+          Identifier: d
+      VarDecl: float_sub : float
+        BinaryOp: -
+          Identifier: c
+          Identifier: d
+      VarDecl: float_mul : float
+        BinaryOp: *
+          Identifier: c
+          Identifier: d
+      VarDecl: float_div : float
+        BinaryOp: /
+          Identifier: c
+          Identifier: d
+      VarDecl: float_mod : float
+        BinaryOp: %
+          Identifier: c
+... (48 more lines)
+------------------------------------------------------------
+
+Semantic analysis passed - all types valid
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Type Error Detection
+TESTING: Semantic analyzer correctly detects type mismatches
+================================================================================
+
+INPUT PROGRAM:
+
+    let a:int = 10;
+    let b:bool = true;
+    let c:colour = #ff0000;
+    
+    // Type mismatches in binary operations
+    let error1:int = a + b;
+    let error2:int = a % b;
+    let error3:bool = b * 5;
+    let error4:colour = c + 1;
+    
+    // Type mismatches in assignments
+    a = true;
+    b = 42;
+    c = 3.14;
+    
+    // Type mismatches in unary operations
+    let error5:int = not a;
+    let error6:bool = -b;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: a : int
+    Literal: 10 (int)
+  VarDecl: b : bool
+    Literal: True (bool)
+  VarDecl: c : colour
+    Literal: #ff0000 (colour)
+  VarDecl: error1 : int
+    BinaryOp: +
+      Identifier: a
+      Identifier: b
+  VarDecl: error2 : int
+    BinaryOp: %
+      Identifier: a
+      Identifier: b
+  VarDecl: error3 : bool
+    BinaryOp: *
+      Identifier: b
+      Literal: 5 (int)
+  VarDecl: error4 : colour
+    BinaryOp: +
+      Identifier: c
+      Literal: 1 (int)
+  Assignment
+    Identifier: a
+    Literal: True (bool)
+  Assignment
+    Identifier: b
+    Literal: 42 (int)
+  Assignment
+    Identifier: c
+    Literal: 3.14 (float)
+  VarDecl: error5 : int
+    UnaryOp: not
+      Identifier: a
+  VarDecl: error6 : bool
+    UnaryOp: -
+      Identifier: b
+------------------------------------------------------------
+
+Detected 9 semantic errors:
+  - Semantic Error at line 6, col 22: Invalid arithmetic operation: 'int' + 'bool'. Operands must have matching types.
+  - Semantic Error at line 7, col 22: Invalid arithmetic operation: 'int' % 'bool'. Operands must have matching types.
+  - Semantic Error at line 8, col 23: Invalid arithmetic operation: 'bool' * 'int'. Operands must have matching types.
+  - Semantic Error at line 9, col 25: Invalid arithmetic operation: 'colour' + 'int'. Operands must have matching types.
+  - Semantic Error at line 12, col 5: Cannot assign expression of type 'bool' to variable of type 'int'
+  - Semantic Error at line 13, col 5: Cannot assign expression of type 'int' to variable of type 'bool'
+  - Semantic Error at line 14, col 5: Cannot assign expression of type 'float' to variable of type 'colour'
+  - Semantic Error at line 17, col 22: Invalid unary operation: not 'int'
+  - Semantic Error at line 18, col 23: Invalid unary operation: - 'bool'
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Scope Management
+TESTING: Semantic analyzer correctly manages variable scopes
+================================================================================
+
+INPUT PROGRAM:
+
+    // Global scope
+    let global_var:int = 100;
+    
+    fun outer(param1:int) -> int {
+        // Function scope
+        let local1:int = param1 + global_var;
+        
+        if (param1 > 0) {
+            // Block scope
+            let block_var:int = local1 * 2;
+            global_var = block_var;  // Can access global
+            return block_var;
+        } else {
+            // Different block scope
+            let block_var:bool = false;  // Same name, different scope
+            return 0;
+        }
+    }
+    
+    fun inner() -> int {
+        // Can't access outer's locals
+        let local1:float = 3.14;  // Same name as in outer, but different scope
+        return global_var;
+    }
+    
+    let result:int = outer(10);
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: global_var : int
+    Literal: 100 (int)
+  FuncDecl: outer(param1:int) -> int
+    Param: param1 : int
+    Block
+      VarDecl: local1 : int
+        BinaryOp: +
+          Identifier: param1
+          Identifier: global_var
+      If
+        BinaryOp: >
+          Identifier: param1
+          Literal: 0 (int)
+        Block
+          VarDecl: block_var : int
+            BinaryOp: *
+              Identifier: local1
+              Literal: 2 (int)
+          Assignment
+            Identifier: global_var
+            Identifier: block_var
+          Return
+            Identifier: block_var
+        Block
+          VarDecl: block_var : bool
+            Literal: False (bool)
+          Return
+            Literal: 0 (int)
+  FuncDecl: inner() -> int
+    Block
+      VarDecl: local1 : float
+        Literal: 3.14 (float)
+      Return
+        Identifier: global_var
+  VarDecl: result : int
+    FuncCall: outer
+      Literal: 10 (int)
+------------------------------------------------------------
+
+Scope management correct
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Undefined Variables
+TESTING: Semantic analyzer detects use of undefined variables
+================================================================================
+
+INPUT PROGRAM:
+
+    fun test() -> int {
+        let x:int = y;  // y is undefined
+        let z:int = x + undefined_var;  // undefined_var is undefined
+        return w;  // w is undefined
+    }
+    
+    let a:int = b;  // b is undefined
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: test() -> int
+    Block
+      VarDecl: x : int
+        Identifier: y
+      VarDecl: z : int
+        BinaryOp: +
+          Identifier: x
+          Identifier: undefined_var
+      Return
+        Identifier: w
+  VarDecl: a : int
+    Identifier: b
+------------------------------------------------------------
+
+Detected 4 undefined variable errors:
+  - Semantic Error at line 2, col 21: Undeclared variable 'y'
+  - Semantic Error at line 3, col 25: Undeclared variable 'undefined_var'
+  - Semantic Error at line 4, col 16: Undeclared variable 'w'
+  - Semantic Error at line 7, col 17: Undeclared variable 'b'
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Function Validation
+TESTING: Semantic analyzer validates function declarations and calls
+================================================================================
+
+INPUT PROGRAM:
+
+    fun add(x:int, y:int) -> int {
+        return x + y;
+    }
+    
+    fun no_return(x:int) -> int {
+        let y:int = x + 1;
+        // Missing return statement
+    }
+    
+    fun wrong_return(x:int) -> bool {
+        return x;  // Wrong return type
+    }
+    
+    fun test_calls() -> int {
+        // Valid call
+        let result1:int = add(5, 10);
+        
+        // Wrong number of arguments
+        let result2:int = add(5);
+        
+        // Wrong argument types
+        let result3:int = add(true, false);
+        
+        // Undefined function
+        let result4:int = undefined_func(1, 2);
+        
+        return result1;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: add(x:int, y:int) -> int
+    Param: x : int
+    Param: y : int
+    Block
+      Return
+        BinaryOp: +
+          Identifier: x
+          Identifier: y
+  FuncDecl: no_return(x:int) -> int
+    Param: x : int
+    Block
+      VarDecl: y : int
+        BinaryOp: +
+          Identifier: x
+          Literal: 1 (int)
+  FuncDecl: wrong_return(x:int) -> bool
+    Param: x : int
+    Block
+      Return
+        Identifier: x
+  FuncDecl: test_calls() -> int
+    Block
+      VarDecl: result1 : int
+        FuncCall: add
+          Literal: 5 (int)
+          Literal: 10 (int)
+      VarDecl: result2 : int
+        FuncCall: add
+          Literal: 5 (int)
+      VarDecl: result3 : int
+        FuncCall: add
+          Literal: True (bool)
+          Literal: False (bool)
+      VarDecl: result4 : int
+        FuncCall: undefined_func
+          Literal: 1 (int)
+          Literal: 2 (int)
+      Return
+        Identifier: result1
+------------------------------------------------------------
+
+Detected 6 function-related errors:
+  - Semantic Error at line 5, col 5: Function 'no_return' must return a value of type 'int'
+  - Semantic Error at line 11, col 9: Function must return 'bool', got 'int'
+  - Semantic Error at line 19, col 27: Function 'add' expects 2 arguments, got 1
+  - Semantic Error at line 22, col 31: Argument 1 to function 'add' expects 'int', got 'bool'
+  - Semantic Error at line 22, col 37: Argument 2 to function 'add' expects 'int', got 'bool'
+  - Semantic Error at line 25, col 27: Undeclared function 'undefined_func'
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Built-in Function Validation
+TESTING: Semantic analyzer validates built-in function usage
+================================================================================
+
+INPUT PROGRAM:
+
+    // Valid built-in usage
+    let w:int = __width;
+    let h:int = __height;
+    let rand:int = __randi 100;
+    let pixel:colour = __read 10, 20;
+    
+    __print 42;
+    __delay 1000;
+    __write 10, 20, #ff0000;
+    __write_box 0, 0, 100, 100, #00ff00;
+    __clear #000000;
+    
+    // Invalid built-in usage
+    __print true;  // Can print bool, but let's see
+    __delay 3.14;  // Wrong type
+    __write 1.5, 2.5, #ff0000;  // Wrong types for x, y
+    __write 10, 20, 255;  // Wrong type for color
+    __clear 0;  // Wrong type
+    __randi 3.14;  // Wrong type
+    
+
+Detected 1 built-in usage errors:
+  - Parser Error at line 19, col 5: Expected statement, but found '__randi' (BUILTIN_RANDI) (found '__randi')
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Type Cast Validation
+TESTING: Semantic analyzer validates type casts
+================================================================================
+
+INPUT PROGRAM:
+
+    // Valid casts
+    let i:int = 42;
+    let f:float = 3.14;
+    let b:bool = true;
+    let c:colour = #ff0000;
+    
+    let i_to_f:float = i as float;
+    let f_to_i:int = f as int;
+    let i_to_b:bool = i as bool;
+    let b_to_i:int = b as int;
+    let i_to_c:colour = i as colour;
+    let c_to_i:int = c as int;
+    
+    // Complex cast expressions
+    let complex:float = (10 + 5 * 2) as float;
+    let chained:colour = ((255 * 256) as colour);
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: i : int
+    Literal: 42 (int)
+  VarDecl: f : float
+    Literal: 3.14 (float)
+  VarDecl: b : bool
+    Literal: True (bool)
+  VarDecl: c : colour
+    Literal: #ff0000 (colour)
+  VarDecl: i_to_f : float
+    Cast -> float
+      Identifier: i
+  VarDecl: f_to_i : int
+    Cast -> int
+      Identifier: f
+  VarDecl: i_to_b : bool
+    Cast -> bool
+      Identifier: i
+  VarDecl: b_to_i : int
+    Cast -> int
+      Identifier: b
+  VarDecl: i_to_c : colour
+    Cast -> colour
+      Identifier: i
+  VarDecl: c_to_i : int
+    Cast -> int
+      Identifier: c
+  VarDecl: complex : float
+    Cast -> float
+      BinaryOp: +
+        Literal: 10 (int)
+        BinaryOp: *
+          Literal: 5 (int)
+          Literal: 2 (int)
+  VarDecl: chained : colour
+    Cast -> colour
+      BinaryOp: *
+        Literal: 255 (int)
+        Literal: 256 (int)
+------------------------------------------------------------
+
+All casts are valid
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Control Flow Conditions
+TESTING: Semantic analyzer ensures control flow conditions are boolean
+================================================================================
+
+INPUT PROGRAM:
+
+    let x:int = 5;
+    let flag:bool = true;
+    
+    // Valid conditions
+    if (flag) { __print 1; }
+    if (x > 0) { __print 2; }
+    if (not flag) { __print 3; }
+    
+    while (x > 0) {
+        x = x - 1;
+    }
+    
+    for (let i:int = 0; i < 10; i = i + 1) {
+        __print i;
+    }
+    
+    // Invalid conditions
+    if (x) { __print 4; }  // int is not bool
+    while (42) { __print 5; }  // int literal is not bool
+    for (let j:int = 0; j; j = j + 1) { }  // int is not bool
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: x : int
+    Literal: 5 (int)
+  VarDecl: flag : bool
+    Literal: True (bool)
+  If
+    Identifier: flag
+    Block
+      Print
+        Literal: 1 (int)
+  If
+    BinaryOp: >
+      Identifier: x
+      Literal: 0 (int)
+    Block
+      Print
+        Literal: 2 (int)
+  If
+    UnaryOp: not
+      Identifier: flag
+    Block
+      Print
+        Literal: 3 (int)
+  While
+    BinaryOp: >
+      Identifier: x
+      Literal: 0 (int)
+    Block
+      Assignment
+        Identifier: x
+        BinaryOp: -
+          Identifier: x
+          Literal: 1 (int)
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 10 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Print
+        Identifier: i
+  If
+    Identifier: x
+    Block
+... (17 more lines)
+------------------------------------------------------------
+
+Detected 3 condition type errors:
+  - Semantic Error at line 18, col 9: If condition must be boolean, got 'int'
+  - Semantic Error at line 19, col 12: While condition must be boolean, got 'int'
+  - Semantic Error at line 20, col 25: For condition must be boolean, got 'int'
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Modulo Type Checking
+TESTING: Semantic analyzer correctly type-checks modulo operations
+================================================================================
+
+INPUT PROGRAM:
+
+    // Valid modulo operations
+    let a:int = 17;
+    let b:int = 5;
+    let c:float = 17.5;
+    let d:float = 5.5;
+    
+    let int_mod:int = a % b;
+    let float_mod:float = c % d;
+    
+    // Invalid modulo operations
+    let flag:bool = true;
+    let color:colour = #ff0000;
+    
+    let error1:int = a % flag;
+    let error2:int = flag % b;
+    let error3:int = a % color;
+    let error4:int = color % color;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: a : int
+    Literal: 17 (int)
+  VarDecl: b : int
+    Literal: 5 (int)
+  VarDecl: c : float
+    Literal: 17.5 (float)
+  VarDecl: d : float
+    Literal: 5.5 (float)
+  VarDecl: int_mod : int
+    BinaryOp: %
+      Identifier: a
+      Identifier: b
+  VarDecl: float_mod : float
+    BinaryOp: %
+      Identifier: c
+      Identifier: d
+  VarDecl: flag : bool
+    Literal: True (bool)
+  VarDecl: color : colour
+    Literal: #ff0000 (colour)
+  VarDecl: error1 : int
+    BinaryOp: %
+      Identifier: a
+      Identifier: flag
+  VarDecl: error2 : int
+    BinaryOp: %
+      Identifier: flag
+      Identifier: b
+  VarDecl: error3 : int
+    BinaryOp: %
+      Identifier: a
+      Identifier: color
+  VarDecl: error4 : int
+    BinaryOp: %
+      Identifier: color
+      Identifier: color
+------------------------------------------------------------
+
+Detected 4 modulo type errors:
+  - Semantic Error at line 14, col 22: Invalid arithmetic operation: 'int' % 'bool'. Operands must have matching types.
+  - Semantic Error at line 15, col 22: Invalid arithmetic operation: 'bool' % 'int'. Operands must have matching types.
+  - Semantic Error at line 16, col 22: Invalid arithmetic operation: 'int' % 'colour'. Operands must have matching types.
+  - Semantic Error at line 17, col 22: Invalid arithmetic operation: 'colour' % 'colour'. Operands must have matching types.
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Complex Program Semantic Analysis
+TESTING: Semantic analyzer handles complex program with all features
+================================================================================
+
+INPUT PROGRAM:
+
+    let global_counter:int = 0;
+    
+    fun factorial(n:int) -> int {
+        if (n <= 1) {
+            return 1;
+        }
+        return n * factorial(n - 1);
+    }
+    
+    fun test_operations(x:int, y:int) -> bool {
+        let sum:int = x + y;
+        let diff:int = x - y;
+        let prod:int = x * y;
+        let quot:int = x / y;
+        let rem:int = x % y;
+        
+        __print sum;
+        __print rem;
+        
+        return rem == 0;
+    }
+    
+    fun draw_pattern() -> int {
+        for (let i:int = 0; i < 10; i = i + 1) {
+            for (let j:int = 0; j < 10; j = j + 1) {
+                if ((i + j) % 2 == 0) {
+                    let color:colour = #ff0000;
+                    __write i * 10, j * 10, color;
+                } else {
+                    let color:colour = #0000ff;
+                    __write i * 10, j * 10, color;
+                }
+            }
+        }
+        
+        global_counter = global_counter + 1;
+        return global_counter;
+    }
+    
+    // Main code
+    let fact5:int = factorial(5);
+    __print fact5;
+    
+    let divisible:bool = test_operations(20, 5);
+    if (divisible) {
+        __print 1;
+    } else {
+        __print 0;
+    }
+    
+    let patterns:int = draw_pattern();
+    __delay 1000;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: global_counter : int
+    Literal: 0 (int)
+  FuncDecl: factorial(n:int) -> int
+    Param: n : int
+    Block
+      If
+        BinaryOp: <=
+          Identifier: n
+          Literal: 1 (int)
+        Block
+          Return
+            Literal: 1 (int)
+      Return
+        BinaryOp: *
+          Identifier: n
+          FuncCall: factorial
+            BinaryOp: -
+              Identifier: n
+              Literal: 1 (int)
+  FuncDecl: test_operations(x:int, y:int) -> bool
+    Param: x : int
+    Param: y : int
+    Block
+      VarDecl: sum : int
+        BinaryOp: +
+          Identifier: x
+          Identifier: y
+      VarDecl: diff : int
+        BinaryOp: -
+          Identifier: x
+          Identifier: y
+      VarDecl: prod : int
+        BinaryOp: *
+          Identifier: x
+          Identifier: y
+      VarDecl: quot : int
+        BinaryOp: /
+          Identifier: x
+          Identifier: y
+      VarDecl: rem : int
+        BinaryOp: %
+          Identifier: x
+          Identifier: y
+      Print
+        Identifier: sum
+      Print
+        Identifier: rem
+      Return
+        BinaryOp: ==
+          Identifier: rem
+          Literal: 0 (int)
+  FuncDecl: draw_pattern() -> int
+    Block
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 10 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          For
+            VarDecl: j : int
+              Literal: 0 (int)
+            BinaryOp: <
+              Identifier: j
+              Literal: 10 (int)
+            Assignment
+              Identifier: j
+              BinaryOp: +
+                Identifier: j
+                Literal: 1 (int)
+            Block
+              If
+                BinaryOp: ==
+                  BinaryOp: %
+                    BinaryOp: +
+                      Identifier: i
+                      Identifier: j
+                    Literal: 2 (int)
+                  Literal: 0 (int)
+                Block
+                  VarDecl: color : colour
+                    Literal: #ff0000 (colour)
+                  Write
+                    BinaryOp: *
+                      Identifier: i
+                      Literal: 10 (int)
+                    BinaryOp: *
+                      Identifier: j
+                      Literal: 10 (int)
+                    Identifier: color
+                Block
+                  VarDecl: color : colour
+                    Literal: #0000ff (colour)
+... (36 more lines)
+------------------------------------------------------------
+
+Complex program semantic analysis passed
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TASK 3 SUMMARY
+================================================================================
+Type Checking                  PASS
+Type Error Detection           PASS
+Scope Management               PASS
+Undefined Variables            PASS
+Function Validation            PASS
+Built-in Validation            PASS
+Cast Validation                PASS
+Control Flow Conditions        PASS
+Modulo Type Checking           PASS
+Complex Program                PASS
+--------------------------------------------------------------------------------
+Total: 10/10 tests passed

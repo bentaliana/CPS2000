@@ -25,30 +25,23 @@ class ASTNode(ABC):
         """Beautiful tree-style string representation"""
         pass
     
-    def _tree_children(self, children, prefix="", is_last_list=None):
-        """Helper for beautiful tree-style child printing"""
+    def _tree_children(self, children, indent_level=1):
+        """Helper for indentation-based tree printing"""
         if not children:
             return ""
         
-        if is_last_list is None:
-            is_last_list = [False] * (len(children) - 1) + [True]
-        
+        indent = "  " * indent_level  # 2 spaces per level
         result = ""
-        for i, child in enumerate(children):
+        
+        for child in children:
             if child is not None:
-                is_last = is_last_list[i] if i < len(is_last_list) else True
+                # Add the child with proper indentation
+                result += f"\n{indent}{child._get_node_label()}"
                 
-                # Tree structure symbols
-                current_prefix = "└── " if is_last else "├── "
-                child_prefix = "    " if is_last else "│   "
-                
-                # Add this child
-                result += f"\n{prefix}{current_prefix}{child._get_node_label()}"
-                
-                # Add grandchildren
+                # Add grandchildren with increased indentation
                 grandchildren = child._get_children()
                 if grandchildren:
-                    result += child._tree_children(grandchildren, prefix + child_prefix)
+                    result += child._tree_children(grandchildren, indent_level + 1)
         
         return result
     
@@ -70,7 +63,7 @@ class Program(ASTNode):
     
     def __str__(self):
         result = "Program"
-        result += self._tree_children(self.statements)
+        result += self._tree_children(self.statements, indent_level=1)
         return result
     
     def _get_node_label(self):

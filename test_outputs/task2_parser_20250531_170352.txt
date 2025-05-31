@@ -1,0 +1,721 @@
+TEST OUTPUT: task2_parser
+Generated: 2025-05-31 17:03:52
+================================================================================
+
+
+================================================================================
+TEST: Variable Declarations
+TESTING: Parser correctly handles variable declarations of all types
+================================================================================
+
+INPUT PROGRAM:
+
+    let x:int = 42;
+    let y:float = 3.14;
+    let flag:bool = true;
+    let color:colour = #ff0000;
+    let computed:int = 5 + 3 * 2;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: x : int
+    Literal: 42 (int)
+  VarDecl: y : float
+    Literal: 3.14 (float)
+  VarDecl: flag : bool
+    Literal: True (bool)
+  VarDecl: color : colour
+    Literal: #ff0000 (colour)
+  VarDecl: computed : int
+    BinaryOp: +
+      Literal: 5 (int)
+      BinaryOp: *
+        Literal: 3 (int)
+        Literal: 2 (int)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Function Declarations
+TESTING: Parser correctly handles function declarations with parameters and return types
+================================================================================
+
+INPUT PROGRAM:
+
+    fun simple() -> int {
+        return 0;
+    }
+    
+    fun add(x:int, y:int) -> int {
+        return x + y;
+    }
+    
+    fun complex(a:int, b:float, c:bool) -> colour {
+        let result:colour = #000000;
+        if (c) {
+            result = (a as colour);
+        }
+        return result;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: simple() -> int
+    Block
+      Return
+        Literal: 0 (int)
+  FuncDecl: add(x:int, y:int) -> int
+    Param: x : int
+    Param: y : int
+    Block
+      Return
+        BinaryOp: +
+          Identifier: x
+          Identifier: y
+  FuncDecl: complex(a:int, b:float, c:bool) -> colour
+    Param: a : int
+    Param: b : float
+    Param: c : bool
+    Block
+      VarDecl: result : colour
+        Literal: #000000 (colour)
+      If
+        Identifier: c
+        Block
+          Assignment
+            Identifier: result
+            Cast -> colour
+              Identifier: a
+      Return
+        Identifier: result
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Control Structures
+TESTING: Parser correctly handles if/else, while, and for statements
+================================================================================
+
+INPUT PROGRAM:
+
+    let x:int = 10;
+    
+    if (x > 5) {
+        __print x;
+    } else {
+        __print 0;
+    }
+    
+    while (x > 0) {
+        x = x - 1;
+        if (x % 2 == 0) {
+            __print x;
+        }
+    }
+    
+    for (let i:int = 0; i < 10; i = i + 1) {
+        if (i % 3 == 0) {
+            __print i;
+        }
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: x : int
+    Literal: 10 (int)
+  If
+    BinaryOp: >
+      Identifier: x
+      Literal: 5 (int)
+    Block
+      Print
+        Identifier: x
+    Block
+      Print
+        Literal: 0 (int)
+  While
+    BinaryOp: >
+      Identifier: x
+      Literal: 0 (int)
+    Block
+      Assignment
+        Identifier: x
+        BinaryOp: -
+          Identifier: x
+          Literal: 1 (int)
+      If
+        BinaryOp: ==
+          BinaryOp: %
+            Identifier: x
+            Literal: 2 (int)
+          Literal: 0 (int)
+        Block
+          Print
+            Identifier: x
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 10 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      If
+        BinaryOp: ==
+          BinaryOp: %
+            Identifier: i
+            Literal: 3 (int)
+          Literal: 0 (int)
+... (3 more lines)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Expression Parsing
+TESTING: Parser correctly handles expression precedence and associativity
+================================================================================
+
+INPUT PROGRAM:
+
+    let a:int = 1 + 2 * 3;
+    let b:int = (1 + 2) * 3;
+    let c:int = 10 % 3 + 2;
+    let d:int = 10 + 3 % 2;
+    let e:bool = not true and false or true;
+    let f:int = -5 * 3;
+    let g:float = 10 as float / 2.0;
+    let h:bool = 5 > 3 and 10 <= 20;
+    let i:int = a + b * c - d / 2 % 3;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: a : int
+    BinaryOp: +
+      Literal: 1 (int)
+      BinaryOp: *
+        Literal: 2 (int)
+        Literal: 3 (int)
+  VarDecl: b : int
+    BinaryOp: *
+      BinaryOp: +
+        Literal: 1 (int)
+        Literal: 2 (int)
+      Literal: 3 (int)
+  VarDecl: c : int
+    BinaryOp: +
+      BinaryOp: %
+        Literal: 10 (int)
+        Literal: 3 (int)
+      Literal: 2 (int)
+  VarDecl: d : int
+    BinaryOp: +
+      Literal: 10 (int)
+      BinaryOp: %
+        Literal: 3 (int)
+        Literal: 2 (int)
+  VarDecl: e : bool
+    BinaryOp: or
+      BinaryOp: and
+        UnaryOp: not
+          Literal: True (bool)
+        Literal: False (bool)
+      Literal: True (bool)
+  VarDecl: f : int
+    BinaryOp: *
+      UnaryOp: -
+        Literal: 5 (int)
+      Literal: 3 (int)
+  VarDecl: g : float
+    BinaryOp: /
+      Cast -> float
+        Literal: 10 (int)
+      Literal: 2.0 (float)
+  VarDecl: h : bool
+    BinaryOp: and
+      BinaryOp: >
+        Literal: 5 (int)
+        Literal: 3 (int)
+      BinaryOp: <=
+        Literal: 10 (int)
+        Literal: 20 (int)
+... (12 more lines)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Built-in Statements
+TESTING: Parser correctly handles all built-in function statements
+================================================================================
+
+INPUT PROGRAM:
+
+    let x:int = 10;
+    let y:int = 20;
+    let color:colour = #ff0000;
+    
+    __print x;
+    __delay 1000;
+    __write x, y, color;
+    __write_box 0, 0, 100, 100, #00ff00;
+    __clear #000000;
+    
+    let w:int = __width;
+    let h:int = __height;
+    let rand:int = __randi 100;
+    let pixel:colour = __read x, y;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: x : int
+    Literal: 10 (int)
+  VarDecl: y : int
+    Literal: 20 (int)
+  VarDecl: color : colour
+    Literal: #ff0000 (colour)
+  Print
+    Identifier: x
+  Delay
+    Literal: 1000 (int)
+  Write
+    Identifier: x
+    Identifier: y
+    Identifier: color
+  WriteBox
+    Literal: 0 (int)
+    Literal: 0 (int)
+    Literal: 100 (int)
+    Literal: 100 (int)
+    Literal: #00ff00 (colour)
+  Clear
+    Literal: #000000 (colour)
+  VarDecl: w : int
+    BuiltIn: __width
+  VarDecl: h : int
+    BuiltIn: __height
+  VarDecl: rand : int
+    BuiltIn: __randi
+      Literal: 100 (int)
+  VarDecl: pixel : colour
+    BuiltIn: __read
+      Identifier: x
+      Identifier: y
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Function Calls
+TESTING: Parser correctly handles function calls with arguments
+================================================================================
+
+INPUT PROGRAM:
+
+    fun add(x:int, y:int) -> int {
+        return x + y;
+    }
+    
+    fun process(a:int, b:float, c:bool) -> float {
+        if (c) {
+            return (a as float) + b;
+        }
+        return b;
+    }
+    
+    let result1:int = add(5, 10);
+    let result2:int = add(1 + 2, 3 * 4);
+    let result3:float = process(10, 3.14, true);
+    let nested:int = add(add(1, 2), add(3, 4));
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: add(x:int, y:int) -> int
+    Param: x : int
+    Param: y : int
+    Block
+      Return
+        BinaryOp: +
+          Identifier: x
+          Identifier: y
+  FuncDecl: process(a:int, b:float, c:bool) -> float
+    Param: a : int
+    Param: b : float
+    Param: c : bool
+    Block
+      If
+        Identifier: c
+        Block
+          Return
+            BinaryOp: +
+              Cast -> float
+                Identifier: a
+              Identifier: b
+      Return
+        Identifier: b
+  VarDecl: result1 : int
+    FuncCall: add
+      Literal: 5 (int)
+      Literal: 10 (int)
+  VarDecl: result2 : int
+    FuncCall: add
+      BinaryOp: +
+        Literal: 1 (int)
+        Literal: 2 (int)
+      BinaryOp: *
+        Literal: 3 (int)
+        Literal: 4 (int)
+  VarDecl: result3 : float
+    FuncCall: process
+      Literal: 10 (int)
+      Literal: 3.14 (float)
+      Literal: True (bool)
+  VarDecl: nested : int
+    FuncCall: add
+      FuncCall: add
+        Literal: 1 (int)
+        Literal: 2 (int)
+      FuncCall: add
+        Literal: 3 (int)
+        Literal: 4 (int)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Nested Structures
+TESTING: Parser correctly handles deeply nested control structures
+================================================================================
+
+INPUT PROGRAM:
+
+    fun nested_test(n:int) -> int {
+        let result:int = 0;
+        
+        if (n > 0) {
+            if (n % 2 == 0) {
+                while (n > 0) {
+                    for (let i:int = 0; i < n; i = i + 1) {
+                        if (i % 3 == 0) {
+                            result = result + i;
+                        } else {
+                            if (i % 5 == 0) {
+                                result = result - i;
+                            }
+                        }
+                    }
+                    n = n - 1;
+                }
+            } else {
+                result = n * 2;
+            }
+        }
+        
+        return result;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: nested_test(n:int) -> int
+    Param: n : int
+    Block
+      VarDecl: result : int
+        Literal: 0 (int)
+      If
+        BinaryOp: >
+          Identifier: n
+          Literal: 0 (int)
+        Block
+          If
+            BinaryOp: ==
+              BinaryOp: %
+                Identifier: n
+                Literal: 2 (int)
+              Literal: 0 (int)
+            Block
+              While
+                BinaryOp: >
+                  Identifier: n
+                  Literal: 0 (int)
+                Block
+                  For
+                    VarDecl: i : int
+                      Literal: 0 (int)
+                    BinaryOp: <
+                      Identifier: i
+                      Identifier: n
+                    Assignment
+                      Identifier: i
+                      BinaryOp: +
+                        Identifier: i
+                        Literal: 1 (int)
+                    Block
+                      If
+                        BinaryOp: ==
+                          BinaryOp: %
+                            Identifier: i
+                            Literal: 3 (int)
+                          Literal: 0 (int)
+                        Block
+                          Assignment
+                            Identifier: result
+                            BinaryOp: +
+                              Identifier: result
+                              Identifier: i
+                        Block
+                          If
+                            BinaryOp: ==
+... (23 more lines)
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Error Detection
+TESTING: Parser correctly detects and reports syntax errors
+================================================================================
+
+Missing expression:
+INPUT: let x:int = ;
+ERRORS DETECTED: 1
+  - Parser Error at line 1, col 13: Expected expression, but found ';' (SEMICOLON) (found ';')
+
+Missing identifier:
+INPUT: let :int = 5;
+ERRORS DETECTED: 1
+  - Parser Error at line 1, col 5: Expected variable name, but found ':' (COLON) (found ':')
+
+Missing parentheses:
+INPUT: if x > 0 { }
+ERRORS DETECTED: 1
+  - Parser Error at line 1, col 4: Expected '(' after 'if', but found 'x' (IDENTIFIER) (found 'x')
+
+Missing return type:
+INPUT: fun test() { return 5; }
+ERRORS DETECTED: 1
+  - Parser Error at line 1, col 12: Expected '->' before return type, but found '{' (LBRACE) (found '{')
+
+Missing semicolon:
+INPUT: { let x:int = 5 }
+ERRORS DETECTED: 1
+  - Parser Error at line 1, col 17: Expected ';' after variable declaration, but found '}' (RBRACE) (found '}')
+
+Unmatched parenthesis:
+INPUT: let x:int = (5;
+ERRORS DETECTED: 1
+  - Parser Error at line 1, col 15: Expected ')' after expression, but found ';' (SEMICOLON) (found ';')
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Complex Program
+TESTING: Parser correctly handles a complete program with all features
+================================================================================
+
+INPUT PROGRAM:
+
+    fun fibonacci(n:int) -> int {
+        if (n <= 1) {
+            return n;
+        }
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+    
+    fun test_modulo(a:int, b:int) -> int {
+        let quotient:int = a / b;
+        let remainder:int = a % b;
+        
+        if (remainder == 0) {
+            return quotient;
+        }
+        
+        return remainder;
+    }
+    
+    fun main() -> int {
+        let fib10:int = fibonacci(10);
+        __print fib10;
+        
+        let mod_result:int = test_modulo(17, 5);
+        __print mod_result;
+        
+        for (let i:int = 0; i < 10; i = i + 1) {
+            if (i % 2 == 0) {
+                let color:colour = (i * 1000) as colour;
+                __write i * 10, i * 10, color;
+            }
+        }
+        
+        return 0;
+    }
+    
+    let result:int = main();
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: fibonacci(n:int) -> int
+    Param: n : int
+    Block
+      If
+        BinaryOp: <=
+          Identifier: n
+          Literal: 1 (int)
+        Block
+          Return
+            Identifier: n
+      Return
+        BinaryOp: +
+          FuncCall: fibonacci
+            BinaryOp: -
+              Identifier: n
+              Literal: 1 (int)
+          FuncCall: fibonacci
+            BinaryOp: -
+              Identifier: n
+              Literal: 2 (int)
+  FuncDecl: test_modulo(a:int, b:int) -> int
+    Param: a : int
+    Param: b : int
+    Block
+      VarDecl: quotient : int
+        BinaryOp: /
+          Identifier: a
+          Identifier: b
+      VarDecl: remainder : int
+        BinaryOp: %
+          Identifier: a
+          Identifier: b
+      If
+        BinaryOp: ==
+          Identifier: remainder
+          Literal: 0 (int)
+        Block
+          Return
+            Identifier: quotient
+      Return
+        Identifier: remainder
+  FuncDecl: main() -> int
+    Block
+      VarDecl: fib10 : int
+        FuncCall: fibonacci
+          Literal: 10 (int)
+      Print
+        Identifier: fib10
+      VarDecl: mod_result : int
+        FuncCall: test_modulo
+          Literal: 17 (int)
+          Literal: 5 (int)
+      Print
+        Identifier: mod_result
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 10 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          If
+            BinaryOp: ==
+              BinaryOp: %
+                Identifier: i
+                Literal: 2 (int)
+              Literal: 0 (int)
+            Block
+              VarDecl: color : colour
+                Cast -> colour
+                  BinaryOp: *
+                    Identifier: i
+                    Literal: 1000 (int)
+              Write
+                BinaryOp: *
+                  Identifier: i
+                  Literal: 10 (int)
+                BinaryOp: *
+                  Identifier: i
+                  Literal: 10 (int)
+                Identifier: color
+      Return
+        Literal: 0 (int)
+  VarDecl: result : int
+    FuncCall: main
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TASK 2 SUMMARY
+================================================================================
+Variable Declarations          PASS
+Function Declarations          PASS
+Control Structures             PASS
+Expression Parsing             PASS
+Built-in Statements            PASS
+Function Calls                 PASS
+Nested Structures              PASS
+Error Detection                PASS
+Complex Program                PASS
+--------------------------------------------------------------------------------
+Total: 9/9 tests passed

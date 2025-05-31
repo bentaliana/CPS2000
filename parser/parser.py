@@ -178,6 +178,16 @@ class PArLParser:
         return VariableDeclaration(name_token.lexeme, var_type, initializer,
                                 start_token.line, start_token.col)
     
+    def parse_comma_separated_expression(self) -> ASTNode:
+        """
+        Parse expression up to (but not including) comma level.
+        This is used for parsing arguments in built-in functions where
+        commas are argument separators, not operators.
+        """
+        # Parse everything except comma at the top level
+        # This includes all arithmetic, relational, and logical operations
+        return self.parse_expression()
+    
     def parse_array_literal(self) -> ArrayLiteral:
         """Parse array literal: [expr, expr, ...]"""
         start_token = self.stream.expect(TokenType.LBRACKET, "'[' for array literal")
@@ -309,46 +319,46 @@ class PArLParser:
         return ReturnStatement(value, start_token.line, start_token.col)
     
     def parse_print_statement(self) -> PrintStatement:
-        """Parse print statement: '__print' Expr - FIXED PRECEDENCE"""
+        """Parse print statement: '__print' Expr"""
         start_token = self.stream.expect(TokenType.BUILTIN_PRINT)
-        expr = self.parse_unary_expression()  # Changed from parse_expression()
+        expr = self.parse_comma_separated_expression()
         return PrintStatement(expr, start_token.line, start_token.col)
     
     def parse_delay_statement(self) -> DelayStatement:
-        """Parse delay statement: '__delay' Expr - FIXED PRECEDENCE"""
+        """Parse delay statement: '__delay' Expr"""
         start_token = self.stream.expect(TokenType.BUILTIN_DELAY)
-        expr = self.parse_unary_expression()  # Changed from parse_expression()
+        expr = self.parse_comma_separated_expression()
         return DelayStatement(expr, start_token.line, start_token.col)
 
     def parse_write_statement(self) -> WriteStatement:
-        """Parse write statement: '__write' Expr ',' Expr ',' Expr - FIXED PRECEDENCE"""
+        """Parse write statement: '__write' Expr ',' Expr ',' Expr"""
         start_token = self.stream.expect(TokenType.BUILTIN_WRITE)
-        x = self.parse_unary_expression()  # Changed from parse_expression()
+        x = self.parse_comma_separated_expression()
         self.stream.expect(TokenType.COMMA, "',' after first argument")
-        y = self.parse_unary_expression()  # Changed from parse_expression()
+        y = self.parse_comma_separated_expression()
         self.stream.expect(TokenType.COMMA, "',' after second argument")
-        color = self.parse_unary_expression()  # Changed from parse_expression()
+        color = self.parse_comma_separated_expression()
         return WriteStatement(x, y, color, start_token.line, start_token.col)
 
     def parse_write_box_statement(self) -> WriteBoxStatement:
-        """Parse write_box statement: '__write_box' Expr ',' Expr ',' Expr ',' Expr ',' Expr - FIXED PRECEDENCE"""
+        """Parse write_box statement: '__write_box' Expr ',' Expr ',' Expr ',' Expr ',' Expr"""
         start_token = self.stream.expect(TokenType.BUILTIN_WRITE_BOX)
-        x = self.parse_unary_expression()  # Changed from parse_expression()
+        x = self.parse_comma_separated_expression()
         self.stream.expect(TokenType.COMMA, "',' after first argument")
-        y = self.parse_unary_expression()  # Changed from parse_expression()
+        y = self.parse_comma_separated_expression()
         self.stream.expect(TokenType.COMMA, "',' after second argument")
-        width = self.parse_unary_expression()  # Changed from parse_expression()
+        width = self.parse_comma_separated_expression()
         self.stream.expect(TokenType.COMMA, "',' after third argument")
-        height = self.parse_unary_expression()  # Changed from parse_expression()
+        height = self.parse_comma_separated_expression()
         self.stream.expect(TokenType.COMMA, "',' after fourth argument")
-        color = self.parse_unary_expression()  # Changed from parse_expression()
+        color = self.parse_comma_separated_expression()
         return WriteBoxStatement(x, y, width, height, color,
                                 start_token.line, start_token.col)
 
     def parse_clear_statement(self) -> ClearStatement:
-        """Parse clear statement: '__clear' Expr - FIXED PRECEDENCE"""
+        """Parse clear statement: '__clear' Expr"""
         start_token = self.stream.expect(TokenType.BUILTIN_CLEAR)
-        color = self.parse_unary_expression()  # Changed from parse_expression()
+        color = self.parse_comma_separated_expression()
         return ClearStatement(color, start_token.line, start_token.col)
     
     def parse_block(self) -> Block:
@@ -373,12 +383,35 @@ class PArLParser:
         self.stream.expect(TokenType.RBRACE, "'}'")
         return Block(statements, start_token.line, start_token.col)
     
+    def parse_logical_or_expression(self) -> ASTNode:
+        """Parse logical OR expression (lowest precedence after assignment)"""
+        left = self.parse_logical_and_expression()
+        
+        while self.stream.match(TokenType.OR):
+            op_token = self.stream.advance()
+            right = self.parse_logical_and_expression()
+            left = BinaryOperation(left, op_token.lexeme, right,
+                                left.line, left.col)
+        
+        return left
+
+    def parse_logical_and_expression(self) -> ASTNode:
+        """Parse logical AND expression (higher than OR, lower than comparisons)"""
+        left = self.parse_relational_expression()
+        
+        while self.stream.match(TokenType.AND):
+            op_token = self.stream.advance()
+            right = self.parse_relational_expression()
+            left = BinaryOperation(left, op_token.lexeme, right,
+                                left.line, left.col)
+        
+        return left
+    
     # ===== EXPRESSION PARSING =====
     
     def parse_expression(self) -> ASTNode:
-        """Parse expression: SimpleExpr { RelationalOp SimpleExpr }"""
-        # Remove cast handling from here - it should be at a higher precedence level
-        return self.parse_relational_expression()
+        """Parse expression with proper precedence hierarchy"""
+        return self.parse_logical_or_expression()
 
     def parse_relational_expression(self) -> ASTNode:
         """Parse relational expression: SimpleExpr { RelationalOp SimpleExpr }"""
@@ -398,23 +431,26 @@ class PArLParser:
         """Parse additive expression: Term { AdditiveOp Term }"""
         left = self.parse_multiplicative_expression()
         
-        while self.stream.match(TokenType.PLUS, TokenType.MINUS, TokenType.OR):
+        # SYSTEMATIC FIX: Remove OR from here - it belongs at lower precedence
+        while self.stream.match(TokenType.PLUS, TokenType.MINUS):  # No more OR here
             op_token = self.stream.advance()
             right = self.parse_multiplicative_expression()
             left = BinaryOperation(left, op_token.lexeme, right,
-                                 left.line, left.col)
+                                left.line, left.col)
         
         return left
-    
+
+    # UPDATE parse_multiplicative_expression - REMOVE TokenType.AND:
     def parse_multiplicative_expression(self) -> ASTNode:
         """Parse multiplicative expression: Factor { MultiplicativeOp Factor }"""
         left = self.parse_cast_expression()
         
-        while self.stream.match(TokenType.MULTIPLY, TokenType.SLASH, TokenType.MODULO, TokenType.AND):  # Add MODULO
+        # SYSTEMATIC FIX: Remove AND from here - it belongs at lower precedence
+        while self.stream.match(TokenType.MULTIPLY, TokenType.SLASH, TokenType.MODULO):  # No more AND here
             op_token = self.stream.advance()
             right = self.parse_cast_expression()
             left = BinaryOperation(left, op_token.lexeme, right,
-                                 left.line, left.col)
+                                left.line, left.col)
         
         return left
     
@@ -548,22 +584,19 @@ class PArLParser:
         return create_literal_from_token(token)
     
     def parse_pad_read(self) -> PadRead:
-        """Parse __read expression: '__read' Expr ',' Expr - FIXED PRECEDENCE"""
+        """Parse __read expression: '__read' Expr ',' Expr"""
         start_token = self.stream.expect(TokenType.BUILTIN_READ)
-        
-        # FIXED: Parse at unary level to respect operator precedence
-        x = self.parse_unary_expression()  # Changed from parse_expression()
+        x = self.parse_comma_separated_expression()
         self.stream.expect(TokenType.COMMA, "',' after first argument to __read")
-        y = self.parse_unary_expression()  # Changed from parse_expression()
-        
+        y = self.parse_comma_separated_expression()
         return PadRead(x, y, start_token.line, start_token.col)
     
     def parse_pad_rand_int(self) -> PadRandI:
         """Parse __randi expression: '__randi' Expr"""
         start_token = self.stream.expect(TokenType.BUILTIN_RANDI)
-        max_val = self.parse_expression()  # Back to full expression
+        max_val = self.parse_comma_separated_expression()
         return PadRandI(max_val, start_token.line, start_token.col)
-            
+    
     def parse_type(self) -> Union[str, ArrayType]:
         """Parse type specification including arrays: 'int' | 'int[5]' | 'int[]'"""
         token = self.stream.current_token()

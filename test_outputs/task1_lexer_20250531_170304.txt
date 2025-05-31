@@ -1,0 +1,275 @@
+TEST OUTPUT: task1_lexer
+Generated: 2025-05-31 17:03:04
+================================================================================
+
+
+================================================================================
+TEST: All Operators
+TESTING: Lexer correctly identifies all operators including modulo
+================================================================================
+
+INPUT:
+
+    + - * / % = == != < > <= >= -> ( ) { } [ ] : , ;
+    
+
+TOKENS:
++ -> PLUS
+- -> MINUS
+* -> MULTIPLY
+/ -> SLASH
+% -> MODULO
+= -> EQUAL
+== -> EQUAL_EQUAL
+!= -> NOT_EQUAL
+< -> LESS
+> -> GREATER
+<= -> LESS_EQUAL
+>= -> GREATER_EQUAL
+-> -> ARROW
+( -> LPAREN
+) -> RPAREN
+{ -> LBRACE
+} -> RBRACE
+[ -> LBRACKET
+] -> RBRACKET
+: -> COLON
+, -> COMMA
+; -> SEMICOLON
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: All Keywords
+TESTING: Lexer correctly identifies all language keywords
+================================================================================
+
+INPUT:
+
+    let fun if else for while return as not and or
+    int float bool colour true false
+    
+
+TOKENS:
+let -> LET
+fun -> FUN
+if -> IF
+else -> ELSE
+for -> FOR
+while -> WHILE
+return -> RETURN
+as -> AS
+not -> NOT
+and -> AND
+or -> OR
+int -> TYPE_INT
+float -> TYPE_FLOAT
+bool -> TYPE_BOOL
+colour -> TYPE_COLOUR
+true -> TRUE
+false -> FALSE
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: All Built-ins
+TESTING: Lexer correctly identifies all built-in functions
+================================================================================
+
+INPUT:
+
+    __print __delay __write __write_box __randi __read __width __height __clear
+    
+
+TOKENS:
+__print -> BUILTIN_PRINT
+__delay -> BUILTIN_DELAY
+__write -> BUILTIN_WRITE
+__write_box -> BUILTIN_WRITE_BOX
+__randi -> BUILTIN_RANDI
+__read -> BUILTIN_READ
+__width -> BUILTIN_WIDTH
+__height -> BUILTIN_HEIGHT
+__clear -> BUILTIN_CLEAR
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: All Literals
+TESTING: Lexer correctly identifies integer, float, boolean, and colour literals
+================================================================================
+
+INPUT:
+
+    123 0 999999
+    123.456 0.0 3.14159
+    #000000 #FFFFFF #ff0000 #123ABC
+    variable func_name x variable123
+    
+
+TOKENS:
+123 -> INT_LITERAL
+0 -> INT_LITERAL
+999999 -> INT_LITERAL
+123.456 -> FLOAT_LITERAL
+0.0 -> FLOAT_LITERAL
+3.14159 -> FLOAT_LITERAL
+#000000 -> COLOUR_LITERAL
+#FFFFFF -> COLOUR_LITERAL
+#ff0000 -> COLOUR_LITERAL
+#123ABC -> COLOUR_LITERAL
+variable -> IDENTIFIER
+func_name -> IDENTIFIER
+x -> IDENTIFIER
+variable123 -> IDENTIFIER
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Comment Handling
+TESTING: Lexer correctly handles line and block comments
+================================================================================
+
+Line comment:
+INPUT: '// this is a line comment'
+TOKENS: []
+
+Block comment:
+INPUT: '/* this is a block comment */'
+TOKENS: []
+
+Multi-line block comment:
+INPUT: '/* multi\nline\ncomment */'
+TOKENS: []
+
+Code with line comment:
+INPUT: 'code // comment\nmore code'
+TOKENS: ['code', 'more', 'code']
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Error Detection
+TESTING: Lexer correctly detects and reports lexical errors
+================================================================================
+
+Invalid float (trailing dot):
+INPUT: '123.'
+ERROR DETECTED: ERROR_INVALID_FLOAT
+
+Invalid colour (5 hex digits):
+INPUT: '#12345'
+ERROR DETECTED: ERROR_INVALID_COLOUR
+
+Invalid colour (non-hex):
+INPUT: '#gggggg'
+ERROR DETECTED: ERROR_INVALID_COLOUR
+
+Unterminated block comment:
+INPUT: '/* unterminated'
+NO ERROR DETECTED
+
+Stray comment close:
+INPUT: '*/'
+ERROR DETECTED: ERROR_STRAY_COMMENT_CLOSE
+
+Nested block comment:
+INPUT: '/* nested /* comment */ */'
+ERROR DETECTED: ERROR_NESTED_COMMENT
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Complex Program Tokenization
+TESTING: Lexer correctly tokenizes a complete program with modulo
+================================================================================
+
+INPUT PROGRAM:
+
+    fun calculate(x:int, y:int) -> int {
+        let sum:int = x + y;
+        let product:int = x * y;
+        let remainder:int = x % y;  // Test modulo
+        
+        if (remainder == 0) {
+            return product;
+        } else {
+            return sum + remainder;
+        }
+    }
+    
+    let a:int = 17;
+    let b:int = 5;
+    let result:int = calculate(a, b);
+    __print result;
+    
+
+TOKEN SUMMARY:
+  ARROW: 1
+  BUILTIN_PRINT: 1
+  COLON: 8
+  COMMA: 2
+  ELSE: 1
+  END: 1
+  EQUAL: 6
+  EQUAL_EQUAL: 1
+  FUN: 1
+  IDENTIFIER: 23
+  IF: 1
+  INT_LITERAL: 3
+  LBRACE: 3
+  LET: 6
+  LPAREN: 3
+  MODULO: 1
+  MULTIPLY: 1
+  PLUS: 2
+  RBRACE: 3
+  RETURN: 2
+  RPAREN: 3
+  SEMICOLON: 9
+  TYPE_INT: 9
+
+Modulo operator correctly tokenized
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TASK 1 SUMMARY
+================================================================================
+All Operators                  PASS
+All Keywords                   PASS
+All Built-ins                  PASS
+All Literals                   PASS
+Comment Handling               PASS
+Error Detection                PASS
+Complex Tokenization           PASS
+--------------------------------------------------------------------------------
+Total: 7/7 tests passed

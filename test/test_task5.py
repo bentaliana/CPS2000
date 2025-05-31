@@ -13,40 +13,13 @@ from lexer.lexer import FSALexer, TokenType
 from parser.parser import PArLParser
 from semantic_analyzer.semantic_analyzer import SemanticAnalyzer
 from code_generator.code_generator import PArIRGenerator
+from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
 
 
-def print_test_header(test_name, description):
-    """Print test header"""
-    print("\n" + "="*80)
-    print(f"TEST: {test_name}")
-    print(f"TESTING: {description}")
-    print("="*80)
-
-
-def print_ast(ast, max_lines=50):
-    """Print AST structure"""
-    print("\nPROGRAM AST:")
-    print("-"*60)
-    try:
-        ast_str = str(ast)
-        lines = ast_str.split('\n')
-        for i, line in enumerate(lines[:max_lines]):
-            # Handle unicode characters for Windows console
-            print(line.encode('utf-8', errors='replace').decode('utf-8'))
-        if len(lines) > max_lines:
-            print(f"... ({len(lines) - max_lines} more lines)")
-    except Exception as e:
-        print(f"Error printing AST: {e}")
-    print("-"*60)
-
-
-def print_outcome(success, details=""):
-    """Print test outcome"""
-    print("\nTEST OUTCOME:")
-    if success:
-        print("PASS")
-    else:
-        print(f"FAIL: {details}")
+if "--show-ast" in sys.argv:
+    set_ast_printing(True)
+else:
+    set_ast_printing(False)
 
 
 # ============================================================================
@@ -66,16 +39,16 @@ def test_array_lexing():
     fun process(data:int[10]) -> int { return data[0]; }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
     
-    print("\nTOKENS:")
+    write_to_file("\nTOKENS:")
     for token in tokens:
         if token.type not in [TokenType.WHITESPACE, TokenType.NEWLINE]:
-            print(f"{token.lexeme} -> {token.type.name}")
+            write_to_file(f"{token.lexeme} -> {token.type.name}")
     
     # Check for array-related tokens
     required_tokens = [TokenType.LBRACKET, TokenType.RBRACKET, TokenType.COMMA]
@@ -108,8 +81,8 @@ def test_array_parsing():
     let colors:colour[] = [#ff0000, #00ff00, #0000ff];
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -120,7 +93,8 @@ def test_array_parsing():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser errors: {parser.errors}")
+            error_details = f"Parser errors: {parser.errors}"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -146,8 +120,8 @@ def test_array_access_parsing():
     numbers[1 + 1] = 200;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -158,7 +132,8 @@ def test_array_access_parsing():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser errors: {parser.errors}")
+            error_details = f"Parser errors: {parser.errors}"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -190,8 +165,8 @@ def test_array_function_parsing():
     let total:int = sum_array(numbers);
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -202,7 +177,8 @@ def test_array_function_parsing():
         print_ast(ast)
         
         if parser.has_errors():
-            print_outcome(False, f"Parser errors: {parser.errors}")
+            error_details = f"Parser errors: {parser.errors}"
+            print_outcome(False, error_details)
             return False
         else:
             print_outcome(True)
@@ -232,8 +208,8 @@ def test_array_type_checking():
     let mixed_valid:float[] = [1.0, 2.0, 3.0];  // int literals can be float
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -246,11 +222,11 @@ def test_array_type_checking():
     success = analyzer.analyze(ast)
     
     if success:
-        print("\nArray type checking passed")
+        write_to_file("\nArray type checking passed")
         print_outcome(True)
         return True
     else:
-        print(f"\nSemantic errors: {analyzer.errors}")
+        write_to_file(f"\nSemantic errors: {analyzer.errors}")
         print_outcome(False, "Array type checking failed")
         return False
 
@@ -279,8 +255,8 @@ def test_array_type_errors():
     let y:int = x[0];
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -293,9 +269,9 @@ def test_array_type_errors():
     success = analyzer.analyze(ast)
     
     if not success and len(analyzer.errors) >= 5:
-        print(f"\nDetected {len(analyzer.errors)} array type errors:")
+        write_to_file(f"\nDetected {len(analyzer.errors)} array type errors:")
         for error in analyzer.errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(True, "Correctly detected array type errors")
         return True
     else:
@@ -331,8 +307,8 @@ def test_array_function_semantics():
     let max_val:int = find_max(big_array);
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -345,11 +321,11 @@ def test_array_function_semantics():
     success = analyzer.analyze(ast)
     
     if success:
-        print("\nArray function semantics passed")
+        write_to_file("\nArray function semantics passed")
         print_outcome(True)
         return True
     else:
-        print(f"\nSemantic errors: {analyzer.errors}")
+        write_to_file(f"\nSemantic errors: {analyzer.errors}")
         print_outcome(False, "Array function semantics failed")
         return False
 
@@ -364,19 +340,26 @@ def test_array_code_generation():
                      "Code generator produces correct PArIR for array operations")
     
     test_code = """
+    fun get_element(arr:int[5], index:int) -> int {
+        return arr[index];
+    }
+
     let numbers:int[] = [10, 20, 30, 40, 50];
     let first:int = numbers[0];
     let third:int = numbers[2];
-    
+
     numbers[1] = 25;
     numbers[3] = 45;
-    
+
+    let element:int = get_element(numbers, 1);
+
     __print first;
     __print third;
+    __print element;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -387,17 +370,18 @@ def test_array_code_generation():
     
     analyzer = SemanticAnalyzer()
     if not analyzer.analyze(ast):
-        print_outcome(False, f"Semantic errors: {analyzer.errors}")
+        error_details = f"Semantic errors: {analyzer.errors}"
+        print_outcome(False, error_details)
         return False
     
     generator = PArIRGenerator()
     instructions = generator.generate(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for array operations
     required = ["pusha", "sta", "push [", "push +["]
@@ -432,8 +416,8 @@ def test_array_function_codegen():
     __print total;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -444,17 +428,18 @@ def test_array_function_codegen():
     
     analyzer = SemanticAnalyzer()
     if not analyzer.analyze(ast):
-        print_outcome(False, f"Semantic errors: {analyzer.errors}")
+        error_details = f"Semantic errors: {analyzer.errors}"
+        print_outcome(False, error_details)
         return False
     
     generator = PArIRGenerator()
     instructions = generator.generate(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for instr in instructions:
-        print(instr)
-    print("-"*60)
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     # Check for function and array operations
     required = [".sum_array", "call", "pusha", "push +["]
@@ -491,48 +476,50 @@ def test_maxinarray_complete():
     __print max;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     # Lexical analysis
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
     
-    print("\nLEXICAL ANALYSIS: Success")
+    write_to_file("\nLEXICAL ANALYSIS: Success")
     
     # Parsing
     parser = PArLParser(tokens)
     ast = parser.parse()
     
     if parser.has_errors():
-        print_outcome(False, f"Parser errors: {parser.errors}")
+        error_details = f"Parser errors: {parser.errors}"
+        print_outcome(False, error_details)
         return False
     
-    print("PARSING: Success")
+    write_to_file("PARSING: Success")
     print_ast(ast, max_lines=100)
     
     # Semantic analysis
     analyzer = SemanticAnalyzer()
     if not analyzer.analyze(ast):
-        print_outcome(False, f"Semantic errors: {analyzer.errors}")
+        error_details = f"Semantic errors: {analyzer.errors}"
+        print_outcome(False, error_details)
         return False
     
-    print("SEMANTIC ANALYSIS: Success")
+    write_to_file("SEMANTIC ANALYSIS: Success")
     
     # Code generation
     generator = PArIRGenerator()
     instructions = generator.generate(ast)
     
-    print("\nGENERATED PArIR:")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions):
-        print(instr)
+        write_to_file(instr)
         if i > 100:
-            print(f"... ({len(instructions) - i - 1} more instructions)")
+            write_to_file(f"... ({len(instructions) - i - 1} more instructions)")
             break
-    print("-"*60)
+    write_to_file("-"*60)
     
-    print(f"\nTotal instructions: {len(instructions)}")
+    write_to_file(f"\nTotal instructions: {len(instructions)}")
     
     # Verify key components
     components = {
@@ -544,10 +531,10 @@ def test_maxinarray_complete():
     }
     
     all_found = True
-    print("\nVerifying components:")
+    write_to_file("\nVerifying components:")
     for component, description in components.items():
         found = any(component in instr for instr in instructions)
-        print(f"  {description} ({component}): {'YES' if found else 'NO'}")
+        write_to_file(f"  {description} ({component}): {'YES' if found else 'NO'}")
         if not found:
             all_found = False
     
@@ -590,8 +577,8 @@ def test_multidimensional_simulation():
     __print diag3;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -602,19 +589,20 @@ def test_multidimensional_simulation():
     
     analyzer = SemanticAnalyzer()
     if not analyzer.analyze(ast):
-        print_outcome(False, f"Semantic errors: {analyzer.errors}")
+        error_details = f"Semantic errors: {analyzer.errors}"
+        print_outcome(False, error_details)
         return False
     
     generator = PArIRGenerator()
     instructions = generator.generate(ast)
     
-    print("\nGENERATED PArIR (partial):")
-    print("-"*60)
+    write_to_file("\nGENERATED PArIR (partial):")
+    write_to_file("-"*60)
     for i, instr in enumerate(instructions[:80]):
-        print(instr)
+        write_to_file(instr)
     if len(instructions) > 80:
-        print(f"... ({len(instructions) - 80} more instructions)")
-    print("-"*60)
+        write_to_file(f"... ({len(instructions) - 80} more instructions)")
+    write_to_file("-"*60)
     
     print_outcome(True)
     return True
@@ -662,8 +650,8 @@ def test_array_algorithms():
     __print evens;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -674,19 +662,22 @@ def test_array_algorithms():
     
     analyzer = SemanticAnalyzer()
     if not analyzer.analyze(ast):
-        print_outcome(False, f"Semantic errors: {analyzer.errors}")
+        error_details = f"Semantic errors: {analyzer.errors}"
+        print_outcome(False, error_details)
         return False
     
     generator = PArIRGenerator()
     instructions = generator.generate(ast)
     
-    print(f"\nGenerated {len(instructions)} instructions")
+    write_to_file(f"\nGenerated {len(instructions)} instructions")
     print_outcome(True)
     return True
 
 
 def run_task5_tests():
     """Run all Task 5 array tests"""
+    output_file = create_test_output_file("task5_arrays")
+    
     print("TASK 5 - ARRAY TESTS")
     print("="*80)
     
@@ -713,8 +704,11 @@ def run_task5_tests():
     results.append(("Array Algorithms", test_array_algorithms()))
     
     # Summary
-    print("\n" + "="*80)
-    print("TASK 5 SUMMARY")
+    write_to_file("\n" + "="*80)
+    write_to_file("TASK 5 SUMMARY")
+    write_to_file("="*80)
+    
+    print("\nTASK 5 SUMMARY")
     print("="*80)
     
     passed = sum(1 for _, result in results if result)
@@ -722,10 +716,16 @@ def run_task5_tests():
     
     for test_name, result in results:
         status = "PASS" if result else "FAIL"
+        write_to_file(f"{test_name:<35} {status}")
         print(f"{test_name:<35} {status}")
     
+    write_to_file("-"*80)
+    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
     print(f"Total: {passed}/{total} tests passed")
+    
+    close_test_output_file()
+    print(f"Detailed output written to: {output_file}")
     
     return passed == total
 

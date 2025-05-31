@@ -1,0 +1,1690 @@
+TEST OUTPUT: simulator_programs
+Generated: 2025-05-31 17:12:47
+================================================================================
+
+Testing programs that should work correctly in the PArL simulator
+
+================================================================================
+TEST: Simple Color Animation
+TESTING: Basic color cycling animation
+================================================================================
+
+INPUT PROGRAM:
+
+    let c:colour = 0 as colour;
+
+    for (let i:int = 0; i < 64; i = i + 1) {
+        c = (__randi 16777216) as colour;
+        __clear c;
+        __delay 16;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: c : colour
+    Cast -> colour
+      Literal: 0 (int)
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 64 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Assignment
+        Identifier: c
+        Cast -> colour
+          BuiltIn: __randi
+            Literal: 16777216 (int)
+      Clear
+        Identifier: c
+      Delay
+        Literal: 16 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 2
+oframe
+push 0
+push 1
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 64
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+22
+jmp
+push 0
+oframe
+push 16777216
+irnd
+push 1
+push 2
+st
+push [1:2]
+clear
+push 16
+delay
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-26
+jmp
+cframe
+cframe
+halt
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: MaxInArray Function
+TESTING: Finding maximum value in an array
+================================================================================
+
+INPUT PROGRAM:
+
+    fun MaxInArray(x:int[8]) -> int {
+        let m:int = 0;
+        for (let i:int = 0; i < 8; i = i+1) {
+            if (x[i] > m) { m = x[i]; }
+        }
+        return m;
+    }
+
+    let list_of_integers:int[] = [23, 54, 3, 65, 99, 120, 34, 21];
+    let max:int = MaxInArray(list_of_integers);
+    __print max;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: MaxInArray(x:int[8]) -> int
+    Param: x : int[8]
+    Block
+      VarDecl: m : int
+        Literal: 0 (int)
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 8 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          If
+            BinaryOp: >
+              IndexAccess
+                Identifier: x
+                Identifier: i
+              Identifier: m
+            Block
+              Assignment
+                Identifier: m
+                IndexAccess
+                  Identifier: x
+                  Identifier: i
+      Return
+        Identifier: m
+  VarDecl: list_of_integers : int[8]
+    ArrayLiteral: [8 elements]
+      Literal: 23 (int)
+      Literal: 54 (int)
+      Literal: 3 (int)
+      Literal: 65 (int)
+      Literal: 99 (int)
+      Literal: 120 (int)
+      Literal: 34 (int)
+      Literal: 21 (int)
+  VarDecl: max : int
+    FuncCall: MaxInArray
+      Identifier: list_of_integers
+  Print
+    Identifier: max
+------------------------------------------------------------
+
+GENERATED PArIR (first 100 instructions):
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 10
+oframe
+push #PC+52
+jmp
+.MaxInArray
+push 9
+alloc
+push 0
+push 8
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 8
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+29
+jmp
+push 0
+oframe
+push [8:2]
+push [0:1]
+push +[0:2]
+gt
+push #PC+4
+cjmp
+push #PC+10
+jmp
+push 0
+oframe
+push [0:2]
+push +[0:3]
+push 8
+push 3
+st
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-33
+jmp
+cframe
+push [8:0]
+ret
+push 21
+push 34
+push 120
+push 99
+push 65
+push 3
+push 54
+push 23
+push 8
+push 1
+push 0
+sta
+push 8
+pusha [1:0]
+push 8
+push .MaxInArray
+call
+push 9
+push 0
+st
+push [9:0]
+print
+cframe
+halt
+------------------------------------------------------------
+
+Total instructions: 82
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Color Functions
+TESTING: Random color generation and display
+================================================================================
+
+INPUT PROGRAM:
+
+    fun color() -> colour {
+        return (__randi 16777216 - #f9f9f9 as int) as colour;
+    }
+
+    fun cc(x:int, y:int) -> bool {
+        __print x;
+        __print y;
+
+        let c:colour = color();
+        let h:int = __randi __height;
+        let w:int = __randi __width;
+        __write w, h, c;
+
+        return true;
+    }
+
+    let a:bool = cc(0, 0);
+    __delay 1000;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: color() -> colour
+    Block
+      Return
+        Cast -> colour
+          BuiltIn: __randi
+            BinaryOp: -
+              Literal: 16777216 (int)
+              Cast -> int
+                Literal: #f9f9f9 (colour)
+  FuncDecl: cc(x:int, y:int) -> bool
+    Param: x : int
+    Param: y : int
+    Block
+      Print
+        Identifier: x
+      Print
+        Identifier: y
+      VarDecl: c : colour
+        FuncCall: color
+      VarDecl: h : int
+        BuiltIn: __randi
+          BuiltIn: __height
+      VarDecl: w : int
+        BuiltIn: __randi
+          BuiltIn: __width
+      Write
+        Identifier: w
+        Identifier: h
+        Identifier: c
+      Return
+        Literal: True (bool)
+  VarDecl: a : bool
+    FuncCall: cc
+      Literal: 0 (int)
+      Literal: 0 (int)
+  Delay
+    Literal: 1000 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 2
+oframe
+push #PC+10
+jmp
+.color
+push 0
+alloc
+push #f9f9f9
+push 16777216
+sub
+irnd
+ret
+push #PC+31
+jmp
+.cc
+push 5
+alloc
+push [0:0]
+print
+push [1:0]
+print
+push 0
+push .color
+call
+push 2
+push 0
+st
+height
+irnd
+push 3
+push 0
+st
+width
+irnd
+push 4
+push 0
+st
+push [2:0]
+push [3:0]
+push [4:0]
+write
+push 1
+ret
+push 0
+push 0
+push 2
+push .cc
+call
+push 1
+push 0
+st
+push 1000
+delay
+cframe
+halt
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Color Animation While Loop
+TESTING: Animated random pixels with iteration count
+================================================================================
+
+INPUT PROGRAM:
+
+    fun color() -> colour {
+        return (16777215 - __randi 16777215) as colour;
+    }
+
+    fun cc(x:int, y:int, iter:int) -> bool {
+        __print x;
+        __print y;
+        __print iter;
+        while (iter > 0) {
+            let c:colour = color();
+            let w:int = __randi __width;
+            let h:int = __randi __height;
+            __write w, h, c;
+            iter = iter - 1;
+        }
+        return true;
+    }
+
+    let a:bool = cc(0, 0, 100000);
+    __delay 1000;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: color() -> colour
+    Block
+      Return
+        Cast -> colour
+          BinaryOp: -
+            Literal: 16777215 (int)
+            BuiltIn: __randi
+              Literal: 16777215 (int)
+  FuncDecl: cc(x:int, y:int, iter:int) -> bool
+    Param: x : int
+    Param: y : int
+    Param: iter : int
+    Block
+      Print
+        Identifier: x
+      Print
+        Identifier: y
+      Print
+        Identifier: iter
+      While
+        BinaryOp: >
+          Identifier: iter
+          Literal: 0 (int)
+        Block
+          VarDecl: c : colour
+            FuncCall: color
+          VarDecl: w : int
+            BuiltIn: __randi
+              BuiltIn: __width
+          VarDecl: h : int
+            BuiltIn: __randi
+              BuiltIn: __height
+          Write
+            Identifier: w
+            Identifier: h
+            Identifier: c
+          Assignment
+            Identifier: iter
+            BinaryOp: -
+              Identifier: iter
+              Literal: 1 (int)
+      Return
+        Literal: True (bool)
+  VarDecl: a : bool
+    FuncCall: cc
+      Literal: 0 (int)
+      Literal: 0 (int)
+      Literal: 100000 (int)
+  Delay
+    Literal: 1000 (int)
+------------------------------------------------------------
+
+GENERATED PArIR (first 100 instructions):
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 2
+oframe
+push #PC+10
+jmp
+.color
+push 0
+alloc
+push 16777215
+irnd
+push 16777215
+sub
+ret
+push #PC+51
+jmp
+.cc
+push 3
+alloc
+push [0:0]
+print
+push [1:0]
+print
+push [2:0]
+print
+push 0
+push [2:0]
+gt
+push #PC+4
+cjmp
+push #PC+33
+jmp
+push 3
+oframe
+push 0
+push .color
+call
+push 0
+push 0
+st
+width
+irnd
+push 1
+push 0
+st
+height
+irnd
+push 2
+push 0
+st
+push [0:0]
+push [2:0]
+push [1:0]
+write
+push 1
+push [2:1]
+sub
+push 2
+push 1
+st
+cframe
+push #PC-36
+jmp
+push 1
+ret
+push 100000
+push 0
+push 0
+push 3
+push .cc
+call
+push 1
+push 0
+st
+push 1000
+delay
+cframe
+halt
+------------------------------------------------------------
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Rainbow Pattern
+TESTING: Animated rainbow pattern using color array
+================================================================================
+
+INPUT PROGRAM:
+
+    fun draw_pattern(offset:int) -> bool {
+        let colors:colour[] = [#FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #9400D3];
+
+        for (let x:int = 0; x < __width; x = x + 3) {
+            for (let y:int = 0; y < __height; y = y + 3) {                        
+                let colorIndex:int = (x + y + offset) % 7;
+                __write_box x, y, 2, 2, colors[colorIndex];
+            }
+        }
+
+        return true;
+    }
+
+    let offset:int = 0;
+    let r:bool = false;
+
+    while (true) {
+        r = draw_pattern(offset);
+        offset = offset + 1;
+        __delay 10;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: draw_pattern(offset:int) -> bool
+    Param: offset : int
+    Block
+      VarDecl: colors : colour[7]
+        ArrayLiteral: [7 elements]
+          Literal: #FF0000 (colour)
+          Literal: #FF7F00 (colour)
+          Literal: #FFFF00 (colour)
+          Literal: #00FF00 (colour)
+          Literal: #0000FF (colour)
+          Literal: #4B0082 (colour)
+          Literal: #9400D3 (colour)
+      For
+        VarDecl: x : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: x
+          BuiltIn: __width
+        Assignment
+          Identifier: x
+          BinaryOp: +
+            Identifier: x
+            Literal: 3 (int)
+        Block
+          For
+            VarDecl: y : int
+              Literal: 0 (int)
+            BinaryOp: <
+              Identifier: y
+              BuiltIn: __height
+            Assignment
+              Identifier: y
+              BinaryOp: +
+                Identifier: y
+                Literal: 3 (int)
+            Block
+              VarDecl: colorIndex : int
+                BinaryOp: %
+                  BinaryOp: +
+                    BinaryOp: +
+                      Identifier: x
+                      Identifier: y
+                    Identifier: offset
+                  Literal: 7 (int)
+              WriteBox
+                Identifier: x
+                Identifier: y
+                Literal: 2 (int)
+                Literal: 2 (int)
+                IndexAccess
+                  Identifier: colors
+                  Identifier: colorIndex
+      Return
+        Literal: True (bool)
+  VarDecl: offset : int
+    Literal: 0 (int)
+  VarDecl: r : bool
+    Literal: False (bool)
+  While
+    Literal: True (bool)
+    Block
+      Assignment
+        Identifier: r
+        FuncCall: draw_pattern
+          Identifier: offset
+      Assignment
+        Identifier: offset
+        BinaryOp: +
+          Identifier: offset
+          Literal: 1 (int)
+      Delay
+        Literal: 10 (int)
+------------------------------------------------------------
+
+GENERATED PArIR (first 150 instructions):
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 3
+oframe
+push #PC+85
+jmp
+.draw_pattern
+push 8
+alloc
+push #9400D3
+push #4B0082
+push #0000FF
+push #00FF00
+push #FFFF00
+push #FF7F00
+push #FF0000
+push 7
+push 1
+push 0
+sta
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+width
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+55
+jmp
+push 0
+oframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+height
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+30
+jmp
+push 1
+oframe
+push 7
+push [0:4]
+push [0:1]
+push [0:3]
+add
+add
+mod
+push 0
+push 0
+st
+push [0:0]
+push +[1:4]
+push 2
+push 2
+push [0:1]
+push [0:3]
+writebox
+cframe
+push 3
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-34
+jmp
+cframe
+cframe
+push 3
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-59
+jmp
+cframe
+push 1
+ret
+push 0
+push 1
+push 0
+st
+push 0
+push 2
+push 0
+st
+push 1
+push #PC+4
+cjmp
+push #PC+22
+jmp
+push 0
+oframe
+push [1:1]
+push 1
+push .draw_pattern
+call
+push 2
+push 1
+st
+push 1
+push [1:1]
+add
+push 1
+push 1
+st
+push 10
+delay
+cframe
+push #PC-23
+jmp
+cframe
+halt
+------------------------------------------------------------
+
+Total instructions: 126
+
+TEST OUTCOME:
+FAIL: Missing required operations: ['pusha']
+
+================================================================================
+
+
+================================================================================
+TEST: Screen Operations
+TESTING: Testing all screen-related built-in functions
+================================================================================
+
+INPUT PROGRAM:
+
+    // Get screen dimensions
+    let w:int = __width;
+    let h:int = __height;
+    
+    __print w;
+    __print h;
+    
+    // Clear screen with blue
+    __clear #0000FF;
+    __delay 500;
+    
+    // Draw some pixels
+    for (let i:int = 0; i < 10; i = i + 1) {
+        let x:int = i * 10;
+        let y:int = i * 10;
+        let color:colour = (i * 1000000) as colour;
+        __write x, y, color;
+    }
+    
+    // Draw boxes
+    __write_box 50, 50, 20, 20, #FF0000;
+    __write_box 100, 50, 20, 20, #00FF00;
+    __write_box 150, 50, 20, 20, #0000FF;
+    
+    // Read a pixel
+    let pixel:colour = __read 60, 60;
+    let pixel_int:int = pixel as int;
+    __print pixel_int;
+    
+    __delay 1000;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: w : int
+    BuiltIn: __width
+  VarDecl: h : int
+    BuiltIn: __height
+  Print
+    Identifier: w
+  Print
+    Identifier: h
+  Clear
+    Literal: #0000FF (colour)
+  Delay
+    Literal: 500 (int)
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 10 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      VarDecl: x : int
+        BinaryOp: *
+          Identifier: i
+          Literal: 10 (int)
+      VarDecl: y : int
+        BinaryOp: *
+          Identifier: i
+          Literal: 10 (int)
+      VarDecl: color : colour
+        Cast -> colour
+          BinaryOp: *
+            Identifier: i
+            Literal: 1000000 (int)
+      Write
+        Identifier: x
+        Identifier: y
+        Identifier: color
+  WriteBox
+    Literal: 50 (int)
+    Literal: 50 (int)
+    Literal: 20 (int)
+    Literal: 20 (int)
+    Literal: #FF0000 (colour)
+  WriteBox
+    Literal: 100 (int)
+... (21 more lines)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 5
+oframe
+width
+push 1
+push 0
+st
+height
+push 2
+push 0
+st
+push [1:0]
+print
+push [2:0]
+print
+push #0000FF
+clear
+push 500
+delay
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 10
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+35
+jmp
+push 3
+oframe
+push 10
+push [0:1]
+mul
+push 0
+push 0
+st
+push 10
+push [0:1]
+mul
+push 1
+push 0
+st
+push 1000000
+push [0:1]
+mul
+push 2
+push 0
+st
+push [2:0]
+push [1:0]
+push [0:0]
+write
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-39
+jmp
+cframe
+push #FF0000
+push 20
+push 20
+push 50
+push 50
+writebox
+push #00FF00
+push 20
+push 20
+push 50
+push 100
+writebox
+push #0000FF
+push 20
+push 20
+push 50
+push 150
+writebox
+push 60
+push 60
+read
+push 3
+push 0
+st
+push [3:0]
+push 4
+push 0
+st
+push [4:0]
+print
+push 1000
+delay
+cframe
+halt
+------------------------------------------------------------
+
+All screen operations found:
+  width: YES
+  height: YES
+  clear: YES
+  write: YES
+  writebox: YES
+  read: YES
+  delay: YES
+  print: YES
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Modulo Patterns
+TESTING: Creating patterns using modulo operator
+================================================================================
+
+INPUT PROGRAM:
+
+    fun draw_checkerboard() -> int {
+        let count:int = 0;
+        
+        for (let x:int = 0; x < __width; x = x + 10) {
+            for (let y:int = 0; y < __height; y = y + 10) {
+                if ((x / 10 + y / 10) % 2 == 0) {
+                    __write_box x, y, 10, 10, #FFFFFF;
+                } else {
+                    __write_box x, y, 10, 10, #000000;
+                }
+                count = count + 1;
+            }
+        }
+        
+        return count;
+    }
+    
+    fun draw_stripes(width:int) -> bool {
+        for (let x:int = 0; x < __width; x = x + 1) {
+            let stripe:int = x / width;
+            if (stripe % 2 == 0) {
+                for (let y:int = 0; y < __height; y = y + 1) {
+                    __write x, y, #FF0000;
+                }
+            }
+        }
+        return true;
+    }
+    
+    // Clear and draw checkerboard
+    __clear #808080;
+    let squares:int = draw_checkerboard();
+    __print squares;
+    __delay 2000;
+    
+    // Clear and draw stripes
+    __clear #0000FF;
+    let done:bool = draw_stripes(20);
+    __delay 2000;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: draw_checkerboard() -> int
+    Block
+      VarDecl: count : int
+        Literal: 0 (int)
+      For
+        VarDecl: x : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: x
+          BuiltIn: __width
+        Assignment
+          Identifier: x
+          BinaryOp: +
+            Identifier: x
+            Literal: 10 (int)
+        Block
+          For
+            VarDecl: y : int
+              Literal: 0 (int)
+            BinaryOp: <
+              Identifier: y
+              BuiltIn: __height
+            Assignment
+              Identifier: y
+              BinaryOp: +
+                Identifier: y
+                Literal: 10 (int)
+            Block
+              If
+                BinaryOp: ==
+                  BinaryOp: %
+                    BinaryOp: +
+                      BinaryOp: /
+                        Identifier: x
+                        Literal: 10 (int)
+                      BinaryOp: /
+                        Identifier: y
+                        Literal: 10 (int)
+                    Literal: 2 (int)
+                  Literal: 0 (int)
+                Block
+                  WriteBox
+                    Identifier: x
+                    Identifier: y
+                    Literal: 10 (int)
+                    Literal: 10 (int)
+                    Literal: #FFFFFF (colour)
+                Block
+                  WriteBox
+                    Identifier: x
+                    Identifier: y
+                    Literal: 10 (int)
+                    Literal: 10 (int)
+                    Literal: #000000 (colour)
+              Assignment
+                Identifier: count
+                BinaryOp: +
+                  Identifier: count
+                  Literal: 1 (int)
+      Return
+        Identifier: count
+  FuncDecl: draw_stripes(width:int) -> bool
+    Param: width : int
+    Block
+      For
+        VarDecl: x : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: x
+          BuiltIn: __width
+        Assignment
+          Identifier: x
+          BinaryOp: +
+            Identifier: x
+            Literal: 1 (int)
+        Block
+          VarDecl: stripe : int
+            BinaryOp: /
+              Identifier: x
+              Identifier: width
+          If
+            BinaryOp: ==
+              BinaryOp: %
+                Identifier: stripe
+                Literal: 2 (int)
+              Literal: 0 (int)
+            Block
+              For
+                VarDecl: y : int
+                  Literal: 0 (int)
+                BinaryOp: <
+                  Identifier: y
+                  BuiltIn: __height
+                Assignment
+                  Identifier: y
+                  BinaryOp: +
+                    Identifier: y
+                    Literal: 1 (int)
+                Block
+... (21 more lines)
+------------------------------------------------------------
+
+GENERATED PArIR (partial):
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 3
+oframe
+push #PC+102
+jmp
+.draw_checkerboard
+push 1
+alloc
+push 0
+push 0
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+width
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+79
+jmp
+push 0
+oframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+height
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+54
+jmp
+push 0
+oframe
+push 0
+push 2
+push 10
+push [0:1]
+div
+push 10
+push [0:3]
+div
+add
+mod
+eq
+push #PC+4
+cjmp
+push #PC+13
+jmp
+push 0
+oframe
+push #FFFFFF
+push 10
+push 10
+push [0:2]
+push [0:4]
+writebox
+cframe
+push #PC+11
+jmp
+push 0
+oframe
+push #000000
+push 10
+push 10
+push [0:2]
+push [0:4]
+writebox
+cframe
+push 1
+push [0:4]
+add
+push 0
+push 4
+st
+cframe
+push 10
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-58
+jmp
+cframe
+cframe
+push 10
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-83
+jmp
+cframe
+push [0:0]
+ret
+push #PC+79
+jmp
+.draw_stripes
+push 1
+alloc
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+width
+... (92 more instructions)
+------------------------------------------------------------
+
+Modulo operations found: 2
+
+TEST OUTCOME:
+FAIL: Expected at least 3 modulo operations, found 2
+
+================================================================================
+
+
+================================================================================
+TEST: Array Graphics
+TESTING: Using arrays to store and display graphics data
+================================================================================
+
+INPUT PROGRAM:
+
+    fun draw_from_array(pixels:colour[100], startX:int, startY:int) -> bool {
+        for (let i:int = 0; i < 100; i = i + 1) {
+            let x:int = startX + (i % 10) * 5;
+            let y:int = startY + (i / 10) * 5;
+            __write_box x, y, 4, 4, pixels[i];
+        }
+        return true;
+    }
+    
+    // Create gradient array
+    let gradient:colour[] = [
+        #000000, #111111, #222222, #333333, #444444,
+        #555555, #666666, #777777, #888888, #999999
+    ];
+    
+    // Create pattern
+    let pattern:colour[100];
+    for (let i:int = 0; i < 100; i = i + 1) {
+        pattern[i] = gradient[i % 10];
+    }
+    
+    // Draw the pattern
+    __clear #FFFFFF;
+    let success:bool = draw_from_array(pattern, 50, 50);
+    
+    __delay 2000;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: draw_from_array(pixels:colour[100], startX:int, startY:int) -> bool
+    Param: pixels : colour[100]
+    Param: startX : int
+    Param: startY : int
+    Block
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 100 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          VarDecl: x : int
+            BinaryOp: +
+              Identifier: startX
+              BinaryOp: *
+                BinaryOp: %
+                  Identifier: i
+                  Literal: 10 (int)
+                Literal: 5 (int)
+          VarDecl: y : int
+            BinaryOp: +
+              Identifier: startY
+              BinaryOp: *
+                BinaryOp: /
+                  Identifier: i
+                  Literal: 10 (int)
+                Literal: 5 (int)
+          WriteBox
+            Identifier: x
+            Identifier: y
+            Literal: 4 (int)
+            Literal: 4 (int)
+            IndexAccess
+              Identifier: pixels
+              Identifier: i
+      Return
+        Literal: True (bool)
+  VarDecl: gradient : colour[10]
+    ArrayLiteral: [10 elements]
+      Literal: #000000 (colour)
+      Literal: #111111 (colour)
+      Literal: #222222 (colour)
+      Literal: #333333 (colour)
+      Literal: #444444 (colour)
+      Literal: #555555 (colour)
+      Literal: #666666 (colour)
+      Literal: #777777 (colour)
+      Literal: #888888 (colour)
+      Literal: #999999 (colour)
+  VarDecl: pattern : colour[100]
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 100 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Assignment
+        IndexAccess
+          Identifier: pattern
+          Identifier: i
+        IndexAccess
+          Identifier: gradient
+          BinaryOp: %
+            Identifier: i
+            Literal: 10 (int)
+  Clear
+    Literal: #FFFFFF (colour)
+  VarDecl: success : bool
+    FuncCall: draw_from_array
+      Identifier: pattern
+      Literal: 50 (int)
+      Literal: 50 (int)
+  Delay
+    Literal: 2000 (int)
+------------------------------------------------------------
+
+Generated 129 instructions
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+TEST: Complex Animation
+TESTING: Animation using functions, arrays, and all graphics features
+================================================================================
+
+INPUT PROGRAM:
+
+    fun hsv_to_colour(h:int, s:int, v:int) -> colour {
+        // Simplified HSV to RGB (h: 0-360, s: 0-100, v: 0-100)
+        let region:int = h / 60;
+        let remainder:int = h % 60;
+        
+        let r:int = 0;
+        let g:int = 0;
+        let b:int = 0;
+        
+        if (region == 0) {
+            r = v; g = remainder * v / 60; b = 0;
+        } else {
+            if (region == 1) {
+                r = (60 - remainder) * v / 60; g = v; b = 0;
+            } else {
+                r = 0; g = v; b = remainder * v / 60;
+            }
+        }
+        
+        return (r * 65536 + g * 256 + b) as colour;
+    }
+    
+    fun animate_frame(frame:int) -> bool {
+        for (let i:int = 0; i < 10; i = i + 1) {
+            for (let j:int = 0; j < 10; j = j + 1) {
+                let h:int = (i + j + frame) % 360;
+                let color:colour = hsv_to_colour(h, 100, 100);
+                __write_box i * 10, j * 10, 4, 4, color;
+            }
+        }
+        return true;
+    }
+    
+    // Animation loop
+    for (let frame:int = 0; frame < 60; frame = frame + 1) {
+        let success:bool = animate_frame(frame * 6);
+        __delay 16;  // ~60 FPS
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: hsv_to_colour(h:int, s:int, v:int) -> colour
+    Param: h : int
+    Param: s : int
+    Param: v : int
+    Block
+      VarDecl: region : int
+        BinaryOp: /
+          Identifier: h
+          Literal: 60 (int)
+      VarDecl: remainder : int
+        BinaryOp: %
+          Identifier: h
+          Literal: 60 (int)
+      VarDecl: r : int
+        Literal: 0 (int)
+      VarDecl: g : int
+        Literal: 0 (int)
+      VarDecl: b : int
+        Literal: 0 (int)
+      If
+        BinaryOp: ==
+          Identifier: region
+          Literal: 0 (int)
+        Block
+          Assignment
+            Identifier: r
+            Identifier: v
+          Assignment
+            Identifier: g
+            BinaryOp: /
+              BinaryOp: *
+                Identifier: remainder
+                Identifier: v
+              Literal: 60 (int)
+          Assignment
+            Identifier: b
+            Literal: 0 (int)
+        Block
+          If
+            BinaryOp: ==
+              Identifier: region
+              Literal: 1 (int)
+            Block
+              Assignment
+                Identifier: r
+                BinaryOp: /
+                  BinaryOp: *
+                    BinaryOp: -
+                      Literal: 60 (int)
+                      Identifier: remainder
+                    Identifier: v
+                  Literal: 60 (int)
+              Assignment
+                Identifier: g
+                Identifier: v
+              Assignment
+                Identifier: b
+                Literal: 0 (int)
+            Block
+              Assignment
+                Identifier: r
+                Literal: 0 (int)
+              Assignment
+                Identifier: g
+                Identifier: v
+              Assignment
+                Identifier: b
+                BinaryOp: /
+                  BinaryOp: *
+                    Identifier: remainder
+                    Identifier: v
+                  Literal: 60 (int)
+      Return
+        Cast -> colour
+          BinaryOp: +
+            BinaryOp: +
+              BinaryOp: *
+                Identifier: r
+                Literal: 65536 (int)
+              BinaryOp: *
+                Identifier: g
+                Literal: 256 (int)
+            Identifier: b
+  FuncDecl: animate_frame(frame:int) -> bool
+    Param: frame : int
+    Block
+      For
+        VarDecl: i : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: i
+          Literal: 10 (int)
+        Assignment
+          Identifier: i
+          BinaryOp: +
+            Identifier: i
+            Literal: 1 (int)
+        Block
+          For
+            VarDecl: j : int
+              Literal: 0 (int)
+            BinaryOp: <
+              Identifier: j
+              Literal: 10 (int)
+            Assignment
+              Identifier: j
+              BinaryOp: +
+                Identifier: j
+                Literal: 1 (int)
+            Block
+              VarDecl: h : int
+                BinaryOp: %
+                  BinaryOp: +
+                    BinaryOp: +
+                      Identifier: i
+                      Identifier: j
+                    Identifier: frame
+                  Literal: 360 (int)
+              VarDecl: color : colour
+                FuncCall: hsv_to_colour
+                  Identifier: h
+                  Literal: 100 (int)
+                  Literal: 100 (int)
+              WriteBox
+                BinaryOp: *
+                  Identifier: i
+                  Literal: 10 (int)
+                BinaryOp: *
+                  Identifier: j
+                  Literal: 10 (int)
+                Literal: 4 (int)
+                Literal: 4 (int)
+                Identifier: color
+      Return
+        Literal: True (bool)
+  For
+    VarDecl: frame : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: frame
+      Literal: 60 (int)
+    Assignment
+      Identifier: frame
+      BinaryOp: +
+        Identifier: frame
+        Literal: 1 (int)
+    Block
+      VarDecl: success : bool
+        FuncCall: animate_frame
+... (5 more lines)
+------------------------------------------------------------
+
+Generated 249 instructions
+
+TEST OUTCOME:
+PASS
+
+================================================================================
+
+
+================================================================================
+SIMULATOR TESTS SUMMARY
+================================================================================
+Simple Color Animation         PASS
+MaxInArray Function            PASS
+Color Functions                PASS
+Color Animation While          PASS
+Rainbow Pattern                FAIL
+Screen Operations              PASS
+Modulo Patterns                FAIL
+Array Graphics                 PASS
+Complex Animation              PASS
+--------------------------------------------------------------------------------
+Total: 7/9 tests passed

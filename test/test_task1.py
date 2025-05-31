@@ -10,23 +10,13 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lexer.lexer import FSALexer, TokenType
+from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
 
 
-def print_test_header(test_name, description):
-    """Print test header"""
-    print("\n" + "="*80)
-    print(f"TEST: {test_name}")
-    print(f"TESTING: {description}")
-    print("="*80)
-
-
-def print_outcome(success, details=""):
-    """Print test outcome"""
-    print("\nTEST OUTCOME:")
-    if success:
-        print("PASS")
-    else:
-        print(f"FAIL: {details}")
+if "--show-ast" in sys.argv:
+    set_ast_printing(True)
+else:
+    set_ast_printing(False)
 
 
 def test_all_operators():
@@ -41,14 +31,15 @@ def test_all_operators():
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
     
-    print("\nINPUT:")
-    print(test_code)
+    write_to_file("\nINPUT:")
+    write_to_file(test_code)
     
-    print("\nTOKENS:")
+    write_to_file("\nTOKENS:")
     operators_found = {}
     for token in tokens:
         if token.type != TokenType.WHITESPACE and token.type != TokenType.END:
-            print(f"{token.lexeme} -> {token.type.name}")
+            token_info = f"{token.lexeme} -> {token.type.name}"
+            write_to_file(token_info)
             operators_found[token.lexeme] = token.type
     
     # Check all operators are recognized
@@ -103,14 +94,15 @@ def test_all_keywords():
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
     
-    print("\nINPUT:")
-    print(test_code)
+    write_to_file("\nINPUT:")
+    write_to_file(test_code)
     
-    print("\nTOKENS:")
+    write_to_file("\nTOKENS:")
     keywords_found = {}
     for token in tokens:
         if token.type not in [TokenType.WHITESPACE, TokenType.END, TokenType.NEWLINE]:
-            print(f"{token.lexeme} -> {token.type.name}")
+            token_info = f"{token.lexeme} -> {token.type.name}"
+            write_to_file(token_info)
             keywords_found[token.lexeme] = token.type
     
     expected_keywords = {
@@ -158,14 +150,15 @@ def test_all_builtins():
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
     
-    print("\nINPUT:")
-    print(test_code)
+    write_to_file("\nINPUT:")
+    write_to_file(test_code)
     
-    print("\nTOKENS:")
+    write_to_file("\nTOKENS:")
     builtins_found = {}
     for token in tokens:
         if token.type not in [TokenType.WHITESPACE, TokenType.END, TokenType.NEWLINE]:
-            print(f"{token.lexeme} -> {token.type.name}")
+            token_info = f"{token.lexeme} -> {token.type.name}"
+            write_to_file(token_info)
             builtins_found[token.lexeme] = token.type
     
     expected_builtins = {
@@ -208,13 +201,14 @@ def test_literals():
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
     
-    print("\nINPUT:")
-    print(test_code)
+    write_to_file("\nINPUT:")
+    write_to_file(test_code)
     
-    print("\nTOKENS:")
+    write_to_file("\nTOKENS:")
     for token in tokens:
         if token.type not in [TokenType.WHITESPACE, TokenType.END, TokenType.NEWLINE]:
-            print(f"{token.lexeme} -> {token.type.name}")
+            token_info = f"{token.lexeme} -> {token.type.name}"
+            write_to_file(token_info)
     
     # Check we have all literal types
     literal_types = {TokenType.INT_LITERAL, TokenType.FLOAT_LITERAL, 
@@ -246,8 +240,8 @@ def test_comments():
     all_passed = True
     
     for test_code, description in test_cases:
-        print(f"\n{description}:")
-        print(f"INPUT: {repr(test_code)}")
+        write_to_file(f"\n{description}:")
+        write_to_file(f"INPUT: {repr(test_code)}")
         
         lexer = FSALexer()
         tokens = lexer.tokenize(test_code)
@@ -256,13 +250,13 @@ def test_comments():
         display_tokens = [t for t in tokens if t.type not in 
                          [TokenType.WHITESPACE, TokenType.NEWLINE]]
         
-        print("TOKENS:", [t.lexeme for t in display_tokens if t.type != TokenType.END])
+        write_to_file("TOKENS: " + str([t.lexeme for t in display_tokens if t.type != TokenType.END]))
         
         # Comments should be tokenized but can be filtered out later
         # Check no errors
         errors = [t for t in tokens if t.type.name.startswith("ERROR")]
         if errors:
-            print(f"ERROR: {errors}")
+            write_to_file(f"ERROR: {errors}")
             all_passed = False
     
     print_outcome(all_passed)
@@ -287,8 +281,8 @@ def test_error_detection():
     errors_found = 0
     
     for test_code, description in error_cases:
-        print(f"\n{description}:")
-        print(f"INPUT: {repr(test_code)}")
+        write_to_file(f"\n{description}:")
+        write_to_file(f"INPUT: {repr(test_code)}")
         
         lexer = FSALexer()
         tokens = lexer.tokenize(test_code)
@@ -296,16 +290,16 @@ def test_error_detection():
         errors = [t for t in tokens if t.type.name.startswith("ERROR")]
         
         if errors:
-            print(f"ERROR DETECTED: {errors[0].type.name}")
+            write_to_file(f"ERROR DETECTED: {errors[0].type.name}")
             errors_found += 1
         else:
-            print("NO ERROR DETECTED")
+            write_to_file("NO ERROR DETECTED")
             # Special case: unterminated comment might be at END token
             if "unterminated" in description.lower():
                 # Check if there's an error in lexer state
                 end_token = next((t for t in tokens if t.type.name == "END"), None)
                 if end_token and hasattr(end_token, 'error'):
-                    print("(Error may be attached to END token)")
+                    write_to_file("(Error may be attached to END token)")
                     errors_found += 1
                 else:
                     all_detected = False
@@ -345,8 +339,8 @@ def test_complex_tokenization():
     __print result;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     lexer = FSALexer()
     tokens = lexer.tokenize(test_code)
@@ -355,9 +349,9 @@ def test_complex_tokenization():
     errors = [t for t in tokens if t.type.name.startswith("ERROR")]
     
     if errors:
-        print("\nERRORS FOUND:")
+        write_to_file("\nERRORS FOUND:")
         for error in errors:
-            print(f"  {error}")
+            write_to_file(f"  {error}")
         print_outcome(False, "Lexical errors in program")
         return False
     
@@ -366,10 +360,10 @@ def test_complex_tokenization():
     for token in tokens:
         token_counts[token.type.name] = token_counts.get(token.type.name, 0) + 1
     
-    print("\nTOKEN SUMMARY:")
+    write_to_file("\nTOKEN SUMMARY:")
     for token_type, count in sorted(token_counts.items()):
         if token_type not in ["WHITESPACE", "NEWLINE"]:
-            print(f"  {token_type}: {count}")
+            write_to_file(f"  {token_type}: {count}")
     
     # Verify modulo token exists
     modulo_found = any(t.type == TokenType.MODULO for t in tokens)
@@ -378,13 +372,15 @@ def test_complex_tokenization():
         print_outcome(False, "Modulo operator not found in tokenization")
         return False
     else:
-        print("\nModulo operator correctly tokenized")
+        write_to_file("\nModulo operator correctly tokenized")
         print_outcome(True)
         return True
 
 
 def run_task1_tests():
     """Run all Task 1 tests"""
+    output_file = create_test_output_file("task1_lexer")
+    
     print("TASK 1 - LEXER TESTS")
     print("="*80)
     
@@ -400,8 +396,11 @@ def run_task1_tests():
     results.append(("Complex Tokenization", test_complex_tokenization()))
     
     # Summary
-    print("\n" + "="*80)
-    print("TASK 1 SUMMARY")
+    write_to_file("\n" + "="*80)
+    write_to_file("TASK 1 SUMMARY")
+    write_to_file("="*80)
+    
+    print("\nTASK 1 SUMMARY")
     print("="*80)
     
     passed = sum(1 for _, result in results if result)
@@ -409,10 +408,16 @@ def run_task1_tests():
     
     for test_name, result in results:
         status = "PASS" if result else "FAIL"
+        write_to_file(f"{test_name:<30} {status}")
         print(f"{test_name:<30} {status}")
     
+    write_to_file("-"*80)
+    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
     print(f"Total: {passed}/{total} tests passed")
+    
+    close_test_output_file()
+    print(f"Detailed output written to: {output_file}")
     
     return passed == total
 

@@ -12,37 +12,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lexer import FSALexer
 from parser import PArLParser
 from semantic_analyzer import SemanticAnalyzer
+from test.test_utils import print_test_header, print_ast, print_outcome, set_ast_printing, create_test_output_file, close_test_output_file, write_to_file
 
 
-def print_test_header(test_name, description):
-    """Print test header"""
-    print("\n" + "="*80)
-    print(f"TEST: {test_name}")
-    print(f"TESTING: {description}")
-    print("="*80)
-
-
-def print_ast(ast, max_lines=50):
-    """Print AST structure"""
-    print("\nPROGRAM AST:")
-    print("-"*60)
-    ast_str = str(ast)
-    lines = ast_str.split('\n')
-    for i, line in enumerate(lines[:max_lines]):
-        print(line)
-    if len(lines) > max_lines:
-        print(f"... ({len(lines) - max_lines} more lines)")
-    print("-"*60)
-
-
-def print_outcome(success, details=""):
-    """Print test outcome"""
-    print("\nTEST OUTCOME:")
-    if success:
-        print("PASS")
-    else:
-        print(f"FAIL: {details}")
-
+if "--show-ast" in sys.argv:
+    set_ast_printing(True)
+else:
+    set_ast_printing(False)
 
 def analyze_code(code):
     """Helper to analyze code"""
@@ -109,8 +85,8 @@ def test_type_checking():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -118,13 +94,13 @@ def test_type_checking():
         print_ast(ast)
     
     if success:
-        print("\nSemantic analysis passed - all types valid")
+        write_to_file("\nSemantic analysis passed - all types valid")
         print_outcome(True)
         return True
     else:
-        print(f"\nSemantic errors: {len(errors)}")
+        write_to_file(f"\nSemantic errors: {len(errors)}")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(False, "Type checking failed")
         return False
 
@@ -155,8 +131,8 @@ def test_type_errors():
     let error6:bool = -b;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -164,9 +140,9 @@ def test_type_errors():
         print_ast(ast)
     
     if not success and len(errors) > 0:
-        print(f"\nDetected {len(errors)} semantic errors:")
+        write_to_file(f"\nDetected {len(errors)} semantic errors:")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(True, "Correctly detected type errors")
         return True
     else:
@@ -208,8 +184,8 @@ def test_scope_management():
     let result:int = outer(10);
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -217,13 +193,13 @@ def test_scope_management():
         print_ast(ast)
     
     if success:
-        print("\nScope management correct")
+        write_to_file("\nScope management correct")
         print_outcome(True)
         return True
     else:
-        print(f"\nSemantic errors: {len(errors)}")
+        write_to_file(f"\nSemantic errors: {len(errors)}")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(False, "Scope management failed")
         return False
 
@@ -243,8 +219,8 @@ def test_undefined_variables():
     let a:int = b;  // b is undefined
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -252,9 +228,9 @@ def test_undefined_variables():
         print_ast(ast)
     
     if not success and len(errors) > 0:
-        print(f"\nDetected {len(errors)} undefined variable errors:")
+        write_to_file(f"\nDetected {len(errors)} undefined variable errors:")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(True, "Correctly detected undefined variables")
         return True
     else:
@@ -298,8 +274,8 @@ def test_function_validation():
     }
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -308,9 +284,9 @@ def test_function_validation():
     
     # Should have errors for missing return, wrong return type, wrong args, etc.
     if not success and len(errors) >= 4:
-        print(f"\nDetected {len(errors)} function-related errors:")
+        write_to_file(f"\nDetected {len(errors)} function-related errors:")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(True, "Correctly detected function errors")
         return True
     else:
@@ -345,8 +321,8 @@ def test_builtin_validation():
     __randi 3.14;  // Wrong type
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -355,9 +331,9 @@ def test_builtin_validation():
     
     # Should have errors for wrong types in built-ins
     if not success and len(errors) > 0:
-        print(f"\nDetected {len(errors)} built-in usage errors:")
+        write_to_file(f"\nDetected {len(errors)} built-in usage errors:")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(True, "Correctly validated built-in usage")
         return True
     else:
@@ -389,8 +365,8 @@ def test_cast_validation():
     let chained:colour = ((255 * 256) as colour);
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -398,13 +374,13 @@ def test_cast_validation():
         print_ast(ast)
     
     if success:
-        print("\nAll casts are valid")
+        write_to_file("\nAll casts are valid")
         print_outcome(True)
         return True
     else:
-        print(f"\nSemantic errors: {len(errors)}")
+        write_to_file(f"\nSemantic errors: {len(errors)}")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(False, "Cast validation failed")
         return False
 
@@ -437,8 +413,8 @@ def test_control_flow_conditions():
     for (let j:int = 0; j; j = j + 1) { }  // int is not bool
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -447,9 +423,9 @@ def test_control_flow_conditions():
     
     # Should detect non-boolean conditions
     if not success and len(errors) >= 3:
-        print(f"\nDetected {len(errors)} condition type errors:")
+        write_to_file(f"\nDetected {len(errors)} condition type errors:")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(True, "Correctly detected non-boolean conditions")
         return True
     else:
@@ -482,8 +458,8 @@ def test_modulo_type_checking():
     let error4:int = color % color;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -492,9 +468,9 @@ def test_modulo_type_checking():
     
     # Should have errors for invalid modulo operations
     if not success and len(errors) >= 4:
-        print(f"\nDetected {len(errors)} modulo type errors:")
+        write_to_file(f"\nDetected {len(errors)} modulo type errors:")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(True, "Correctly validated modulo operations")
         return True
     else:
@@ -562,8 +538,8 @@ def test_complex_semantic_program():
     __delay 1000;
     """
     
-    print("\nINPUT PROGRAM:")
-    print(test_code)
+    write_to_file("\nINPUT PROGRAM:")
+    write_to_file(test_code)
     
     ast, success, errors = analyze_code(test_code)
     
@@ -571,19 +547,21 @@ def test_complex_semantic_program():
         print_ast(ast, max_lines=100)
     
     if success:
-        print("\nComplex program semantic analysis passed")
+        write_to_file("\nComplex program semantic analysis passed")
         print_outcome(True)
         return True
     else:
-        print(f"\nSemantic errors: {len(errors)}")
+        write_to_file(f"\nSemantic errors: {len(errors)}")
         for error in errors:
-            print(f"  - {error}")
+            write_to_file(f"  - {error}")
         print_outcome(False, "Complex program semantic analysis failed")
         return False
 
 
 def run_task3_tests():
     """Run all Task 3 tests"""
+    output_file = create_test_output_file("task3_semantic")
+    
     print("TASK 3 - SEMANTIC ANALYSIS TESTS")
     print("="*80)
     
@@ -602,8 +580,11 @@ def run_task3_tests():
     results.append(("Complex Program", test_complex_semantic_program()))
     
     # Summary
-    print("\n" + "="*80)
-    print("TASK 3 SUMMARY")
+    write_to_file("\n" + "="*80)
+    write_to_file("TASK 3 SUMMARY")
+    write_to_file("="*80)
+    
+    print("\nTASK 3 SUMMARY")
     print("="*80)
     
     passed = sum(1 for _, result in results if result)
@@ -611,10 +592,16 @@ def run_task3_tests():
     
     for test_name, result in results:
         status = "PASS" if result else "FAIL"
+        write_to_file(f"{test_name:<30} {status}")
         print(f"{test_name:<30} {status}")
     
+    write_to_file("-"*80)
+    write_to_file(f"Total: {passed}/{total} tests passed")
     print("-"*80)
     print(f"Total: {passed}/{total} tests passed")
+    
+    close_test_output_file()
+    print(f"Detailed output written to: {output_file}")
     
     return passed == total
 
