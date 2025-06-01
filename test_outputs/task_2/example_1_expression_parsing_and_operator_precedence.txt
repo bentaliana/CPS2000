@@ -1,6 +1,6 @@
 TEST: Expression Parsing and Operator Precedence
 TASK: TASK_2
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Expression Parsing and Operator Precedence
@@ -69,7 +69,12 @@ Program
       BinaryOp: <=
         Identifier: e
         Identifier: f
-... (6 more lines)
+  VarDecl: g : float
+    BinaryOp: +
+      Cast -> float
+        Identifier: x
+      Cast -> float
+        Identifier: y
 ------------------------------------------------------------
 
 EXPRESSION STRUCTURE ANALYSIS:

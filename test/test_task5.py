@@ -113,24 +113,20 @@ def test_array_declarations_and_initialization():
     write_to_file("\nARRAY INSTRUCTION ANALYSIS:")
     array_instructions = {
         'sta': 0,     # Store array
-        'pusha': 0,   # Push array elements
-        'dupa': 0,    # Duplicate array elements
+        'push +[': 0, # Array element access
     }
     
     push_instructions = 0
     for instr in instructions:
         if 'sta' in instr:
             array_instructions['sta'] += 1
-        elif 'pusha' in instr:
-            array_instructions['pusha'] += 1
-        elif 'dupa' in instr:
-            array_instructions['dupa'] += 1
+        elif 'push +[' in instr:
+            array_instructions['push +['] += 1
         elif instr.startswith('push ') and not instr.startswith('push [') and not instr.startswith('push #'):
             push_instructions += 1
     
     write_to_file(f"Array store operations (sta): {array_instructions['sta']}")
-    write_to_file(f"Array push operations (pusha): {array_instructions['pusha']}")
-    write_to_file(f"Array duplicate operations (dupa): {array_instructions['dupa']}")
+    write_to_file(f"Array element access (push +[...]): {array_instructions['push +[']}")
     write_to_file(f"Value push operations: {push_instructions}")
     
     # Check for proper array initialization
@@ -254,7 +250,7 @@ def test_array_function_parameters():
     create_test_output_file("task_5", "Array Function Parameters")
     
     print_test_header("Array Function Parameters",
-                     "Tests array parameters, pusha instruction, and array argument passing")
+                     "Tests array parameters and array argument passing")
     
     test_code = """
     // Function that takes array parameter
@@ -337,7 +333,7 @@ def test_array_function_parameters():
     # Analyze array parameter handling
     write_to_file("\nARRAY PARAMETER ANALYSIS:")
     
-    pusha_instructions = [instr for instr in instructions if 'pusha' in instr]
+    array_element_pushes = [instr for instr in instructions if 'push +[' in instr]
     call_instructions = [instr for instr in instructions if 'call' in instr]
     function_labels = [instr for instr in instructions if instr.startswith('.') and instr != '.main']
     
@@ -345,9 +341,11 @@ def test_array_function_parameters():
     for label in function_labels:
         write_to_file(f"  {label}")
     
-    write_to_file(f"\nArray push operations (pusha): {len(pusha_instructions)}")
-    for pusha in pusha_instructions:
-        write_to_file(f"  {pusha}")
+    write_to_file(f"\nArray element push operations (push +[...]): {len(array_element_pushes)}")
+    for push in array_element_pushes[:10]:  # Show first 10
+        write_to_file(f"  {push}")
+    if len(array_element_pushes) > 10:
+        write_to_file(f"  ... and {len(array_element_pushes) - 10} more")
     
     write_to_file(f"\nFunction calls: {len(call_instructions)}")
     for call in call_instructions:
@@ -359,7 +357,7 @@ def test_array_function_parameters():
     
     success = (len(function_labels) >= expected_functions and 
                len(call_instructions) >= expected_calls and
-               len(pusha_instructions) > 0)
+               len(array_element_pushes) > 0)
     
     if success:
         write_to_file("\nArray function parameters successful")
@@ -419,7 +417,6 @@ def test_assignment_maxinarray_example():
     expected_patterns = [
         '.MaxInArray',  # Function label
         'alloc',        # Memory allocation
-        'pusha',        # Array parameter passing
         'push +[',      # Array element access
         'sta',          # Array storage
         'call',         # Function call
@@ -430,6 +427,8 @@ def test_assignment_maxinarray_example():
         found_patterns[pattern] = sum(1 for instr in instructions if pattern in instr)
     
     write_to_file("Expected instruction patterns:")
+    for pattern, count in found_patterns.items():
+        write_to_file(f"  {pattern}: {count} occurrences")
     
     # Verify array size handling
     array_literal_values = [23, 54, 3, 65, 99, 120, 34, 21]

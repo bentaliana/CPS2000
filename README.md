@@ -1,46 +1,36 @@
-# PArL Language Compiler
-
-A complete compiler implementation for the PArL (Programming and Rendering Language) programming language, built as part of the CPS2000 Assignment. This compiler translates PArL source code into PArIR (PArL Intermediate Representation) instructions.
-
-## Project Structure
-
-```
+Assignment/
 ├── README.md
 ├── lexer/
 │   ├── __init__.py
-│   ├── lexer.py              # FSA-based lexical analyzer
-│   └── __pycache__/
+│   ├── lexer.py
 ├── parser/
 │   ├── __init__.py
-│   ├── ast_nodes.py          # Abstract Syntax Tree node definitions
-│   ├── parser.py             # Recursive descent parser
-│   ├── parser_errors.py      # Parser error handling
-│   ├── token_stream.py       # Token stream management
-│   └── __pycache__/
+│   ├── ast_nodes.py
+│   ├── parser_errors.py
+│   ├── parser.py
+│   ├── token_stream.py
 ├── semantic_analyzer/
 │   ├── __init__.py
-│   ├── semantic_analyzer.py  # Type checking and semantic analysis
-│   └── __pycache__/
+│   ├── semantic_analyzer.py
 ├── code_generator/
 │   ├── __init__.py
-│   ├── code_generator.py     # PArIR code generation
-│   └── __pycache__/
+│   ├── code_generator.py
 ├── test/
 │   ├── __init__.py
-│   ├── run_all_tests.py      # Test runner for all tasks
-│   ├── test_simulator.py     # Simulator tests
-│   ├── test_task1.py         # Lexer tests
-│   ├── test_task2.py         # Parser tests
-│   ├── test_task3.py         # Semantic analyzer tests
-│   ├── test_task4.py         # Code generator tests
-│   ├── test_task5.py         # Integration tests
-│   └── __pycache__/
-└── tests/
-    ├── __init__.py
-    ├── test_codegen.py       # Code generation test cases
-    ├── test_lexer.py         # Lexical analysis test cases
-    ├── test_parser.py        # Parser test cases
-    ├── test_arrays.py        # Array handling test cases
-    ├── test2.py              # Debug compilation pipeline
-    └── ...
-```
+│   ├── run_all_tests.py
+│   ├── test_assignment.py
+│   ├── test_simulator.py
+│   ├── test_task1.py
+|   ├── test_task2.py
+|   ├── test_task3.py
+│   ├── test_task4.py
+│   ├── test_task5.py
+│   └── test_utils.py
+└── test_outputs/
+    ├── assignment/
+    ├── simulator/
+    ├── task_1/
+    ├── task_2/
+    ├── task_3/
+    ├── task_4/
+    └── task_5/

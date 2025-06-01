@@ -103,7 +103,7 @@ def test_basic_arithmetic_and_memory():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f"{instr}")
     write_to_file("-" * 60)
     
     # Analyze generated instructions
@@ -190,7 +190,7 @@ def test_control_flow_generation():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f"{instr}")
     write_to_file("-" * 60)
     
     # Analyze control flow instructions
@@ -238,9 +238,6 @@ def test_function_calls_and_parameters():
                      "Tests function definitions, calls, parameter passing, and returns")
     
     test_code = """
-    fun add(x:int, y:int) -> int {
-        return x + y;
-    }
     
     fun multiply_and_check(a:int, b:int) -> bool {
         let result:int = a * b;
@@ -260,11 +257,9 @@ def test_function_calls_and_parameters():
     }
     
     // Function calls in main
-    let sum:int = add(5, 3);
     let is_large:bool = multiply_and_check(12, 9);
     let calc_result:float = complex_calculation(20, 2.5);
     
-    __print sum;
     __print is_large;
     __print calc_result as int;
     """
@@ -285,7 +280,7 @@ def test_function_calls_and_parameters():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f"{instr}")
     write_to_file("-" * 60)
     
     # Analyze function-related instructions
@@ -393,7 +388,7 @@ def test_builtin_operations_generation():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f"{instr}")
     write_to_file("-" * 60)
     
     # Analyze built-in operations

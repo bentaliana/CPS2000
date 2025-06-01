@@ -1,6 +1,6 @@
 TEST: Array Declarations and Initialization
 TASK: TASK_5
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Array Declarations and Initialization
@@ -81,7 +81,12 @@ Program
       BinaryOp: +
         Literal: 1 (int)
         Literal: 1 (int)
-... (6 more lines)
+      BinaryOp: *
+        Literal: 2 (int)
+        Literal: 3 (int)
+      BinaryOp: +
+        Literal: 4 (int)
+        Literal: 5 (int)
 ------------------------------------------------------------
 
 GENERATED PArIR:
@@ -170,8 +175,7 @@ GENERATED PArIR:
 
 ARRAY INSTRUCTION ANALYSIS:
 Array store operations (sta): 9
-Array push operations (pusha): 0
-Array duplicate operations (dupa): 0
+Array element access (push +[...]): 0
 Value push operations: 54
 
 Array declaration and initialization successful

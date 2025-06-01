@@ -1,6 +1,6 @@
 TEST: Type Checking and Compatibility
 TASK: TASK_3
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Type Checking and Compatibility
@@ -92,7 +92,34 @@ Program
     BinaryOp: +
       Identifier: a
       BinaryOp: *
-... (28 more lines)
+        Identifier: b
+        Literal: 2 (int)
+  VarDecl: arith2 : float
+    BinaryOp: -
+      Identifier: c
+      BinaryOp: /
+        Identifier: d
+        Literal: 2.0 (float)
+  VarDecl: arith3 : int
+    BinaryOp: %
+      Identifier: a
+      Literal: 5 (int)
+  VarDecl: error1 : int
+    BinaryOp: +
+      Identifier: a
+      Identifier: c
+  VarDecl: error2 : bool
+    BinaryOp: +
+      Identifier: e
+      Identifier: f
+  VarDecl: error3 : colour
+    BinaryOp: *
+      Identifier: g
+      Literal: 2 (int)
+  VarDecl: error4 : int
+    BinaryOp: and
+      Identifier: a
+      Identifier: b
 ------------------------------------------------------------
 
 SEMANTIC ANALYSIS RESULTS:

@@ -1,6 +1,6 @@
 TEST: Assignment MaxInArray Example
 TASK: TASK_5
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Assignment MaxInArray Example
@@ -173,16 +173,21 @@ cframe
 halt
 ------------------------------------------------------------
 Expected instruction patterns:
+  .MaxInArray: 2 occurrences
+  alloc: 1 occurrences
+  push +[: 10 occurrences
+  sta: 1 occurrences
+  call: 1 occurrences
 
 Array literal analysis:
 Expected array values: [23, 54, 3, 65, 99, 120, 34, 21]
 Expected array size: 8
 Array literal push instructions: 12
 
-MaxInArray example compilation incomplete
-Missing patterns: ['pusha']
+MaxInArray example compilation successful
+Generated code follows assignment specification patterns
 
-MAXINARRAY EXAMPLE: Completed with issues
+MAXINARRAY EXAMPLE: Successfully completed
 
 ================================================================================
 

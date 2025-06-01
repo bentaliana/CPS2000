@@ -100,7 +100,7 @@ def print_test_header(test_name, description):
     write_to_file(header_text)
     print(f"Running: {test_name}")
 
-def print_ast(ast, max_lines=50):
+def print_ast(ast, max_lines= 400):
     """Print AST structure (only if enabled)"""
     if not PRINT_AST_ENABLED:
         write_to_file("\nAST PRINTING: Disabled (use --show-ast to enable)")

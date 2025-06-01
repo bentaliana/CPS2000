@@ -1,15 +1,15 @@
-TEST: Random Color Generation and Display
+TEST: Random Pixel Display
 TASK: SIMULATOR
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
-TEST: Random Color Generation and Display
-PURPOSE: Random color generation and display
+TEST: Random Pixel Display
+PURPOSE: Random pixel display with color generation
 --------------------------------------------------------------------------------
 INPUT PROGRAM:
 
     fun color() -> colour {
-        return (__randi 16384257 - #f9f9f9 as int) as colour;
+        return (16777215 - __randi 16777215) as colour;
     }
 
     fun cc(x:int, y:int) -> bool {
@@ -35,11 +35,10 @@ Program
     Block
       Return
         Cast -> colour
-          BuiltIn: __randi
-            BinaryOp: -
-              Literal: 16384257 (int)
-              Cast -> int
-                Literal: #f9f9f9 (colour)
+          BinaryOp: -
+            Literal: 16777215 (int)
+            BuiltIn: __randi
+              Literal: 16777215 (int)
   FuncDecl: cc(x:int, y:int) -> bool
     Param: x : int
     Param: y : int
@@ -83,10 +82,10 @@ jmp
 .color
 push 0
 alloc
-push #f9f9f9
-push 16384257
-sub
+push 16777215
 irnd
+push 16777215
+sub
 ret
 push #PC+31
 jmp
@@ -133,8 +132,10 @@ cframe
 halt
 ------------------------------------------------------------
 
-Random color generation ready for simulator
-Displays random colored pixels at random locations
+Total instructions: 59
+
+Random pixel display ready for simulator
+Creates random pixel patterns with varied colors
 
 COMPILATION: Successfully completed
 

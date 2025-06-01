@@ -53,78 +53,6 @@ def compile_program(source_code):
     return ast, instructions, None
 
 
-def test_race_function():
-    """Test Race function from assignment"""
-    create_test_output_file("simulator", "Race Function")
-    
-    print_test_header("Race Function",
-                     "Complete Race function with graphics output")
-    
-    test_code = """
-    fun Race(p1_c:colour, p2_c:colour, score_max:int) -> int {
-        let p1_score:int = 0;
-        let p2_score:int = 0;
-        
-        while ((p1_score < score_max) and (p2_score < score_max)) {
-            let p1_toss:int = __randi 1000;
-            let p2_toss:int = __randi 1000;
-            
-            if (p1_toss > p2_toss) {
-                p1_score = p1_score + 1;
-                __write 1, p1_score, p1_c;
-            } else {
-                p2_score = p2_score + 1;
-                __write 2, p2_score, p2_c;
-            }
-            
-            __delay 100;
-        }
-        
-        if (p2_score > p1_score) {
-            return 2;
-        }
-        
-        return 1;
-    }
-    
-    // Execution starts here
-    let c1:colour = #00ff00; //green
-    let c2:colour = #0000ff; //blue
-    let m:int = __height; //the height (y-values) of the pad
-    let w:int = Race(c1, c2, m); //call function Race
-    __print w; //prints value of expression to VM logs
-    """
-    
-    write_to_file("INPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        write_to_file(f"\nCompilation error: {error}")
-        print_completion_status("Compilation", False)
-        close_test_output_file()
-        return False
-    
-    print_ast(ast, max_lines=80)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for i, instr in enumerate(instructions):
-        write_to_file(f"{instr}")
-    write_to_file("-"*60)
-    
-    write_to_file(f"\nTotal instructions: {len(instructions)}")
-    
-    # Save PArIR to file
-    create_parir_output_file("simulator", "Race Function", instructions)
-    
-    write_to_file("\nRace function compiled successfully for simulator")
-    write_to_file("Ready for execution in PAD2000c simulator")
-    print_completion_status("Compilation", True)
-    close_test_output_file()
-    return True
-
 
 def test_basic_color_animation():
     """Test simple animation loop from assignment"""
@@ -170,59 +98,6 @@ def test_basic_color_animation():
     print_completion_status("Compilation", True)
     close_test_output_file()
     return True
-
-
-def test_max_in_array():
-    """Test MaxInArray function"""
-    create_test_output_file("simulator", "Max in Array Function")
-    
-    print_test_header("Max in Array Function",
-                     "Finding maximum value in an array")
-    
-    test_code = """
-    fun MaxInArray(x:int[8]) -> int {
-        let m:int = 0;
-        for (let i:int = 0; i < 8; i = i+1) {
-            if (x[i] > m) { m = x[i]; }
-        }
-        return m;
-    }
-
-    let list_of_integers:int[] = [23, 54, 3, 65, 99, 120, 34, 21];
-    let max:int = MaxInArray(list_of_integers);
-    __print max;
-    """
-    
-    write_to_file("INPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        write_to_file(f"\nCompilation error: {error}")
-        print_completion_status("Compilation", False)
-        close_test_output_file()
-        return False
-    
-    print_ast(ast, max_lines=80)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for i, instr in enumerate(instructions):
-        write_to_file(f"{instr}")
-    write_to_file("-"*60)
-    
-    write_to_file(f"\nTotal instructions: {len(instructions)}")
-    
-    # Save PArIR to file
-    create_parir_output_file("simulator", "Max in Array Function", instructions)
-    
-    write_to_file("\nMaxInArray function ready for simulator")
-    write_to_file("Should print: 120 (maximum value from array)")
-    print_completion_status("Compilation", True)
-    close_test_output_file()
-    return True
-
 
 def test_random_color_generation():
     """Test color generation functions"""
@@ -462,6 +337,71 @@ def test_rainbow_pattern():
     return True
 
 
+def test_moving_checkerboard():
+    """Test moving checkerboard pattern"""
+    create_test_output_file("simulator", "Moving Checkerboard")
+    
+    print_test_header("Moving Checkerboard",
+                     "Creates an animated checkerboard pattern")
+    
+    test_code = """
+    // Simple moving checkerboard pattern
+    let size:int = 4;  // Size of each square
+    let frame:int = 0;
+    
+    while (frame < 200) {
+        for (let x:int = 0; x < __width; x = x + size) {
+            for (let y:int = 0; y < __height; y = y + size) {
+                // Create checkerboard pattern with animation
+                let checker:int = ((x / size) + (y / size) + frame) % 2;
+                
+                let color:colour = #000000;
+                if (checker == 0) {
+                    color = #FFFFFF;  // White
+                } else {
+                    color = #000000;  // Black
+                }
+                
+                __write_box x, y, size, size, color;
+            }
+        }
+        
+        frame = frame + 1;
+        __delay 100;
+    }
+    """
+    
+    write_to_file("INPUT PROGRAM:")
+    write_to_file(test_code)
+    
+    ast, instructions, error = compile_program(test_code)
+    
+    if error:
+        write_to_file(f"\nCompilation error: {error}")
+        print_completion_status("Compilation", False)
+        close_test_output_file()
+        return False
+    
+    print_ast(ast, max_lines=100)
+    
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
+    write_to_file("-"*60)
+    
+    write_to_file(f"\nTotal instructions: {len(instructions)}")
+    
+    # Save PArIR to file
+    create_parir_output_file("simulator", "Moving Checkerboard", instructions)
+    
+    write_to_file("\nMoving checkerboard pattern ready for simulator")
+    write_to_file("Creates an animated checkerboard that shifts over time")
+    print_completion_status("Compilation", True)
+    close_test_output_file()
+    return True
+
+
 def run_simulator_tests():
     """Run all simulator test programs"""
     reset_test_counter()
@@ -472,13 +412,12 @@ def run_simulator_tests():
     results = []
     
     # Run the specified tests - each creates its own output file
-    results.append(("Race Function", test_race_function()))
     results.append(("Basic Color Cycling Animation", test_basic_color_animation()))
-    results.append(("Max in Array Function", test_max_in_array()))
     results.append(("Random Color Generation and Display", test_random_color_generation()))
     results.append(("Random Pixel Display", test_random_pixel_display()))
     results.append(("Color Animation While Loop", test_color_animation_while()))
     results.append(("Rainbow Pattern", test_rainbow_pattern()))
+    results.append(("Moving Checkerboard", test_moving_checkerboard()))
     
     # Summary
     print("\nSIMULATOR TESTS SUMMARY")

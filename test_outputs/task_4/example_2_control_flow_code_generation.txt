@@ -1,6 +1,6 @@
 TEST: Control Flow Code Generation
 TASK: TASK_4
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Control Flow Code Generation
@@ -90,129 +90,142 @@ Program
       Identifier: i
       Literal: 3 (int)
     Assignment
-... (14 more lines)
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Print
+        Identifier: i
+      If
+        BinaryOp: ==
+          Identifier: i
+          Literal: 1 (int)
+        Block
+          Delay
+            Literal: 100 (int)
 ------------------------------------------------------------
 
 GENERATED PArIR:
 ------------------------------------------------------------
-  0: .main
-  1: push 4
-  2: jmp
-  3: halt
-  4: push 3
-  5: oframe
-  6: push 10
-  7: push 1
-  8: push 0
-  9: st
- 10: push 5
- 11: push [1:0]
- 12: gt
- 13: push #PC+4
- 14: cjmp
- 15: push #PC+11
- 16: jmp
- 17: push 0
- 18: oframe
- 19: push 1
- 20: push [1:1]
- 21: add
- 22: push 1
- 23: push 1
- 24: st
- 25: cframe
- 26: push 15
- 27: push [1:0]
- 28: gt
- 29: push #PC+4
- 30: cjmp
- 31: push #PC+13
- 32: jmp
- 33: push 0
- 34: oframe
- 35: push 5
- 36: push [1:1]
- 37: sub
- 38: push 1
- 39: push 1
- 40: st
- 41: cframe
- 42: push #PC+11
- 43: jmp
- 44: push 0
- 45: oframe
- 46: push 5
- 47: push [1:1]
- 48: add
- 49: push 1
- 50: push 1
- 51: st
- 52: cframe
- 53: push 0
- 54: push 2
- 55: push 0
- 56: st
- 57: push 5
- 58: push [2:0]
- 59: lt
- 60: push #PC+4
- 61: cjmp
- 62: push #PC+15
- 63: jmp
- 64: push 0
- 65: oframe
- 66: push 1
- 67: push [2:1]
- 68: add
- 69: push 2
- 70: push 1
- 71: st
- 72: push [2:1]
- 73: print
- 74: cframe
- 75: push #PC-18
- 76: jmp
- 77: push 1
- 78: oframe
- 79: push 0
- 80: push 0
- 81: push 0
- 82: st
- 83: push 3
- 84: push [0:0]
- 85: lt
- 86: push #PC+4
- 87: cjmp
- 88: push #PC+27
- 89: jmp
- 90: push 0
- 91: oframe
- 92: push [0:1]
- 93: print
- 94: push 1
- 95: push [0:1]
- 96: eq
- 97: push #PC+4
- 98: cjmp
- 99: push #PC+7
-100: jmp
-101: push 0
-102: oframe
-103: push 100
-104: delay
-105: cframe
-106: cframe
-107: push 1
-108: push [0:0]
-109: add
-110: push 0
-111: push 0
-112: st
-113: push #PC-31
-114: jmp
-115: cframe
-116: cframe
-117: halt
+.main
+push 4
+jmp
+halt
+push 3
+oframe
+push 10
+push 1
+push 0
+st
+push 5
+push [1:0]
+gt
+push #PC+4
+cjmp
+push #PC+11
+jmp
+push 0
+oframe
+push 1
+push [1:1]
+add
+push 1
+push 1
+st
+cframe
+push 15
+push [1:0]
+gt
+push #PC+4
+cjmp
+push #PC+13
+jmp
+push 0
+oframe
+push 5
+push [1:1]
+sub
+push 1
+push 1
+st
+cframe
+push #PC+11
+jmp
+push 0
+oframe
+push 5
+push [1:1]
+add
+push 1
+push 1
+st
+cframe
+push 0
+push 2
+push 0
+st
+push 5
+push [2:0]
+lt
+push #PC+4
+cjmp
+push #PC+15
+jmp
+push 0
+oframe
+push 1
+push [2:1]
+add
+push 2
+push 1
+st
+push [2:1]
+print
+cframe
+push #PC-18
+jmp
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 3
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+27
+jmp
+push 0
+oframe
+push [0:1]
+print
+push 1
+push [0:1]
+eq
+push #PC+4
+cjmp
+push #PC+7
+jmp
+push 0
+oframe
+push 100
+delay
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-31
+jmp
+cframe
+cframe
+halt
 ------------------------------------------------------------
 
 CONTROL FLOW ANALYSIS:

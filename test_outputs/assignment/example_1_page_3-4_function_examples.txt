@@ -1,6 +1,6 @@
 TEST: Page 3-4 Function Examples
 TASK: ASSIGNMENT
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Assignment Page 3-4 Functions
@@ -115,6 +115,107 @@ Program
             Identifier: y
       Return
         Identifier: m
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 1
+oframe
+push #PC+25
+jmp
+.XGreaterY
+push 3
+alloc
+push 1
+push 2
+push 0
+st
+push [0:0]
+push [1:0]
+gt
+push #PC+4
+cjmp
+push #PC+9
+jmp
+push 0
+oframe
+push 0
+push 2
+push 1
+st
+cframe
+push [2:0]
+ret
+push #PC+9
+jmp
+.XGreaterY_2
+push 2
+alloc
+push [1:0]
+push [0:0]
+gt
+ret
+push #PC+19
+jmp
+.AverageOfTwo
+push 4
+alloc
+push [1:0]
+push [0:0]
+add
+push 2
+push 0
+st
+push 2
+push [2:0]
+div
+push 3
+push 0
+st
+push [3:0]
+ret
+push #PC+11
+jmp
+.AverageOfTwo_2
+push 2
+alloc
+push 2
+push [1:0]
+push [0:0]
+add
+div
+ret
+push #PC+25
+jmp
+.Max
+push 3
+alloc
+push [0:0]
+push 2
+push 0
+st
+push [2:0]
+push [1:0]
+gt
+push #PC+4
+cjmp
+push #PC+9
+jmp
+push 0
+oframe
+push [1:1]
+push 2
+push 1
+st
+cframe
+push [2:0]
+ret
+cframe
+halt
 ------------------------------------------------------------
 
 Successfully compiled 97 PArIR instructions

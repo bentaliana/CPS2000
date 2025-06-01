@@ -1,6 +1,6 @@
 TEST: Function Declaration Parsing
 TASK: TASK_2
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Function Declaration Parsing
@@ -93,7 +93,16 @@ Program
         BinaryOp: <=
           Identifier: n
           Literal: 1 (int)
-... (10 more lines)
+        Block
+          Return
+            Literal: 1 (int)
+      Return
+        BinaryOp: *
+          Identifier: n
+          FuncCall: factorial
+            BinaryOp: -
+              Identifier: n
+              Literal: 1 (int)
 ------------------------------------------------------------
 
 FUNCTION ANALYSIS:

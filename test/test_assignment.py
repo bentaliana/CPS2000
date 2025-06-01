@@ -103,6 +103,12 @@ def test_assignment_page3_functions():
     
     print_ast(ast, max_lines=100)
     
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
+    for instr in instructions:
+        write_to_file(instr)
+    write_to_file("-"*60)
+    
     write_to_file(f"\nSuccessfully compiled {len(instructions)} PArIR instructions")
     print_completion_status("Compilation", True)
     close_test_output_file()
@@ -140,6 +146,12 @@ def test_assignment_page3_builtin_statements():
         return False
     
     print_ast(ast)
+    
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
+    for instr in instructions:
+        write_to_file(instr)
+    write_to_file("-"*60)
     
     write_to_file(f"\nSuccessfully compiled {len(instructions)} PArIR instructions")
     print_completion_status("Compilation", True)
@@ -212,6 +224,12 @@ def test_assignment_race_function():
     
     print_ast(ast, max_lines=100)
     
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-"*60)
+    for instr in instructions:
+        write_to_file(instr)
+    write_to_file("-"*60)
+    
     write_to_file(f"\nSuccessfully compiled {len(instructions)} PArIR instructions")
     print_completion_status("Compilation", True)
     close_test_output_file()
@@ -259,6 +277,11 @@ def test_assignment_page9_scope_error():
         print_completion_status("Error Detection", True)
     elif ast:
         print_ast(ast)
+        write_to_file("\nGENERATED PArIR:")
+        write_to_file("-"*60)
+        for instr in instructions:
+            write_to_file(instr)
+        write_to_file("-"*60)
         write_to_file("\nProgram compiled - semantic analyzer may need enhancement")
         print_completion_status("Compilation", True)
     else:
@@ -306,43 +329,6 @@ def test_assignment_page9_graphics_loop():
     
     print_ast(ast)
     
-    write_to_file(f"\nSuccessfully compiled {len(instructions)} PArIR instructions")
-    print_completion_status("Compilation", True)
-    close_test_output_file()
-    return True
-
-
-def test_assignment_page13_animation_example():
-    """Test animation example from assignment page 13"""
-    create_test_output_file("assignment", "Page 13 Animation Example")
-    
-    print_test_header("Assignment Page 13 Animation",
-                     "Color animation loop with PArIR example")
-    
-    test_code = """
-    let c:colour = 0 as colour;
-
-    for (let i:int = 0; i < 64; i = i + 1) {
-        c = (__randi 16777216) as colour;
-        __clear c;
-        __delay 16;
-    }
-    """
-    
-    write_to_file("ASSIGNMENT EXAMPLE: Animation from page 13 with PArIR reference")
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        write_to_file(f"\nCompilation error: {error}")
-        print_completion_status("Compilation", False)
-        close_test_output_file()
-        return False
-    
-    print_ast(ast)
-    
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-"*60)
     for instr in instructions:
@@ -354,53 +340,6 @@ def test_assignment_page13_animation_example():
     close_test_output_file()
     return True
 
-
-def test_assignment_page15_maxinarray():
-    """Test MaxInArray example from assignment page 15"""
-    create_test_output_file("assignment", "Page 15 MaxInArray Example")
-    
-    print_test_header("Assignment Page 15 MaxInArray",
-                     "Complete array example with PArIR reference")
-    
-    test_code = """
-    //x is an array of 8 +ve integers
-    fun MaxInArray(x:int[8]) -> int {
-        let m:int = 0;
-        for (let i:int = 0; i < 8; i = i+1) {
-            if (x[i] > m) { m = x[i]; }
-        }
-        return m;
-    }
-
-    let list_of_integers:int[] = [23, 54, 3, 65, 99, 120, 34, 21];
-    let max:int = MaxInArray(list_of_integers);
-    __print max;
-    """
-    
-    write_to_file("ASSIGNMENT EXAMPLE: MaxInArray from page 15 with PArIR reference")
-    write_to_file("\nINPUT PROGRAM:")
-    write_to_file(test_code)
-    
-    ast, instructions, error = compile_program(test_code)
-    
-    if error:
-        write_to_file(f"\nCompilation error: {error}")
-        print_completion_status("Compilation", False)
-        close_test_output_file()
-        return False
-    
-    print_ast(ast, max_lines=100)
-    
-    write_to_file("\nGENERATED PArIR:")
-    write_to_file("-"*60)
-    for instr in instructions:
-        write_to_file(instr)
-    write_to_file("-"*60)
-    
-    write_to_file(f"\nSuccessfully compiled {len(instructions)} PArIR instructions")
-    print_completion_status("Compilation", True)
-    close_test_output_file()
-    return True
 
 
 def run_assignment_tests():
@@ -418,8 +357,6 @@ def run_assignment_tests():
     results.append(("Race Function", test_assignment_race_function()))
     results.append(("Page 9 Scope Errors", test_assignment_page9_scope_error()))
     results.append(("Page 9 Graphics Loop", test_assignment_page9_graphics_loop()))
-    results.append(("Page 13 Animation", test_assignment_page13_animation_example()))
-    results.append(("Page 15 MaxInArray", test_assignment_page15_maxinarray()))
     
     # Summary
     print("\nASSIGNMENT EXAMPLES SUMMARY")

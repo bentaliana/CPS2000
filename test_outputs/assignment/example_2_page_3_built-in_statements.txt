@@ -1,6 +1,6 @@
 TEST: Page 3 Built-in Statements
 TASK: ASSIGNMENT
-Generated: 2025-06-01 10:22:10
+Generated: 2025-06-01 18:52:02
 ================================================================================
 
 TEST: Assignment Page 3 Built-ins
@@ -51,6 +51,59 @@ Program
         Identifier: i
       Delay
         Literal: 1000 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 1
+oframe
+push #00ff00
+push 14
+push 10
+write
+push 100
+delay
+push #0000ff
+push 2
+push 2
+push 14
+push 10
+writebox
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 10
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+17
+jmp
+push 0
+oframe
+push [0:1]
+print
+push 1000
+delay
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-21
+jmp
+cframe
+cframe
+halt
 ------------------------------------------------------------
 
 Successfully compiled 49 PArIR instructions
