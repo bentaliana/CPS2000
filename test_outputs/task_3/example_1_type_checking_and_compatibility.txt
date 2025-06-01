@@ -1,6 +1,6 @@
 TEST: Type Checking and Compatibility
 TASK: TASK_3
-Generated: 2025-05-31 22:26:54
+Generated: 2025-06-01 02:59:25
 ================================================================================
 
 TEST: Type Checking and Compatibility
@@ -98,7 +98,7 @@ Program
 SEMANTIC ANALYSIS RESULTS:
 ------------------------------------------------------------
 Semantic errors detected (expected for invalid operations):
-  1. Semantic Error at line 27, col 22: Invalid arithmetic operation: 'int' + 'float'. Operands must have matching types.
+  1. Semantic Error at line 27, col 5: Cannot initialize variable 'error1' of type 'int' with expression of type 'float'
   2. Semantic Error at line 28, col 23: Invalid arithmetic operation: 'bool' + 'bool'. Operands must have matching types.
   3. Semantic Error at line 29, col 25: Invalid arithmetic operation: 'colour' * 'int'. Operands must have matching types.
   4. Semantic Error at line 30, col 22: Invalid logical operation: 'int' and 'int'. Operands must have matching types.

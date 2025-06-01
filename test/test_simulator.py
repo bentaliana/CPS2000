@@ -1,5 +1,5 @@
 """
-Simulator Test Programs - CORRECTED VERSION
+Simulator Test Programs
 Tests programs that should work correctly in the simulator
 Each test creates its own output file with detailed results
 """

@@ -1,5 +1,5 @@
-// PArIR for: Random Color Generation and Display
-// Generated: 2025-05-31 22:26:54
+// PArIR for: Random Pixel Display
+// Generated: 2025-06-01 02:59:25
 // ============================================================================
 
 .main
@@ -13,10 +13,10 @@ jmp
 .color
 push 0
 alloc
-push #f9f9f9
-push 16384257
-sub
+push 16777215
 irnd
+push 16777215
+sub
 ret
 push #PC+31
 jmp

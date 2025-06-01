@@ -1,6 +1,6 @@
 TEST: Array Function Parameters
 TASK: TASK_5
-Generated: 2025-05-31 22:26:54
+Generated: 2025-06-01 02:59:25
 ================================================================================
 
 TEST: Array Function Parameters
@@ -193,278 +193,278 @@ Program
 
 GENERATED PArIR:
 ------------------------------------------------------------
-  0: .main
-  1: push 4
-  2: jmp
-  3: halt
-  4: push 19
-  5: oframe
-  6: push #PC+43
-  7: jmp
-  8: .sum_array
-  9: push 6
- 10: alloc
- 11: push 0
- 12: push 5
- 13: push 0
- 14: st
- 15: push 1
- 16: oframe
- 17: push 0
- 18: push 0
- 19: push 0
- 20: st
- 21: push 5
- 22: push [0:0]
- 23: lt
- 24: push #PC+4
- 25: cjmp
- 26: push #PC+20
- 27: jmp
- 28: push 0
- 29: oframe
- 30: push [0:1]
- 31: push +[0:2]
- 32: push [5:2]
- 33: add
- 34: push 5
- 35: push 2
- 36: st
- 37: cframe
- 38: push 1
- 39: push [0:0]
- 40: add
- 41: push 0
- 42: push 0
- 43: st
- 44: push #PC-24
- 45: jmp
- 46: cframe
- 47: push [5:0]
- 48: ret
- 49: push #PC+65
- 50: jmp
- 51: .process_arrays
- 52: push 5
- 53: alloc
- 54: push 1
- 55: oframe
- 56: push 0
- 57: push 0
- 58: push 0
- 59: st
- 60: push 3
- 61: push [0:0]
- 62: lt
- 63: push #PC+4
- 64: cjmp
- 65: push #PC+16
- 66: jmp
- 67: push 0
- 68: oframe
- 69: push [0:1]
- 70: push +[0:2]
- 71: print
- 72: cframe
- 73: push 1
- 74: push [0:0]
- 75: add
- 76: push 0
- 77: push 0
- 78: st
- 79: push #PC-20
- 80: jmp
- 81: cframe
- 82: push 1
- 83: oframe
- 84: push 0
- 85: push 0
- 86: push 0
- 87: st
- 88: push 2
- 89: push [0:0]
- 90: lt
- 91: push #PC+4
- 92: cjmp
- 93: push #PC+18
- 94: jmp
- 95: push 0
- 96: oframe
- 97: push [0:1]
- 98: push +[3:2]
- 99: push 0
-100: push [0:1]
-101: write
-102: cframe
-103: push 1
-104: push [0:0]
-105: add
-106: push 0
-107: push 0
-108: st
-109: push #PC-22
-110: jmp
-111: cframe
-112: push 1
-113: ret
-114: push #PC+42
-115: jmp
-116: .double_values
-117: push 4
-118: alloc
-119: push 1
-120: oframe
-121: push 0
-122: push 0
-123: push 0
-124: st
-125: push 4
-126: push [0:0]
-127: lt
-128: push #PC+4
-129: cjmp
-130: push #PC+22
-131: jmp
-132: push 0
-133: oframe
-134: push 2
-135: push [0:1]
-136: push +[0:2]
-137: mul
-138: push [0:1]
-139: push 0
-140: add
-141: push 2
-142: st
-143: cframe
-144: push 1
-145: push [0:0]
-146: add
-147: push 0
-148: push 0
-149: st
-150: push #PC-26
-151: jmp
-152: cframe
-153: push 0
-154: push +[0:0]
-155: ret
-156: push #PC+44
-157: jmp
-158: .get_max
-159: push 4
-160: alloc
-161: push 0
-162: push +[0:0]
-163: push 3
-164: push 0
-165: st
-166: push [3:0]
-167: push 1
-168: push +[0:0]
-169: gt
-170: push #PC+4
-171: cjmp
-172: push #PC+10
-173: jmp
-174: push 0
-175: oframe
-176: push 1
-177: push +[0:1]
-178: push 3
-179: push 1
-180: st
-181: cframe
-182: push [3:0]
-183: push 2
-184: push +[0:0]
-185: gt
-186: push #PC+4
-187: cjmp
-188: push #PC+10
-189: jmp
-190: push 0
-191: oframe
-192: push 2
-193: push +[0:1]
-194: push 3
-195: push 1
-196: st
-197: cframe
-198: push [3:0]
-199: ret
-200: push 5
-201: push 4
-202: push 3
-203: push 2
-204: push 1
-205: push 5
-206: push 1
-207: push 0
-208: sta
-209: push #00FF00
-210: push #FF0000
-211: push 2
-212: push 6
-213: push 0
-214: sta
-215: push 40
-216: push 30
-217: push 20
-218: push 10
-219: push 4
-220: push 8
-221: push 0
-222: sta
-223: push 150
-224: push 200
-225: push 100
-226: push 3
-227: push 12
-228: push 0
-229: sta
-230: push 5
-231: pusha [1:0]
-232: push 5
-233: push .sum_array
-234: call
-235: push 15
-236: push 0
-237: st
-238: push 2
-239: pusha [6:0]
-240: push 3
-241: pusha [12:0]
-242: push 5
-243: push .process_arrays
-244: call
-245: push 16
-246: push 0
-247: st
-248: push 4
-249: pusha [8:0]
-250: push 4
-251: push .double_values
-252: call
-253: push 17
-254: push 0
-255: st
-256: push 3
-257: pusha [12:0]
-258: push 3
-259: push .get_max
-260: call
-261: push 18
-262: push 0
-263: st
-264: push [15:0]
-265: print
-266: push [17:0]
-267: print
-268: push [18:0]
-269: print
-270: cframe
-271: halt
+.main
+push 4
+jmp
+halt
+push 19
+oframe
+push #PC+43
+jmp
+.sum_array
+push 6
+alloc
+push 0
+push 5
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 5
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+20
+jmp
+push 0
+oframe
+push [0:1]
+push +[0:2]
+push [5:2]
+add
+push 5
+push 2
+st
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-24
+jmp
+cframe
+push [5:0]
+ret
+push #PC+65
+jmp
+.process_arrays
+push 5
+alloc
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 3
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+16
+jmp
+push 0
+oframe
+push [0:1]
+push +[0:2]
+print
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-20
+jmp
+cframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 2
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+18
+jmp
+push 0
+oframe
+push [0:1]
+push +[3:2]
+push 0
+push [0:1]
+write
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-22
+jmp
+cframe
+push 1
+ret
+push #PC+42
+jmp
+.double_values
+push 4
+alloc
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 4
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+22
+jmp
+push 0
+oframe
+push 2
+push [0:1]
+push +[0:2]
+mul
+push [0:1]
+push 0
+add
+push 2
+st
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-26
+jmp
+cframe
+push 0
+push +[0:0]
+ret
+push #PC+44
+jmp
+.get_max
+push 4
+alloc
+push 0
+push +[0:0]
+push 3
+push 0
+st
+push [3:0]
+push 1
+push +[0:0]
+gt
+push #PC+4
+cjmp
+push #PC+10
+jmp
+push 0
+oframe
+push 1
+push +[0:1]
+push 3
+push 1
+st
+cframe
+push [3:0]
+push 2
+push +[0:0]
+gt
+push #PC+4
+cjmp
+push #PC+10
+jmp
+push 0
+oframe
+push 2
+push +[0:1]
+push 3
+push 1
+st
+cframe
+push [3:0]
+ret
+push 5
+push 4
+push 3
+push 2
+push 1
+push 5
+push 1
+push 0
+sta
+push #00FF00
+push #FF0000
+push 2
+push 6
+push 0
+sta
+push 40
+push 30
+push 20
+push 10
+push 4
+push 8
+push 0
+sta
+push 150
+push 200
+push 100
+push 3
+push 12
+push 0
+sta
+push 5
+pusha [1:0]
+push 5
+push .sum_array
+call
+push 15
+push 0
+st
+push 2
+pusha [6:0]
+push 3
+pusha [12:0]
+push 5
+push .process_arrays
+call
+push 16
+push 0
+st
+push 4
+pusha [8:0]
+push 4
+push .double_values
+call
+push 17
+push 0
+st
+push 3
+pusha [12:0]
+push 3
+push .get_max
+call
+push 18
+push 0
+st
+push [15:0]
+print
+push [17:0]
+print
+push [18:0]
+print
+cframe
+halt
 ------------------------------------------------------------
 
 ARRAY PARAMETER ANALYSIS:

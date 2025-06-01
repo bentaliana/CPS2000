@@ -1,6 +1,6 @@
 TEST: Page 3-4 Function Examples
 TASK: ASSIGNMENT
-Generated: 2025-05-31 22:26:54
+Generated: 2025-06-01 02:59:25
 ================================================================================
 
 TEST: Assignment Page 3-4 Functions
@@ -46,9 +46,80 @@ INPUT PROGRAM:
     }
     
 
-Compilation error: Semantic errors: [SemanticError("Semantic Error at line 18, col 24: Invalid arithmetic operation: 'int' / 'float'. Operands must have matching types."), SemanticError("Semantic Error at line 26, col 17: Invalid arithmetic operation: 'int' / 'float'. Operands must have matching types.")]
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: XGreaterY(x:int, y:int) -> bool
+    Param: x : int
+    Param: y : int
+    Block
+      VarDecl: ans : bool
+        Literal: True (bool)
+      If
+        BinaryOp: >
+          Identifier: y
+          Identifier: x
+        Block
+          Assignment
+            Identifier: ans
+            Literal: False (bool)
+      Return
+        Identifier: ans
+  FuncDecl: XGreaterY_2(x:int, y:int) -> bool
+    Param: x : int
+    Param: y : int
+    Block
+      Return
+        BinaryOp: >
+          Identifier: x
+          Identifier: y
+  FuncDecl: AverageOfTwo(x:int, y:int) -> float
+    Param: x : int
+    Param: y : int
+    Block
+      VarDecl: t0 : int
+        BinaryOp: +
+          Identifier: x
+          Identifier: y
+      VarDecl: t1 : float
+        BinaryOp: /
+          Identifier: t0
+          Cast -> float
+            Literal: 2 (int)
+      Return
+        Identifier: t1
+  FuncDecl: AverageOfTwo_2(x:int, y:int) -> float
+    Param: x : int
+    Param: y : int
+    Block
+      Return
+        BinaryOp: /
+          BinaryOp: +
+            Identifier: x
+            Identifier: y
+          Cast -> float
+            Literal: 2 (int)
+  FuncDecl: Max(x:int, y:int) -> int
+    Param: x : int
+    Param: y : int
+    Block
+      VarDecl: m : int
+        Identifier: x
+      If
+        BinaryOp: >
+          Identifier: y
+          Identifier: m
+        Block
+          Assignment
+            Identifier: m
+            Identifier: y
+      Return
+        Identifier: m
+------------------------------------------------------------
 
-COMPILATION: Completed with issues
+Successfully compiled 97 PArIR instructions
+
+COMPILATION: Successfully completed
 
 ================================================================================
 

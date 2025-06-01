@@ -125,9 +125,9 @@ class SymbolTable:
         current_scope[name] = symbol
         return symbol
     
-    def declare_function(self, name: str, return_type: str, 
-                        param_types: List[str], node: ASTNode = None) -> Symbol:
-        """Declare a function in the global scope"""
+    def declare_function(self, name: str, return_type: Union[str, ArrayType], 
+                        param_types: List[Union[str, ArrayType]], node: ASTNode = None) -> Symbol:
+        """Declare a function in the global scope with array support"""
         if name in self.functions:
             raise SemanticError(
                 SemanticErrorType.REDECLARATION,
@@ -171,14 +171,24 @@ class TypeChecker:
     
     @staticmethod
     def types_equal(type1: Union[str, ArrayType], type2: Union[str, ArrayType]) -> bool:
-        """Check if two types are equal"""
+        """Check if two types are equal with enhanced array support"""
         if isinstance(type1, ArrayType) and isinstance(type2, ArrayType):
-            return (type1.element_type == type2.element_type and 
-                    type1.size == type2.size)
+            # Array types are equal if element types match
+            # Size compatibility: fixed arrays can be passed to dynamic array parameters
+            element_types_match = type1.element_type == type2.element_type
+            
+            # Allow passing fixed-size arrays to dynamic array parameters
+            # But not the other way around (dynamic to fixed)
+            if type2.size is None:  # Parameter is dynamic array
+                return element_types_match
+            elif type1.size is None:  # Argument is dynamic array, parameter is fixed
+                return False
+            else:  # Both are fixed-size arrays
+                return element_types_match and type1.size == type2.size
         elif isinstance(type1, ArrayType) or isinstance(type2, ArrayType):
-            return False
+            return False  # One is array, one is scalar
         else:
-            return type1 == type2
+            return type1 == type2  # Both are scalar types
     
     @staticmethod
     def can_cast(from_type: str, to_type: str) -> bool:
@@ -204,8 +214,22 @@ class TypeChecker:
         """Get the result type of a binary operation - SYSTEMATIC MODULO SUPPORT"""
         # Arithmetic operators including modulo
         if operator in ["+", "-", "*", "/", "%"]:
+            # Handle same types
             if left_type == right_type and left_type in ["int", "float"]:
                 return left_type
+            
+            # Handle mixed int/float operations - promote to float
+            if operator in ["+", "-", "*", "/"]:  # Division promotes to float
+                if (left_type == "int" and right_type == "float") or \
+                   (left_type == "float" and right_type == "int"):
+                    return "float"
+            
+            # Modulo requires both operands to be int
+            if operator == "%":
+                if left_type == "int" and right_type == "int":
+                    return "int"
+                return None
+            
             return None
         
         # SYSTEMATIC FIX: Comparison operators ALWAYS return bool
@@ -213,6 +237,10 @@ class TypeChecker:
             # Check operands are compatible for comparison
             if left_type == right_type and left_type in ["int", "float", "bool", "colour"]:
                 return "bool"  # ALWAYS return bool for comparisons
+            # Allow mixed int/float comparisons
+            if (left_type == "int" and right_type == "float") or \
+               (left_type == "float" and right_type == "int"):
+                return "bool"
             return None
         
         # Logical operators require bool operands and return bool
@@ -281,19 +309,27 @@ class SemanticAnalyzer:
                 self.visit_statement(stmt)
     
     def _declare_function(self, node: FunctionDeclaration):
-        """Pre-declare function for forward references"""
+        """Pre-declare function for forward references with array support"""
         param_types = [param.param_type for param in node.params]
         
-        # Validate parameter types
+        # Validate parameter types (including arrays)
         for param in node.params:
             if not TypeChecker.is_valid_type(param.param_type):
-                self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                              f"Invalid parameter type '{param.param_type}'", node)
+                if isinstance(param.param_type, ArrayType):
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                  f"Invalid array parameter type '{param.param_type.element_type}[]'", node)
+                else:
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                  f"Invalid parameter type '{param.param_type}'", node)
         
-        # Validate return type
+        # Validate return type (including arrays)
         if not TypeChecker.is_valid_type(node.return_type):
-            self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                          f"Invalid return type '{node.return_type}'", node)
+            if isinstance(node.return_type, ArrayType):
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                              f"Invalid array return type '{node.return_type.element_type}[]'", node)
+            else:
+                self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                              f"Invalid return type '{node.return_type}'", node)
         
         try:
             self.symbol_table.declare_function(node.name, node.return_type, 
@@ -384,7 +420,7 @@ class SemanticAnalyzer:
         if not TypeChecker.is_valid_type(var_type):
             if isinstance(var_type, ArrayType):
                 self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                            f"Invalid array element type '{var_type.element_type}'", node)
+                            f"Invalid array element type '{var_type.element_type}[]'", node)
             else:
                 self._add_error(SemanticErrorType.TYPE_MISMATCH,
                             f"Invalid variable type '{var_type}'", node)
@@ -556,7 +592,7 @@ class SemanticAnalyzer:
         self.symbol_table.exit_scope()
     
     def visit_return_statement(self, node: ReturnStatement):
-        """Visit return statement"""
+        """Visit return statement with array support"""
         if not self.current_function:
             self._add_error(SemanticErrorType.MISSING_RETURN,
                           "Return statement outside function", node)
@@ -565,10 +601,21 @@ class SemanticAnalyzer:
         return_value_type = self.visit_expression(node.value)
         expected_type = self.current_return_type
         
-        if return_value_type and expected_type and return_value_type != expected_type:
-            self._add_error(SemanticErrorType.TYPE_MISMATCH,
-                          f"Function must return '{expected_type}', got '{return_value_type}'", 
-                          node)
+        if return_value_type and expected_type:
+            if not TypeChecker.types_equal(return_value_type, expected_type):
+                # Better error messages for array returns
+                if isinstance(expected_type, ArrayType) and not isinstance(return_value_type, ArrayType):
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                  f"Function must return array '{expected_type}', got scalar '{return_value_type}'", 
+                                  node)
+                elif isinstance(return_value_type, ArrayType) and not isinstance(expected_type, ArrayType):
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                  f"Function must return scalar '{expected_type}', got array '{return_value_type}'", 
+                                  node)
+                else:
+                    self._add_error(SemanticErrorType.TYPE_MISMATCH,
+                                  f"Function must return '{expected_type}', got '{return_value_type}'", 
+                                  node)
         
         self.function_has_return = True
     
@@ -737,8 +784,8 @@ class SemanticAnalyzer:
 
         return target_type
     
-    def visit_function_call(self, node: FunctionCall) -> Optional[str]:
-        """Visit function call"""
+    def visit_function_call(self, node: FunctionCall) -> Optional[Union[str, ArrayType]]:
+        """Visit function call with array support"""
         func_symbol = self.symbol_table.lookup_function(node.name)
         
         if not func_symbol:
@@ -756,13 +803,23 @@ class SemanticAnalyzer:
                           f"got {actual_count}", node)
             return func_symbol.return_type
         
-        # Check argument types
+        # Check argument types (including arrays)
         for i, (arg, expected_type) in enumerate(zip(node.arguments, func_symbol.parameter_types)):
             actual_type = self.visit_expression(arg)
-            if actual_type and actual_type != expected_type:
-                self._add_error(SemanticErrorType.ARGUMENT_TYPE_MISMATCH,
-                              f"Argument {i+1} to function '{node.name}' expects '{expected_type}', "
-                              f"got '{actual_type}'", arg)
+            if actual_type and not TypeChecker.types_equal(actual_type, expected_type):
+                # Better error messages for array mismatches
+                if isinstance(expected_type, ArrayType) and not isinstance(actual_type, ArrayType):
+                    self._add_error(SemanticErrorType.ARGUMENT_TYPE_MISMATCH,
+                                  f"Argument {i+1} to function '{node.name}' expects array '{expected_type}', "
+                                  f"got scalar '{actual_type}'", arg)
+                elif isinstance(actual_type, ArrayType) and not isinstance(expected_type, ArrayType):
+                    self._add_error(SemanticErrorType.ARGUMENT_TYPE_MISMATCH,
+                                  f"Argument {i+1} to function '{node.name}' expects scalar '{expected_type}', "
+                                  f"got array '{actual_type}'", arg)
+                else:
+                    self._add_error(SemanticErrorType.ARGUMENT_TYPE_MISMATCH,
+                                  f"Argument {i+1} to function '{node.name}' expects '{expected_type}', "
+                                  f"got '{actual_type}'", arg)
         
         return func_symbol.return_type
     

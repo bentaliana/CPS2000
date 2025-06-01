@@ -1,6 +1,6 @@
 TEST: Assignment MaxInArray Example
 TASK: TASK_5
-Generated: 2025-05-31 22:26:54
+Generated: 2025-06-01 02:59:25
 ================================================================================
 
 TEST: Assignment MaxInArray Example
@@ -75,98 +75,90 @@ Program
 
 GENERATED PArIR:
 ------------------------------------------------------------
-  0: .main
-  1: push 4
-  2: jmp
-  3: halt
-  4: push 10
-  5: oframe
-  6: push #PC+52
-  7: jmp
-  8: .MaxInArray
-  9: push 9
- 10: alloc
- 11: push 0
- 12: push 8
- 13: push 0
- 14: st
- 15: push 1
- 16: oframe
- 17: push 0
- 18: push 0
- 19: push 0
- 20: st
- 21: push 8
- 22: push [0:0]
- 23: lt
- 24: push #PC+4
- 25: cjmp
- 26: push #PC+29
- 27: jmp
- 28: push 0
- 29: oframe
- 30: push [8:2]
- 31: push [0:1]
- 32: push +[0:2]
- 33: gt
- 34: push #PC+4
- 35: cjmp
- 36: push #PC+10
- 37: jmp
- 38: push 0
- 39: oframe
- 40: push [0:2]
- 41: push +[0:3]
- 42: push 8
- 43: push 3
- 44: st
- 45: cframe
- 46: cframe
- 47: push 1
- 48: push [0:0]
- 49: add
- 50: push 0
- 51: push 0
- 52: st
- 53: push #PC-33
- 54: jmp
- 55: cframe
- 56: push [8:0]
- 57: ret
- 58: push 21
- 59: push 34
- 60: push 120
- 61: push 99
- 62: push 65
- 63: push 3
- 64: push 54
- 65: push 23
- 66: push 8
- 67: push 1
- 68: push 0
- 69: sta
- 70: push 8
- 71: pusha [1:0]
- 72: push 8
- 73: push .MaxInArray
- 74: call
- 75: push 9
- 76: push 0
- 77: st
- 78: push [9:0]
- 79: print
- 80: cframe
- 81: halt
+.main
+push 4
+jmp
+halt
+push 10
+oframe
+push #PC+52
+jmp
+.MaxInArray
+push 9
+alloc
+push 0
+push 8
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 8
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+29
+jmp
+push 0
+oframe
+push [8:2]
+push [0:1]
+push +[0:2]
+gt
+push #PC+4
+cjmp
+push #PC+10
+jmp
+push 0
+oframe
+push [0:2]
+push +[0:3]
+push 8
+push 3
+st
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-33
+jmp
+cframe
+push [8:0]
+ret
+push 21
+push 34
+push 120
+push 99
+push 65
+push 3
+push 54
+push 23
+push 8
+push 1
+push 0
+sta
+push 8
+pusha [1:0]
+push 8
+push .MaxInArray
+call
+push 9
+push 0
+st
+push [9:0]
+print
+cframe
+halt
 ------------------------------------------------------------
-
-ASSIGNMENT COMPLIANCE ANALYSIS:
 Expected instruction patterns:
-  ✓ .MaxInArray: 2 occurrences
-  ✓ alloc: 1 occurrences
-  ✓ pusha: 1 occurrences
-  ✓ push +[: 2 occurrences
-  ✓ sta: 1 occurrences
-  ✓ call: 1 occurrences
 
 Array literal analysis:
 Expected array values: [23, 54, 3, 65, 99, 120, 34, 21]

@@ -1,6 +1,6 @@
 TEST: Array Declarations and Initialization
 TASK: TASK_5
-Generated: 2025-05-31 22:26:54
+Generated: 2025-06-01 02:59:25
 ================================================================================
 
 TEST: Array Declarations and Initialization
@@ -86,86 +86,86 @@ Program
 
 GENERATED PArIR:
 ------------------------------------------------------------
-  0: .main
-  1: push 4
-  2: jmp
-  3: halt
-  4: push 41
-  5: oframe
-  6: push 5
-  7: push 4
-  8: push 3
-  9: push 2
- 10: push 1
- 11: push 5
- 12: push 1
- 13: push 0
- 14: sta
- 15: push 3.3
- 16: push 2.2
- 17: push 1.1
- 18: push 3
- 19: push 6
- 20: push 0
- 21: sta
- 22: push 0
- 23: push 1
- 24: push 0
- 25: push 1
- 26: push 4
- 27: push 9
- 28: push 0
- 29: sta
- 30: push #00FF00
- 31: push #FF0000
- 32: push 2
- 33: push 13
- 34: push 0
- 35: sta
- 36: push 60
- 37: push 50
- 38: push 40
- 39: push 30
- 40: push 20
- 41: push 10
- 42: push 6
- 43: push 15
- 44: push 0
- 45: sta
- 46: push #0000FF
- 47: push #00FF00
- 48: push #FF0000
- 49: push #FFFFFF
- 50: push #000000
- 51: push 5
- 52: push 21
- 53: push 0
- 54: sta
- 55: push 42
- 56: push 1
- 57: push 36
- 58: push 0
- 59: sta
- 60: push #ABCDEF
- 61: push 1
- 62: push 37
- 63: push 0
- 64: sta
- 65: push 5
- 66: push 4
- 67: add
- 68: push 3
- 69: push 2
- 70: mul
- 71: push 1
- 72: push 1
- 73: add
- 74: push 3
- 75: push 38
- 76: push 0
- 77: sta
- 78: cframe
- 79: halt
+ .main
+ push 4
+ jmp
+ halt
+ push 41
+ oframe
+ push 5
+ push 4
+ push 3
+ push 2
+ push 1
+ push 5
+ push 1
+ push 0
+ sta
+ push 3.3
+ push 2.2
+ push 1.1
+ push 3
+ push 6
+ push 0
+ sta
+ push 0
+ push 1
+ push 0
+ push 1
+ push 4
+ push 9
+ push 0
+ sta
+ push #00FF00
+ push #FF0000
+ push 2
+ push 13
+ push 0
+ sta
+ push 60
+ push 50
+ push 40
+ push 30
+ push 20
+ push 10
+ push 6
+ push 15
+ push 0
+ sta
+ push #0000FF
+ push #00FF00
+ push #FF0000
+ push #FFFFFF
+ push #000000
+ push 5
+ push 21
+ push 0
+ sta
+ push 42
+ push 1
+ push 36
+ push 0
+ sta
+ push #ABCDEF
+ push 1
+ push 37
+ push 0
+ sta
+ push 5
+ push 4
+ add
+ push 3
+ push 2
+ mul
+ push 1
+ push 1
+ add
+ push 3
+ push 38
+ push 0
+ sta
+ cframe
+ halt
 ------------------------------------------------------------
 
 ARRAY INSTRUCTION ANALYSIS:

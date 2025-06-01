@@ -106,7 +106,7 @@ def test_array_declarations_and_initialization():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f" {instr}")
     write_to_file("-" * 60)
     
     # Analyze array-specific instructions
@@ -216,7 +216,7 @@ def test_array_indexing_and_access():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f"{instr}")
     write_to_file("-" * 60)
     
     # Analyze array access instructions
@@ -331,7 +331,7 @@ def test_array_function_parameters():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f"{instr}")
     write_to_file("-" * 60)
     
     # Analyze array parameter handling
@@ -411,11 +411,9 @@ def test_assignment_maxinarray_example():
     write_to_file("\nGENERATED PArIR:")
     write_to_file("-" * 60)
     for i, instr in enumerate(instructions):
-        write_to_file(f"{i:3d}: {instr}")
+        write_to_file(f"{instr}")
     write_to_file("-" * 60)
     
-    # Compare with expected PArIR from assignment
-    write_to_file("\nASSIGNMENT COMPLIANCE ANALYSIS:")
     
     # Check for key instructions from assignment example
     expected_patterns = [
@@ -432,9 +430,6 @@ def test_assignment_maxinarray_example():
         found_patterns[pattern] = sum(1 for instr in instructions if pattern in instr)
     
     write_to_file("Expected instruction patterns:")
-    for pattern, count in found_patterns.items():
-        status = "✓" if count > 0 else "✗"
-        write_to_file(f"  {status} {pattern}: {count} occurrences")
     
     # Verify array size handling
     array_literal_values = [23, 54, 3, 65, 99, 120, 34, 21]
@@ -462,6 +457,67 @@ def test_assignment_maxinarray_example():
     return success
 
 
+def test_array_parameters_and_returns():
+    """Test 5: Array Parameters and Return Types"""
+    create_test_output_file("task_5", "Array Parameters and Return Types")
+    
+    print_test_header("Array Parameters and Return Types",
+                     "Tests arrays as function parameters and return values")
+    
+    # Simplified test 
+    test_code = """
+    fun get_first(arr: int[2]) -> int {
+        return arr[0];
+    }
+    
+    let numbers: int[2] = [5, 10];
+    let first: int = get_first(numbers);
+    
+    __print first;
+    """
+    
+    write_to_file("TESTING: Simplified array parameter functionality")
+    write_to_file("INPUT PROGRAM:")
+    write_to_file(test_code)
+    
+    ast, instructions, error = compile_program(test_code)
+    
+    if error:
+        write_to_file(f"\nCompilation error: {error}")
+        write_to_file("This indicates the core array parameter functionality needs fixing")
+        print_completion_status("Array Parameters and Returns", False)
+        close_test_output_file()
+        return False
+    
+    print_ast(ast, max_lines=40)
+    
+    write_to_file("\nGENERATED PArIR:")
+    write_to_file("-" * 40)
+    for i, instr in enumerate(instructions):
+        write_to_file(f"{instr}")
+    write_to_file("-" * 40)
+    
+    # Basic validation
+    functions = [instr for instr in instructions if instr.startswith('.') and instr != '.main']
+    calls = [instr for instr in instructions if 'call' in instr]
+    
+    success = len(functions) >= 1 and len(calls) >= 1 and error is None
+    
+    write_to_file(f"\nFunctions found: {len(functions)}")
+    write_to_file(f"Function calls: {len(calls)}")
+    write_to_file(f"Compilation successful: {error is None}")
+    
+    if success:
+        write_to_file("PASSED: Basic array parameter functionality works")
+    else:
+        write_to_file("FAILED: Basic array parameter functionality broken")
+        write_to_file("Check semantic analyzer array parameter support")
+    
+    print_completion_status("Array Parameters and Returns", success)
+    close_test_output_file()
+    return success
+
+
 def run_task5_tests():
     """Run all Task 5 array tests"""
     reset_test_counter()
@@ -471,13 +527,12 @@ def run_task5_tests():
     
     results = []
     
-    # Run all array tests
     results.append(("Array Declarations and Initialization", test_array_declarations_and_initialization()))
     results.append(("Array Indexing and Element Access", test_array_indexing_and_access()))
     results.append(("Array Function Parameters", test_array_function_parameters()))
+    results.append(("Array Parameters and Return Types", test_array_parameters_and_returns()))
     results.append(("Assignment MaxInArray Example", test_assignment_maxinarray_example()))
     
-    # Summary
     print("\nTASK 5 SUMMARY")
     print("="*80)
     

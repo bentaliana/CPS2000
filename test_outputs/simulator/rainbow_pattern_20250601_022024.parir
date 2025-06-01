@@ -1,0 +1,130 @@
+// PArIR for: Rainbow Pattern
+// Generated: 2025-06-01 02:20:24
+// ============================================================================
+
+.main
+push 4
+jmp
+halt
+push 3
+oframe
+push #PC+85
+jmp
+.draw_pattern
+push 8
+alloc
+push #9400D3
+push #4B0082
+push #0000FF
+push #00FF00
+push #FFFF00
+push #FF7F00
+push #FF0000
+push 7
+push 1
+push 0
+sta
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+width
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+55
+jmp
+push 0
+oframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+height
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+30
+jmp
+push 1
+oframe
+push 7
+push [0:4]
+push [0:1]
+push [0:3]
+add
+add
+mod
+push 0
+push 0
+st
+push [0:0]
+push +[1:4]
+push 2
+push 2
+push [0:1]
+push [0:3]
+writebox
+cframe
+push 3
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-34
+jmp
+cframe
+cframe
+push 3
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-59
+jmp
+cframe
+push 1
+ret
+push 0
+push 1
+push 0
+st
+push 0
+push 2
+push 0
+st
+push 1
+push #PC+4
+cjmp
+push #PC+22
+jmp
+push 0
+oframe
+push [1:1]
+push 1
+push .draw_pattern
+call
+push 2
+push 1
+st
+push 1
+push [1:1]
+add
+push 1
+push 1
+st
+push 10
+delay
+cframe
+push #PC-23
+jmp
+cframe
+halt

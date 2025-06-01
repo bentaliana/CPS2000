@@ -98,11 +98,11 @@ def main():
         elif sys.argv[1].startswith("task"):
             # Run specific task test
             task_map = {
-                "task1": ("test_task1.py", "Task 1 - Lexer Tests (4 comprehensive tests)"),
-                "task2": ("test_task2.py", "Task 2 - Parser Tests (4 comprehensive tests)"),
-                "task3": ("test_task3.py", "Task 3 - Semantic Analysis Tests (4 comprehensive tests)"),
-                "task4": ("test_task4.py", "Task 4 - Code Generation Tests (4 comprehensive tests)"),
-                "task5": ("test_task5.py", "Task 5 - Array Tests (4 comprehensive tests)")
+                "task1": ("test_task1.py", "Task 1 - Lexer Tests"),
+                "task2": ("test_task2.py", "Task 2 - Parser Tests"),
+                "task3": ("test_task3.py", "Task 3 - Semantic Analysis Tests"),
+                "task4": ("test_task4.py", "Task 4 - Code Generation Tests"),
+                "task5": ("test_task5.py", "Task 5 - Array Tests")
             }
             
             task = sys.argv[1].lower()

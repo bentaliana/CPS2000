@@ -1,5 +1,5 @@
 """
-Task 1 - Table-driven Lexer Tests - CORRECTED VERSION
+Task 1 - Table-driven Lexer Tests 
 Comprehensive testing of FSA-based lexical analysis
 Tests micro-syntax recognition, error detection, and token classification
 """

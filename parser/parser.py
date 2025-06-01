@@ -215,7 +215,7 @@ class PArLParser:
         
         self.stream.expect(TokenType.RPAREN, "')' after parameters")
         self.stream.expect(TokenType.ARROW, "'->' before return type")
-        return_type = self.parse_type()
+        return_type = self.parse_type()  # This already supports ArrayType
         
         body = self.parse_block()
         
@@ -237,7 +237,7 @@ class PArLParser:
         """Parse single formal parameter: Identifier ':' Type"""
         name_token = self.stream.expect(TokenType.IDENTIFIER, "parameter name")
         self.stream.expect(TokenType.COLON, "':' after parameter name")
-        param_type = self.parse_type()
+        param_type = self.parse_type()  # This already supports ArrayType
         
         return FormalParameter(name_token.lexeme, param_type,
                              name_token.line, name_token.col)
