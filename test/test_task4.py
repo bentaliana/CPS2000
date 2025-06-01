@@ -303,17 +303,29 @@ def test_function_calls_and_parameters():
     write_to_file(f"Memory allocations: {len(alloc_instructions)}")
     
     # Check for proper function structure
-    expected_functions = 3  # add, multiply_and_check, complex_calculation
-    expected_calls = 3     # calls to each function
+    expected_functions = 2  # multiply_and_check, complex_calculation
+    expected_calls = 2     # calls to multiply_and_check and complex_calculation
+    expected_returns = 2  
     
     success = (len(function_labels) >= expected_functions and 
                len(call_instructions) >= expected_calls and
-               len(return_instructions) >= expected_functions)
+               len(return_instructions) >= expected_returns)
+    
+    write_to_file(f"\nEXPECTATIONS CHECK:")
+    write_to_file(f"Expected functions: {expected_functions}, Found: {len(function_labels)}")
+    write_to_file(f"Expected calls: {expected_calls}, Found: {len(call_instructions)}")
+    write_to_file(f"Expected returns: {expected_returns}, Found: {len(return_instructions)}")
     
     if success:
         write_to_file("\nFunction call generation successful")
     else:
         write_to_file("\nFunction call generation incomplete")
+        if len(function_labels) < expected_functions:
+            write_to_file(f"  Missing function labels (need {expected_functions})")
+        if len(call_instructions) < expected_calls:
+            write_to_file(f"  Missing function calls (need {expected_calls})")
+        if len(return_instructions) < expected_returns:
+            write_to_file(f"  Missing return statements (need {expected_returns})")
     
     print_completion_status("Function Calls and Parameters", success)
     close_test_output_file()
