@@ -389,15 +389,19 @@ class PArIRGenerator:
         """Generate function declaration"""
         self.current_function = node.name
         
-        # SYSTEMATIC FIX: Calculate parameter space including arrays using helper method
+        # Calculate parameter space including arrays
         param_space = 0
-        for param in node.params:
-            param_space += self._get_param_size(param.param_type)
+        param_allocations = []  # Track each parameter's size
         
-        # SYSTEMATIC: Use standard counting with proper scope boundary respect
+        for param in node.params:
+            size = self._get_param_size(param.param_type)
+            param_allocations.append((param.name, size))
+            param_space += size
+        
+        # Count local variables
         local_count = self._count_variable_declarations(node.body.statements)
         
-        # SYSTEMATIC FIX: Allocate space for both parameters and locals together
+        # Total allocation
         allocation = param_space + local_count
         
         if self.debug:
@@ -407,14 +411,13 @@ class PArIRGenerator:
         self._emit("alloc")
         
         # Enter function scope
-        total_vars = allocation
-        self._enter_scope(total_vars)
+        self._enter_scope(allocation)
         
-        # SYSTEMATIC FIX: Register parameters with correct indexing for arrays using helper method
+        # SYSTEMATIC FIX: Register parameters at index 0
+        # Arrays passed as parameters need to maintain their element order
         current_index = 0
-        for param in node.params:
-            param_size = self._get_param_size(param.param_type)
-            self._allocate_variable(param.name, current_index, param_size)
+        for param_name, param_size in param_allocations:
+            self._allocate_variable(param_name, current_index, param_size)
             current_index += param_size
         
         # Set next index after parameters for local variables
@@ -427,7 +430,7 @@ class PArIRGenerator:
         
         self._exit_scope()
         self.current_function = None
-    
+        
     # ===== STATEMENT GENERATION =====
     
     def _generate_statement(self, node: ASTNode):
@@ -461,20 +464,18 @@ class PArIRGenerator:
             self._emit("drop")
     
     def _generate_var_decl(self, node: VariableDeclaration):
-        """Generate variable declaration using systematic frame level semantics"""
+        """Generate variable declaration with REVERSE array storage"""
         if isinstance(node.var_type, ArrayType):
-            # Array variable
             if node.var_type.size is None:
                 raise ValueError(f"Array '{node.name}' must have known size for code generation")
             
             location = self._allocate_variable(node.name, size=node.var_type.size)
             
             if node.initializer and isinstance(node.initializer, ArrayLiteral):
-                # Initialize array with literal values
-                for elem in reversed(node.initializer.elements):
+                # ASSIGNMENT PATTERN: Store in REVERSE order
+                for elem in reversed(node.initializer.elements):  # ← ADD reversed()
                     self._generate_expression(elem)
                 
-                # Use systematic frame level lookup
                 lookup_location = self._lookup_variable(node.name)
                 if lookup_location:
                     self._emit(f"push {len(node.initializer.elements)}")
@@ -482,19 +483,17 @@ class PArIRGenerator:
                     self._emit(f"push {lookup_location.frame_level}")
                     self._emit("sta")
         else:
-            # Regular variable declaration
+            # Regular variable unchanged
             location = self._allocate_variable(node.name)
-            
             if node.initializer:
                 self._generate_expression(node.initializer)
-                
-                # Use systematic frame level lookup
                 lookup_location = self._lookup_variable(node.name)
                 if lookup_location:
                     self._emit(f"push {lookup_location.frame_index}")
                     self._emit(f"push {lookup_location.frame_level}")
                     self._emit("st")
-    
+
+
     def _generate_assignment(self, node: Assignment):
         """Generate assignment with systematic frame level handling"""
         if isinstance(node.target, IndexAccess):
@@ -740,7 +739,7 @@ class PArIRGenerator:
         self._generate_expression(node.width)   # Width 
         self._generate_expression(node.height)  # Height
         self._generate_expression(node.y)       # Y coordinate
-        self._generate_expression(node.x)       # X coordinate  
+        self._generate_expression(node.x)       # X Coordinate  
         self._emit("writebox")
     
     def _generate_clear_stmt(self, node: ClearStatement):
@@ -835,35 +834,34 @@ class PArIRGenerator:
         self._generate_expression(node.expression)
     
     def _generate_function_call(self, node: FunctionCall) -> Optional[str]:
-        """Generate function call with systematic array argument handling"""
+        """Generate function call - SYSTEMATIC FIX for array parameter order"""
         
-        # SYSTEMATIC FIX: Handle array arguments with pusha instruction
         total_param_count = 0
         
-        # Process arguments in reverse order for stack-based parameter passing
         for arg in reversed(node.arguments):
             if isinstance(arg, Identifier):
-                # Check if this is an array variable using helper method
                 is_array, array_size = self._is_array_variable(arg.name)
                 if is_array:
-                    # For array arguments, use pusha to push all elements
                     location = self._lookup_variable(arg.name)
-                    self._emit(f"push {array_size}")
-                    self._emit(f"pusha [{location.frame_index}:{location.frame_level}]")
+                    
+                    # SYSTEMATIC FIX: Push array elements individually in reverse order
+                    # This compensates for the fact that pusha + call reverses the array order
+                    # Push elements from last to first so call stores them correctly
+                    for i in range(array_size - 1, -1, -1):
+                        self._emit(f"push {i}")
+                        self._emit(f"push +[{location.frame_index}:{location.frame_level}]")
+                    
                     total_param_count += array_size
                 else:
-                    # Regular variable argument
                     self._generate_expression(arg)
                     total_param_count += 1
             else:
-                # Regular expression argument
                 self._generate_expression(arg)
                 total_param_count += 1
         
         self._emit(f"push {total_param_count}")
         self._emit(f"push .{node.name}")
         self._emit("call")
-        
         return None
         
     def _generate_pad_randi(self, node: PadRandI):
@@ -872,12 +870,11 @@ class PArIRGenerator:
         self._emit("irnd")
 
     def _generate_array_literal(self, node: ArrayLiteral):
-        """Generate array literal (used in expressions)"""
-        # Push all elements onto stack
-        for elem in node.elements:
+        """Generate array literal in reverse order"""
+        # Push elements in REVERSE order 
+        for elem in reversed(node.elements):  # ← ADD reversed()
             self._generate_expression(elem)
         
-        # Push count for potential array operations
         self._emit(f"push {len(node.elements)}")
 
     def _generate_index_access(self, node: IndexAccess):

@@ -1,6 +1,6 @@
 TEST: Max in Array Function
 TASK: SIMULATOR
-Generated: 2025-06-01 02:59:25
+Generated: 2025-06-01 10:22:10
 ================================================================================
 
 TEST: Max in Array Function
@@ -144,8 +144,22 @@ push 8
 push 1
 push 0
 sta
-push 8
-pusha [1:0]
+push 7
+push +[1:0]
+push 6
+push +[1:0]
+push 5
+push +[1:0]
+push 4
+push +[1:0]
+push 3
+push +[1:0]
+push 2
+push +[1:0]
+push 1
+push +[1:0]
+push 0
+push +[1:0]
 push 8
 push .MaxInArray
 call
@@ -158,7 +172,7 @@ cframe
 halt
 ------------------------------------------------------------
 
-Total instructions: 82
+Total instructions: 96
 
 MaxInArray function ready for simulator
 Should print: 120 (maximum value from array)
