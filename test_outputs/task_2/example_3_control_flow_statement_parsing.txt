@@ -1,0 +1,151 @@
+TEST: Control Flow Statement Parsing
+TASK: TASK_2
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Control Flow Statement Parsing
+PURPOSE: Tests if/else, while loops, for loops, and nested control structures
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Simple if statement
+    if (x > 0) {
+        __print x;
+    }
+    
+    // If-else statement
+    if (condition) {
+        result = true;
+    } else {
+        result = false;
+    }
+    
+    // While loop
+    while (i < 10) {
+        __print i;
+        i = i + 1;
+    }
+    
+    // For loop with all clauses
+    for (let i:int = 0; i < 10; i = i + 1) {
+        __print i;
+    }
+    
+    // For loop with missing clauses
+    for (; x < 100; x = x * 2) {
+        __delay 100;
+    }
+    
+    // Nested control structures
+    for (let outer:int = 0; outer < 5; outer = outer + 1) {
+        if (outer % 2 == 0) {
+            for (let inner:int = 0; inner < outer; inner = inner + 1) {
+                __write outer, inner, #FF0000;
+            }
+        } else {
+            while (condition) {
+                __delay 50;
+                if (check()) {
+                    break_condition = true;
+                }
+            }
+        }
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  If
+    BinaryOp: >
+      Identifier: x
+      Literal: 0 (int)
+    Block
+      Print
+        Identifier: x
+  If
+    Identifier: condition
+    Block
+      Assignment
+        Identifier: result
+        Literal: True (bool)
+    Block
+      Assignment
+        Identifier: result
+        Literal: False (bool)
+  While
+    BinaryOp: <
+      Identifier: i
+      Literal: 10 (int)
+    Block
+      Print
+        Identifier: i
+      Assignment
+        Identifier: i
+        BinaryOp: +
+          Identifier: i
+          Literal: 1 (int)
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 10 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Print
+        Identifier: i
+  For
+    BinaryOp: <
+      Identifier: x
+      Literal: 100 (int)
+    Assignment
+      Identifier: x
+      BinaryOp: *
+        Identifier: x
+        Literal: 2 (int)
+    Block
+      Delay
+        Literal: 100 (int)
+  For
+    VarDecl: outer : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: outer
+      Literal: 5 (int)
+    Assignment
+      Identifier: outer
+      BinaryOp: +
+        Identifier: outer
+        Literal: 1 (int)
+    Block
+      If
+        BinaryOp: ==
+          BinaryOp: %
+            Identifier: outer
+            Literal: 2 (int)
+          Literal: 0 (int)
+        Block
+          For
+            VarDecl: inner : int
+              Literal: 0 (int)
+            BinaryOp: <
+              Identifier: inner
+... (23 more lines)
+------------------------------------------------------------
+
+CONTROL FLOW ANALYSIS:
+------------------------------------------------------------
+If statements: 4
+While loops: 2
+For loops: 4
+Control flow parsing completed successfully
+
+CONTROL FLOW PARSING: Successfully completed
+
+================================================================================
+

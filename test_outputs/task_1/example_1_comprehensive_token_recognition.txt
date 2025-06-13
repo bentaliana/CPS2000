@@ -1,0 +1,69 @@
+TEST: Comprehensive Token Recognition
+TASK: TASK_1
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Comprehensive Token Recognition
+PURPOSE: Tests recognition of all PArL tokens from EBNF specification
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Keywords and types
+    let fun if else for while return as not and or true false
+    int float bool colour
+    
+    // Built-ins from assignment specification
+    __print __delay __write __write_box __randi __read __width __height __clear
+    
+    // Operators and punctuation
+    = == != < > <= >= + - * / % ( ) { } [ ] : , ; # .
+    
+    // Literals
+    42 3.14 true false #FF00AA
+    
+    // Identifiers
+    variable _underscore letter123 mixedCase
+    
+
+TOKEN ANALYSIS:
+------------------------------------------------------------
+Total tokens generated: 59
+Unique token types: 53
+
+REQUIRED TOKEN VERIFICATION:
+LET: 1 found
+FUN: 1 found
+IF: 1 found
+ELSE: 1 found
+FOR: 1 found
+WHILE: 1 found
+RETURN: 1 found
+TYPE_INT: 1 found
+TYPE_FLOAT: 1 found
+TYPE_BOOL: 1 found
+TYPE_COLOUR: 1 found
+BUILTIN_PRINT: 1 found
+BUILTIN_DELAY: 1 found
+BUILTIN_WRITE: 1 found
+BUILTIN_WRITE_BOX: 1 found
+BUILTIN_RANDI: 1 found
+BUILTIN_READ: 1 found
+BUILTIN_WIDTH: 1 found
+BUILTIN_HEIGHT: 1 found
+INT_LITERAL: 1 found
+FLOAT_LITERAL: 1 found
+COLOUR_LITERAL: 1 found
+TRUE: 2 found
+FALSE: 2 found
+IDENTIFIER: 4 found
+EQUAL: 1 found
+EQUAL_EQUAL: 1 found
+PLUS: 1 found
+MODULO: 1 found
+
+All required token types successfully recognized
+
+TOKEN RECOGNITION: Successfully completed
+
+================================================================================
+

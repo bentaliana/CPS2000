@@ -1,0 +1,259 @@
+TEST: Moving Checkerboard
+TASK: SIMULATOR
+Generated: 2025-06-01 20:30:30
+================================================================================
+
+TEST: Moving Checkerboard
+PURPOSE: Creates an animated checkerboard pattern
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Simple moving checkerboard pattern
+    let size:int = 4;  // Size of each square
+    let frame:int = 0;
+    
+    while (frame < 200) {
+        for (let x:int = 0; x < __width; x = x + size) {
+            for (let y:int = 0; y < __height; y = y + size) {
+                // Create checkerboard pattern with animation
+                let checker:int = ((x / size) + (y / size) + frame) % 2;
+                
+                let color:colour = #000000;
+                if (checker == 0) {
+                    color = #FFFFFF;  // White
+                } else {
+                    color = #000000;  // Black
+                }
+                
+                __write_box x, y, size, size, color;
+            }
+        }
+        
+        frame = frame + 1;
+        __delay 100;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: size : int
+    Literal: 4 (int)
+  VarDecl: frame : int
+    Literal: 0 (int)
+  While
+    BinaryOp: <
+      Identifier: frame
+      Literal: 200 (int)
+    Block
+      For
+        VarDecl: x : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: x
+          BuiltIn: __width
+        Assignment
+          Identifier: x
+          BinaryOp: +
+            Identifier: x
+            Identifier: size
+        Block
+          For
+            VarDecl: y : int
+              Literal: 0 (int)
+            BinaryOp: <
+              Identifier: y
+              BuiltIn: __height
+            Assignment
+              Identifier: y
+              BinaryOp: +
+                Identifier: y
+                Identifier: size
+            Block
+              VarDecl: checker : int
+                BinaryOp: %
+                  BinaryOp: +
+                    BinaryOp: +
+                      BinaryOp: /
+                        Identifier: x
+                        Identifier: size
+                      BinaryOp: /
+                        Identifier: y
+                        Identifier: size
+                    Identifier: frame
+                  Literal: 2 (int)
+              VarDecl: color : colour
+                Literal: #000000 (colour)
+              If
+                BinaryOp: ==
+                  Identifier: checker
+                  Literal: 0 (int)
+                Block
+                  Assignment
+                    Identifier: color
+                    Literal: #FFFFFF (colour)
+                Block
+                  Assignment
+                    Identifier: color
+                    Literal: #000000 (colour)
+              WriteBox
+                Identifier: x
+                Identifier: y
+                Identifier: size
+                Identifier: size
+                Identifier: color
+      Assignment
+        Identifier: frame
+        BinaryOp: +
+          Identifier: frame
+          Literal: 1 (int)
+      Delay
+        Literal: 100 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 3
+oframe
+push 4
+push 1
+push 0
+st
+push 0
+push 2
+push 0
+st
+push 200
+push [2:0]
+lt
+push #PC+4
+cjmp
+push #PC+112
+jmp
+push 0
+oframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+width
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+85
+jmp
+push 0
+oframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+height
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+60
+jmp
+push 2
+oframe
+push 2
+push [2:5]
+push [1:5]
+push [0:1]
+div
+push [1:5]
+push [0:3]
+div
+add
+add
+mod
+push 0
+push 0
+st
+push #000000
+push 1
+push 0
+st
+push 0
+push [0:0]
+eq
+push #PC+4
+cjmp
+push #PC+11
+jmp
+push 0
+oframe
+push #FFFFFF
+push 1
+push 1
+st
+cframe
+push #PC+9
+jmp
+push 0
+oframe
+push #000000
+push 1
+push 1
+st
+cframe
+push [1:0]
+push [1:5]
+push [1:5]
+push [0:1]
+push [0:3]
+writebox
+cframe
+push [1:4]
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-64
+jmp
+cframe
+cframe
+push [1:2]
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-89
+jmp
+cframe
+push 1
+push [2:1]
+add
+push 2
+push 1
+st
+push 100
+delay
+cframe
+push #PC-115
+jmp
+cframe
+halt
+------------------------------------------------------------
+
+Total instructions: 133
+
+Moving checkerboard pattern ready for simulator
+Creates an animated checkerboard that shifts over time
+
+COMPILATION: Successfully completed
+
+================================================================================
+

@@ -1,0 +1,39 @@
+TEST: Page 9 Scope Error Example
+TASK: ASSIGNMENT
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Assignment Page 9 Scope Errors
+PURPOSE: Variable redeclaration errors that should be detected
+--------------------------------------------------------------------------------
+ASSIGNMENT EXAMPLE: Scope error detection from page 9
+
+INPUT PROGRAM:
+
+    fun MoreThan50(x:int) -> bool {
+        let x:int = 23; //syntax ok, but this should not be allowed!!
+        if (x <= 50) {
+            return false;
+        }
+        return true;
+    }
+
+    let x:int = 45; //this is fine
+    while (x < 50) {
+        __print MoreThan50(x); //"false" *5 since bool operator is <
+        x = x + 1;
+    }
+
+    let x:int = 45; //re-declaration in the same scope ... not allowed!!
+    while (MoreThan50(x)) {
+        __print MoreThan50(x); //"false" x5 since bool operator is <=
+        x = x + 1;
+    }
+    
+
+Correctly detected semantic errors: Semantic errors: [SemanticError("Semantic Error at line 2, col 9: Variable 'x' conflicts with function parameter"), SemanticError("Semantic Error at line 15, col 5: Variable 'x' already declared in current scope")]
+
+ERROR DETECTION: Successfully completed
+
+================================================================================
+

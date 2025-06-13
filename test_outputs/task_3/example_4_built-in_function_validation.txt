@@ -1,0 +1,204 @@
+TEST: Built-in Function Validation
+TASK: TASK_3
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Built-in Function Validation
+PURPOSE: Tests built-in function parameter types and return type checking
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Valid built-in usage
+    __print 42;
+    __print 3.14;
+    __print true;
+    __print #FF0000;
+    
+    __delay 1000;
+    
+    __write 10, 20, #00FF00;
+    __write_box 5, 5, 10, 10, #0000FF;
+    
+    __clear #FFFFFF;
+    
+    let w:int = __width;
+    let h:int = __height;
+    
+    let random_val:int = __randi 100;
+    let pixel_color:colour = __read 15, 25;
+        
+    // Type mismatches in built-in statements
+    __delay 3.14;                // Should be int, not float
+    __delay (true as int);       // Should be int, not bool (cast to make parseable)
+    
+    __write 10.5, 20, #FF0000;   // x should be int, not float
+    __write 10, 20.5, #FF0000;   // y should be int, not float  
+    __write 10, 20, 255;         // color should be colour, not int
+    
+    __write_box 5.5, 5, 10, 10, #FF0000;    // x should be int
+    __write_box 5, 5.5, 10, 10, #FF0000;    // y should be int
+    __write_box 5, 5, 10.5, 10, #FF0000;    // width should be int
+    __write_box 5, 5, 10, 10.5, #FF0000;    // height should be int
+    __write_box 5, 5, 10, 10, 255;          // color should be colour
+    
+    __clear 255;                 // Should be colour, not int
+    __clear (true as colour);    // Should be colour, not bool (cast to make parseable)
+    
+    // Type mismatches in built-in expressions
+    let bad_random1:int = __randi 3.14;    // Should be int, not float
+    let bad_random2:int = __randi (true as int);  // Should be int, not bool (cast to make parseable)
+    
+    let bad_read1:colour = __read 10.5, 20;     // x should be int, not float
+    let bad_read2:colour = __read 10, 20.5;     // y should be int, not float
+    
+    // Type assignment errors
+    let wrong_width:float = __width;     // __width returns int
+    let wrong_random:bool = __randi 10;  // __randi returns int
+    let wrong_pixel:int = __read 5, 5;   // __read returns colour
+    
+    // Undeclared variable reference (parseable but semantic error)
+    let undefined_test:int = undefined_var;
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  Print
+    Literal: 42 (int)
+  Print
+    Literal: 3.14 (float)
+  Print
+    Literal: True (bool)
+  Print
+    Literal: #FF0000 (colour)
+  Delay
+    Literal: 1000 (int)
+  Write
+    Literal: 10 (int)
+    Literal: 20 (int)
+    Literal: #00FF00 (colour)
+  WriteBox
+    Literal: 5 (int)
+    Literal: 5 (int)
+    Literal: 10 (int)
+    Literal: 10 (int)
+    Literal: #0000FF (colour)
+  Clear
+    Literal: #FFFFFF (colour)
+  VarDecl: w : int
+    BuiltIn: __width
+  VarDecl: h : int
+    BuiltIn: __height
+  VarDecl: random_val : int
+    BuiltIn: __randi
+      Literal: 100 (int)
+  VarDecl: pixel_color : colour
+    BuiltIn: __read
+      Literal: 15 (int)
+      Literal: 25 (int)
+  Delay
+    Literal: 3.14 (float)
+  Delay
+    Cast -> int
+      Literal: True (bool)
+  Write
+    Literal: 10.5 (float)
+    Literal: 20 (int)
+    Literal: #FF0000 (colour)
+  Write
+    Literal: 10 (int)
+    Literal: 20.5 (float)
+    Literal: #FF0000 (colour)
+  Write
+    Literal: 10 (int)
+    Literal: 20 (int)
+    Literal: 255 (int)
+  WriteBox
+    Literal: 5.5 (float)
+    Literal: 5 (int)
+    Literal: 10 (int)
+    Literal: 10 (int)
+    Literal: #FF0000 (colour)
+  WriteBox
+    Literal: 5 (int)
+    Literal: 5.5 (float)
+    Literal: 10 (int)
+    Literal: 10 (int)
+    Literal: #FF0000 (colour)
+  WriteBox
+    Literal: 5 (int)
+    Literal: 5 (int)
+    Literal: 10.5 (float)
+    Literal: 10 (int)
+    Literal: #FF0000 (colour)
+  WriteBox
+    Literal: 5 (int)
+    Literal: 5 (int)
+    Literal: 10 (int)
+    Literal: 10.5 (float)
+    Literal: #FF0000 (colour)
+  WriteBox
+    Literal: 5 (int)
+    Literal: 5 (int)
+    Literal: 10 (int)
+    Literal: 10 (int)
+    Literal: 255 (int)
+  Clear
+    Literal: 255 (int)
+  Clear
+    Cast -> colour
+      Literal: True (bool)
+  VarDecl: bad_random1 : int
+    BuiltIn: __randi
+      Literal: 3.14 (float)
+  VarDecl: bad_random2 : int
+    BuiltIn: __randi
+      Cast -> int
+        Literal: True (bool)
+  VarDecl: bad_read1 : colour
+    BuiltIn: __read
+      Literal: 10.5 (float)
+      Literal: 20 (int)
+  VarDecl: bad_read2 : colour
+    BuiltIn: __read
+      Literal: 10 (int)
+... (12 more lines)
+------------------------------------------------------------
+
+BUILT-IN VALIDATION RESULTS:
+------------------------------------------------------------
+Semantic errors detected (expected for invalid operations):
+  • Semantic Error at line 21, col 5: __delay expects int, got 'float'
+  • Semantic Error at line 24, col 5: __write x coordinate must be int, got 'float'
+  • Semantic Error at line 25, col 5: __write y coordinate must be int, got 'float'
+  • Semantic Error at line 26, col 5: __write color must be colour, got 'int'
+  • Semantic Error at line 28, col 5: __write_box x coordinate must be int, got 'float'
+  • Semantic Error at line 29, col 5: __write_box y coordinate must be int, got 'float'
+  • Semantic Error at line 30, col 5: __write_box width must be int, got 'float'
+  • Semantic Error at line 31, col 5: __write_box height must be int, got 'float'
+  • Semantic Error at line 32, col 5: __write_box color must be colour, got 'int'
+  • Semantic Error at line 34, col 5: __clear expects colour, got 'int'
+  • Semantic Error at line 35, col 19: Cannot cast from 'bool' to 'colour'
+  • Semantic Error at line 38, col 27: __randi max value must be int, got 'float'
+  • Semantic Error at line 41, col 28: __read x coordinate must be int, got 'float'
+  • Semantic Error at line 42, col 28: __read y coordinate must be int, got 'float'
+  • Semantic Error at line 45, col 5: Cannot initialize variable 'wrong_width' of type 'float' with expression of type 'int'
+  • Semantic Error at line 46, col 5: Cannot initialize variable 'wrong_random' of type 'bool' with expression of type 'int'
+  • Semantic Error at line 47, col 5: Cannot initialize variable 'wrong_pixel' of type 'int' with expression of type 'colour'
+  • Semantic Error at line 50, col 30: Undeclared variable 'undefined_var'
+
+Built-in error summary:
+  __delay: 1 errors
+  __write: 8 errors
+  __clear: 1 errors
+  __randi: 1 errors
+  __read: 2 errors
+  assignment: 3 errors
+  other: 2 errors
+
+Built-in function validation completed
+
+BUILT-IN VALIDATION: Successfully completed
+
+================================================================================
+

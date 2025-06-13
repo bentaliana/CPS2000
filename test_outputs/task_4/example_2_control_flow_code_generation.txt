@@ -1,0 +1,264 @@
+TEST: Control Flow Code Generation
+TASK: TASK_4
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Control Flow Code Generation
+PURPOSE: Tests if/else statements, while loops, and for loops with jumps
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    let x:int = 10;
+    
+    // Simple if statement
+    if (x > 5) {
+        x = x + 1;
+    }
+    
+    // If-else statement
+    if (x > 15) {
+        x = x - 5;
+    } else {
+        x = x + 5;
+    }
+    
+    // While loop
+    let counter:int = 0;
+    while (counter < 5) {
+        counter = counter + 1;
+        __print counter;
+    }
+    
+    // For loop
+    for (let i:int = 0; i < 3; i = i + 1) {
+        __print i;
+        if (i == 1) {
+            __delay 100;
+        }
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: x : int
+    Literal: 10 (int)
+  If
+    BinaryOp: >
+      Identifier: x
+      Literal: 5 (int)
+    Block
+      Assignment
+        Identifier: x
+        BinaryOp: +
+          Identifier: x
+          Literal: 1 (int)
+  If
+    BinaryOp: >
+      Identifier: x
+      Literal: 15 (int)
+    Block
+      Assignment
+        Identifier: x
+        BinaryOp: -
+          Identifier: x
+          Literal: 5 (int)
+    Block
+      Assignment
+        Identifier: x
+        BinaryOp: +
+          Identifier: x
+          Literal: 5 (int)
+  VarDecl: counter : int
+    Literal: 0 (int)
+  While
+    BinaryOp: <
+      Identifier: counter
+      Literal: 5 (int)
+    Block
+      Assignment
+        Identifier: counter
+        BinaryOp: +
+          Identifier: counter
+          Literal: 1 (int)
+      Print
+        Identifier: counter
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 3 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Print
+        Identifier: i
+      If
+        BinaryOp: ==
+          Identifier: i
+          Literal: 1 (int)
+        Block
+          Delay
+            Literal: 100 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 3
+oframe
+push 10
+push 1
+push 0
+st
+push 5
+push [1:0]
+gt
+push #PC+4
+cjmp
+push #PC+11
+jmp
+push 0
+oframe
+push 1
+push [1:1]
+add
+push 1
+push 1
+st
+cframe
+push 15
+push [1:0]
+gt
+push #PC+4
+cjmp
+push #PC+13
+jmp
+push 0
+oframe
+push 5
+push [1:1]
+sub
+push 1
+push 1
+st
+cframe
+push #PC+11
+jmp
+push 0
+oframe
+push 5
+push [1:1]
+add
+push 1
+push 1
+st
+cframe
+push 0
+push 2
+push 0
+st
+push 5
+push [2:0]
+lt
+push #PC+4
+cjmp
+push #PC+15
+jmp
+push 0
+oframe
+push 1
+push [2:1]
+add
+push 2
+push 1
+st
+push [2:1]
+print
+cframe
+push #PC-18
+jmp
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 3
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+27
+jmp
+push 0
+oframe
+push [0:1]
+print
+push 1
+push [0:1]
+eq
+push #PC+4
+cjmp
+push #PC+7
+jmp
+push 0
+oframe
+push 100
+delay
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-31
+jmp
+cframe
+cframe
+halt
+------------------------------------------------------------
+
+CONTROL FLOW ANALYSIS:
+Jump instructions: 14
+  2: jmp
+  14: cjmp
+  16: jmp
+  30: cjmp
+  32: jmp
+  43: jmp
+  61: cjmp
+  63: jmp
+  76: jmp
+  87: cjmp
+  89: jmp
+  98: cjmp
+  100: jmp
+  114: jmp
+
+Comparison instructions: 7
+  3: halt
+  12: gt
+  28: gt
+  59: lt
+  85: lt
+  96: eq
+  117: halt
+
+Frame management operations: 16
+
+Control flow generation successful
+
+CONTROL FLOW GENERATION: Successfully completed
+
+================================================================================
+

@@ -1,0 +1,148 @@
+TEST: Page 9 Graphics Loop
+TASK: ASSIGNMENT
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Assignment Page 9 Graphics Loop
+PURPOSE: Nested loops with graphics operations
+--------------------------------------------------------------------------------
+ASSIGNMENT EXAMPLE: Graphics loop from page 9
+
+INPUT PROGRAM:
+
+    let w: int = __width;
+    let h: int = __height;
+
+    for (let u:int = 0; u<w; u = u+1)
+    {
+        for (let v:int = 0; v<h; v = v+1)
+        {
+            //set the pixel at u,v to the colour green
+            __write_box u,v,1,1,#00ff00;
+            //or ... assume one pixel 1x1
+            //__write u,v,#00ff00;
+        }
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: w : int
+    BuiltIn: __width
+  VarDecl: h : int
+    BuiltIn: __height
+  For
+    VarDecl: u : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: u
+      Identifier: w
+    Assignment
+      Identifier: u
+      BinaryOp: +
+        Identifier: u
+        Literal: 1 (int)
+    Block
+      For
+        VarDecl: v : int
+          Literal: 0 (int)
+        BinaryOp: <
+          Identifier: v
+          Identifier: h
+        Assignment
+          Identifier: v
+          BinaryOp: +
+            Identifier: v
+            Literal: 1 (int)
+        Block
+          WriteBox
+            Identifier: u
+            Identifier: v
+            Literal: 1 (int)
+            Literal: 1 (int)
+            Literal: #00ff00 (colour)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 3
+oframe
+width
+push 1
+push 0
+st
+height
+push 2
+push 0
+st
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push [1:1]
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+44
+jmp
+push 0
+oframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push [2:3]
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+19
+jmp
+push 0
+oframe
+push #00ff00
+push 1
+push 1
+push [0:1]
+push [0:3]
+writebox
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-23
+jmp
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-48
+jmp
+cframe
+cframe
+halt
+------------------------------------------------------------
+
+Successfully compiled 72 PArIR instructions
+
+COMPILATION: Successfully completed
+
+================================================================================
+
