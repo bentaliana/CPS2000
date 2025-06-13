@@ -33,6 +33,7 @@ Modulo operator (%) support for integer operations
 
 
 ### Project Structure
+<pre>
 Assignment/
 ├── lexer/              # FSA-based tokenizer
 ├── parser/             # Recursive descent parser & AST nodes
@@ -40,6 +41,7 @@ Assignment/
 ├── code_generator/     # PArIR instruction generation
 ├── test/              # Comprehensive test suite
 └── test_outputs/      # Test results and generated code
+</pre>
 
 ## Installation & Usage
 ### Prerequisites
@@ -49,13 +51,14 @@ No external dependencies required (uses only Python standard library)
 
 ## Running Tests
 ### Run all tests:
-
+<pre>
 python -m test.run_all_tests
-
+</pre>
 ### Run specific test suite:
-
+<pre>
 python -m test.test_task1  # Lexer tests
 python -m test.test_task2  # Parser tests
 python -m test.test_task3  # Semantic analysis tests
 python -m test.test_task4  # Code generation tests
 python -m test.test_task5  # Array support tests
+</pre>
