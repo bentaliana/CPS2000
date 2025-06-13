@@ -1,0 +1,84 @@
+// PArIR for: Color Animation While Loop
+// Generated: 2025-06-01 20:30:30
+// ============================================================================
+
+.main
+push 4
+jmp
+halt
+push 2
+oframe
+push #PC+10
+jmp
+.color
+push 0
+alloc
+push 16777215
+irnd
+push 16777215
+sub
+ret
+push #PC+51
+jmp
+.cc
+push 3
+alloc
+push [0:0]
+print
+push [1:0]
+print
+push [2:0]
+print
+push 0
+push [2:0]
+gt
+push #PC+4
+cjmp
+push #PC+33
+jmp
+push 3
+oframe
+push 0
+push .color
+call
+push 0
+push 0
+st
+width
+irnd
+push 1
+push 0
+st
+height
+irnd
+push 2
+push 0
+st
+push [0:0]
+push [2:0]
+push [1:0]
+write
+push 1
+push [2:1]
+sub
+push 2
+push 1
+st
+cframe
+push #PC-36
+jmp
+push 1
+ret
+push 100000
+push 0
+push 0
+push 3
+push .cc
+call
+push 1
+push 0
+st
+push 1000
+delay
+cframe
+halt

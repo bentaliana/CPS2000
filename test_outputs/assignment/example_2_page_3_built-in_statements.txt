@@ -1,0 +1,114 @@
+TEST: Page 3 Built-in Statements
+TASK: ASSIGNMENT
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Assignment Page 3 Built-ins
+PURPOSE: Graphics and delay statements from assignment
+--------------------------------------------------------------------------------
+ASSIGNMENT EXAMPLE: Built-in statements from page 3
+
+INPUT PROGRAM:
+
+    __write 10, 14, #00ff00;
+    __delay 100;
+    __write_box 10, 14, 2, 2, #0000ff;
+
+    for (let i:int = 0; i<10; i=i+1) {
+        __print i;
+        __delay 1000;
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  Write
+    Literal: 10 (int)
+    Literal: 14 (int)
+    Literal: #00ff00 (colour)
+  Delay
+    Literal: 100 (int)
+  WriteBox
+    Literal: 10 (int)
+    Literal: 14 (int)
+    Literal: 2 (int)
+    Literal: 2 (int)
+    Literal: #0000ff (colour)
+  For
+    VarDecl: i : int
+      Literal: 0 (int)
+    BinaryOp: <
+      Identifier: i
+      Literal: 10 (int)
+    Assignment
+      Identifier: i
+      BinaryOp: +
+        Identifier: i
+        Literal: 1 (int)
+    Block
+      Print
+        Identifier: i
+      Delay
+        Literal: 1000 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 1
+oframe
+push #00ff00
+push 14
+push 10
+write
+push 100
+delay
+push #0000ff
+push 2
+push 2
+push 14
+push 10
+writebox
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 10
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+17
+jmp
+push 0
+oframe
+push [0:1]
+print
+push 1000
+delay
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-21
+jmp
+cframe
+cframe
+halt
+------------------------------------------------------------
+
+Successfully compiled 49 PArIR instructions
+
+COMPILATION: Successfully completed
+
+================================================================================
+

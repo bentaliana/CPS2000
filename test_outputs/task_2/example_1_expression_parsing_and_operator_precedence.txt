@@ -1,0 +1,102 @@
+TEST: Expression Parsing and Operator Precedence
+TASK: TASK_2
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Expression Parsing and Operator Precedence
+PURPOSE: Tests arithmetic, logical, relational operations and precedence rules
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    let a:int = 2 + 3 * 4;           // Should be 2 + (3 * 4) = 14
+    let b:bool = x < y and z > w;    // Should be (x < y) and (z > w)
+    let c:int = (a + b) * c / d;     // Parentheses override precedence
+    let d:bool = not x or y and z;   // Should be (not x) or (y and z)
+    let e:int = x % y + z * w;       // Should be (x % y) + (z * w)
+    let f:bool = a == b and c != d or e <= f;  // Mixed operators
+    let g:float = x as float + y as float;     // Cast expressions
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: a : int
+    BinaryOp: +
+      Literal: 2 (int)
+      BinaryOp: *
+        Literal: 3 (int)
+        Literal: 4 (int)
+  VarDecl: b : bool
+    BinaryOp: and
+      BinaryOp: <
+        Identifier: x
+        Identifier: y
+      BinaryOp: >
+        Identifier: z
+        Identifier: w
+  VarDecl: c : int
+    BinaryOp: /
+      BinaryOp: *
+        BinaryOp: +
+          Identifier: a
+          Identifier: b
+        Identifier: c
+      Identifier: d
+  VarDecl: d : bool
+    BinaryOp: or
+      UnaryOp: not
+        Identifier: x
+      BinaryOp: and
+        Identifier: y
+        Identifier: z
+  VarDecl: e : int
+    BinaryOp: +
+      BinaryOp: %
+        Identifier: x
+        Identifier: y
+      BinaryOp: *
+        Identifier: z
+        Identifier: w
+  VarDecl: f : bool
+    BinaryOp: or
+      BinaryOp: and
+        BinaryOp: ==
+          Identifier: a
+          Identifier: b
+        BinaryOp: !=
+          Identifier: c
+          Identifier: d
+      BinaryOp: <=
+        Identifier: e
+        Identifier: f
+  VarDecl: g : float
+    BinaryOp: +
+      Cast -> float
+        Identifier: x
+      Cast -> float
+        Identifier: y
+------------------------------------------------------------
+
+EXPRESSION STRUCTURE ANALYSIS:
+------------------------------------------------------------
+Variable a: BinaryOperation
+  Root operator: +
+Variable b: BinaryOperation
+  Root operator: and
+Variable c: BinaryOperation
+  Root operator: /
+Variable d: BinaryOperation
+  Root operator: or
+Variable e: BinaryOperation
+  Root operator: +
+Variable f: BinaryOperation
+  Root operator: or
+Variable g: BinaryOperation
+  Root operator: +
+
+Expression parsing completed - check AST for precedence correctness
+
+EXPRESSION PARSING: Successfully completed
+
+================================================================================
+

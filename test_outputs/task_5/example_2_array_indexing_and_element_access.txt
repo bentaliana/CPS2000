@@ -1,0 +1,366 @@
+TEST: Array Indexing and Element Access
+TASK: TASK_5
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Array Indexing and Element Access
+PURPOSE: Tests array element reading, writing, and index expressions
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    let numbers:int[5] = [10, 20, 30, 40, 50];
+    let colors:colour[3] = [#FF0000, #00FF00, #0000FF];
+    
+    // Simple array access
+    let first:int = numbers[0];
+    let last:int = numbers[4];
+    let middle:int = numbers[2];
+    
+    // Array element assignment
+    numbers[0] = 100;
+    numbers[1] = numbers[2] + 5;
+    numbers[3] = first * 2;
+    
+    // Complex indexing with expressions
+    let index:int = 1;
+    numbers[index] = 200;
+    numbers[index + 1] = 300;
+    
+    // Array access in expressions
+    let sum:int = numbers[0] + numbers[1];
+    let product:int = numbers[2] * numbers[3];
+    
+    // Color array operations
+    let red:colour = colors[0];
+    colors[1] = #FFFFFF;
+    colors[2] = red;
+    
+    // Array access in function calls and control structures
+    __print numbers[0];
+    __write 0, 0, colors[0];
+    
+    if (numbers[1] > 100) {
+        numbers[1] = numbers[1] / 2;
+    }
+    
+    for (let i:int = 0; i < 5; i = i + 1) {
+        __print numbers[i];
+        if (i < 3) {
+            __write i, 0, colors[i % 3];
+        }
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: numbers : int[5]
+    ArrayLiteral: [5 elements]
+      Literal: 10 (int)
+      Literal: 20 (int)
+      Literal: 30 (int)
+      Literal: 40 (int)
+      Literal: 50 (int)
+  VarDecl: colors : colour[3]
+    ArrayLiteral: [3 elements]
+      Literal: #FF0000 (colour)
+      Literal: #00FF00 (colour)
+      Literal: #0000FF (colour)
+  VarDecl: first : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  VarDecl: last : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 4 (int)
+  VarDecl: middle : int
+    IndexAccess
+      Identifier: numbers
+      Literal: 2 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+    Literal: 100 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 1 (int)
+    BinaryOp: +
+      IndexAccess
+        Identifier: numbers
+        Literal: 2 (int)
+      Literal: 5 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Literal: 3 (int)
+    BinaryOp: *
+      Identifier: first
+      Literal: 2 (int)
+  VarDecl: index : int
+    Literal: 1 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      Identifier: index
+    Literal: 200 (int)
+  Assignment
+    IndexAccess
+      Identifier: numbers
+      BinaryOp: +
+        Identifier: index
+        Literal: 1 (int)
+    Literal: 300 (int)
+  VarDecl: sum : int
+    BinaryOp: +
+      IndexAccess
+        Identifier: numbers
+        Literal: 0 (int)
+      IndexAccess
+        Identifier: numbers
+        Literal: 1 (int)
+  VarDecl: product : int
+    BinaryOp: *
+      IndexAccess
+        Identifier: numbers
+        Literal: 2 (int)
+      IndexAccess
+        Identifier: numbers
+        Literal: 3 (int)
+  VarDecl: red : colour
+    IndexAccess
+      Identifier: colors
+      Literal: 0 (int)
+  Assignment
+    IndexAccess
+      Identifier: colors
+      Literal: 1 (int)
+    Literal: #FFFFFF (colour)
+  Assignment
+    IndexAccess
+      Identifier: colors
+      Literal: 2 (int)
+    Identifier: red
+  Print
+    IndexAccess
+      Identifier: numbers
+      Literal: 0 (int)
+  Write
+    Literal: 0 (int)
+    Literal: 0 (int)
+    IndexAccess
+      Identifier: colors
+      Literal: 0 (int)
+... (45 more lines)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+.main
+push 4
+jmp
+halt
+push 16
+oframe
+push 50
+push 40
+push 30
+push 20
+push 10
+push 5
+push 1
+push 0
+sta
+push #0000FF
+push #00FF00
+push #FF0000
+push 3
+push 6
+push 0
+sta
+push 0
+push +[1:0]
+push 9
+push 0
+st
+push 4
+push +[1:0]
+push 10
+push 0
+st
+push 2
+push +[1:0]
+push 11
+push 0
+st
+push 100
+push 0
+push 1
+add
+push 0
+st
+push 5
+push 2
+push +[1:0]
+add
+push 1
+push 1
+add
+push 0
+st
+push 2
+push [9:0]
+mul
+push 3
+push 1
+add
+push 0
+st
+push 1
+push 12
+push 0
+st
+push 200
+push [12:0]
+push 1
+add
+push 0
+st
+push 300
+push 1
+push [12:0]
+add
+push 1
+add
+push 0
+st
+push 1
+push +[1:0]
+push 0
+push +[1:0]
+add
+push 13
+push 0
+st
+push 3
+push +[1:0]
+push 2
+push +[1:0]
+mul
+push 14
+push 0
+st
+push 0
+push +[6:0]
+push 15
+push 0
+st
+push #FFFFFF
+push 1
+push 6
+add
+push 0
+st
+push [15:0]
+push 2
+push 6
+add
+push 0
+st
+push 0
+push +[1:0]
+print
+push 0
+push +[6:0]
+push 0
+push 0
+write
+push 100
+push 1
+push +[1:0]
+gt
+push #PC+4
+cjmp
+push #PC+14
+jmp
+push 0
+oframe
+push 2
+push 1
+push +[1:1]
+div
+push 1
+push 1
+add
+push 1
+st
+cframe
+push 1
+oframe
+push 0
+push 0
+push 0
+st
+push 5
+push [0:0]
+lt
+push #PC+4
+cjmp
+push #PC+33
+jmp
+push 0
+oframe
+push [0:1]
+push +[1:2]
+print
+push 3
+push [0:1]
+lt
+push #PC+4
+cjmp
+push #PC+12
+jmp
+push 0
+oframe
+push 3
+push [0:2]
+mod
+push +[6:3]
+push 0
+push [0:2]
+write
+cframe
+cframe
+push 1
+push [0:0]
+add
+push 0
+push 0
+st
+push #PC-37
+jmp
+cframe
+cframe
+halt
+------------------------------------------------------------
+
+ARRAY ACCESS ANALYSIS:
+Array element reads (push +[...]): 15
+  push +[1:0]
+  push +[1:0]
+  push +[1:0]
+  push +[1:0]
+  push +[1:0]
+  ... and 10 more
+
+Array element writes: 19
+Index calculations (add operations): 12
+
+Array indexing and access successful
+
+ARRAY INDEXING: Successfully completed
+
+================================================================================
+

@@ -1,0 +1,82 @@
+TEST: Number and Colour Literal Recognition
+TASK: TASK_1
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Number and Colour Literal Recognition
+PURPOSE: Tests integer, float, and colour literal parsing with edge cases
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Integer literals
+    let a:int = 0;
+    let b:int = 42;
+    let c:int = 999999;
+    
+    // Float literals
+    let d:float = 0.0;
+    let e:float = 3.14159;
+    let f:float = 0.5;
+    let g:float = 123.456789;
+    
+    // Colour literals - various formats
+    let black:colour = #000000;
+    let white:colour = #FFFFFF;
+    let red:colour = #FF0000;
+    let mixed:colour = #Ab12Cd;
+    let lower:colour = #ff00aa;
+    
+    // Edge cases that should work
+    let tiny:float = 0.1;
+    let big:int = 2147483647;
+    
+    // Edge cases that should fail
+    let bad1:float = 123.;     // Invalid float
+    let bad2:colour = #GG0000; // Invalid hex
+    let bad3:colour = #FF00;   // Too short
+    
+
+LITERAL ANALYSIS:
+------------------------------------------------------------
+Integer literals: 4
+Float literals: 5
+Colour literals: 5
+Error tokens: 3
+
+INTEGER LITERALS:
+  0 (Line 3)
+  42 (Line 4)
+  999999 (Line 5)
+  2147483647 (Line 22)
+
+FLOAT LITERALS:
+  0.0 (Line 8)
+  3.14159 (Line 9)
+  0.5 (Line 10)
+  123.456789 (Line 11)
+  0.1 (Line 21)
+
+COLOUR LITERALS:
+  #000000 (Line 14)
+  #FFFFFF (Line 15)
+  #FF0000 (Line 16)
+  #Ab12Cd (Line 17)
+  #ff00aa (Line 18)
+
+ERROR TOKENS (Expected for edge cases):
+  ERROR_INVALID_FLOAT: '123.' (Line 25)
+  ERROR_INVALID_COLOUR: '#GG0000' (Line 26)
+  ERROR_INVALID_COLOUR: '#' (Line 27)
+
+VALIDATION:
+Integer literals: 4/4 correct
+Float literals: 5/5 correct
+Colour literals: 5/5 correct
+Error tokens: 3 (minimum 2) sufficient
+
+Literal recognition successful - all types correctly parsed
+
+LITERAL RECOGNITION: Successfully completed
+
+================================================================================
+

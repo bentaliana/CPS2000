@@ -1,0 +1,122 @@
+TEST: Function Declaration Parsing
+TASK: TASK_2
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Function Declaration Parsing
+PURPOSE: Tests function declarations, parameters, return types, and bodies
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Simple function
+    fun simple() -> int {
+        return 42;
+    }
+    
+    // Function with parameters
+    fun add(x:int, y:int) -> int {
+        return x + y;
+    }
+    
+    // Function with mixed parameter types
+    fun complex(a:int, b:float, c:bool, d:colour) -> bool {
+        let result:bool = a > 0 and b > 0.0;
+        if (c) {
+            __write 0, 0, d;
+        }
+        return result;
+    }
+    
+    // Function with array parameter (Task 5 preview)
+    fun process_array(data:int[10]) -> int {
+        return data[0];
+    }
+    
+    // Recursive function
+    fun factorial(n:int) -> int {
+        if (n <= 1) {
+            return 1;
+        }
+        return n * factorial(n - 1);
+    }
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  FuncDecl: simple() -> int
+    Block
+      Return
+        Literal: 42 (int)
+  FuncDecl: add(x:int, y:int) -> int
+    Param: x : int
+    Param: y : int
+    Block
+      Return
+        BinaryOp: +
+          Identifier: x
+          Identifier: y
+  FuncDecl: complex(a:int, b:float, c:bool, d:colour) -> bool
+    Param: a : int
+    Param: b : float
+    Param: c : bool
+    Param: d : colour
+    Block
+      VarDecl: result : bool
+        BinaryOp: and
+          BinaryOp: >
+            Identifier: a
+            Literal: 0 (int)
+          BinaryOp: >
+            Identifier: b
+            Literal: 0.0 (float)
+      If
+        Identifier: c
+        Block
+          Write
+            Literal: 0 (int)
+            Literal: 0 (int)
+            Identifier: d
+      Return
+        Identifier: result
+  FuncDecl: process_array(data:int[10]) -> int
+    Param: data : int[10]
+    Block
+      Return
+        IndexAccess
+          Identifier: data
+          Literal: 0 (int)
+  FuncDecl: factorial(n:int) -> int
+    Param: n : int
+    Block
+      If
+        BinaryOp: <=
+          Identifier: n
+          Literal: 1 (int)
+        Block
+          Return
+            Literal: 1 (int)
+      Return
+        BinaryOp: *
+          Identifier: n
+          FuncCall: factorial
+            BinaryOp: -
+              Identifier: n
+              Literal: 1 (int)
+------------------------------------------------------------
+
+FUNCTION ANALYSIS:
+------------------------------------------------------------
+Function 'simple': 0 parameters -> int
+Function 'add': 2 parameters -> int
+Function 'complex': 4 parameters -> bool
+Function 'process_array': 1 parameters -> int
+Function 'factorial': 1 parameters -> int
+
+Total functions parsed: 5
+Function declaration parsing completed successfully
+
+FUNCTION PARSING: Successfully completed
+
+================================================================================
+

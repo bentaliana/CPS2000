@@ -1,0 +1,62 @@
+TEST: Syntax Error Detection and Recovery
+TASK: TASK_2
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Syntax Error Detection and Recovery
+PURPOSE: Tests detection of various syntax errors with error recovery
+--------------------------------------------------------------------------------
+SYNTAX ERROR TEST CASES:
+============================================================
+
+Test Case 1: Missing semicolon
+Input: let x:int = 42 let y:int = 24;
+Error detected: Parser errors: [UnexpectedTokenError("Parser Error at line 1, col 16: Expected ';' after variable declaration, but found 'let' (LET) (found 'let')")]
+----------------------------------------
+
+Test Case 2: Unbalanced parentheses
+Input: if (x > 0 { __print x; }
+Error detected: Parser errors: [UnexpectedTokenError("Parser Error at line 1, col 11: Expected ')' after if condition, but found '{' (LBRACE) (found '{')")]
+----------------------------------------
+
+Test Case 3: Missing function body
+Input: fun test() -> int;
+Error detected: Parser errors: [UnexpectedTokenError("Parser Error at line 1, col 18: Expected '{', but found ';' (SEMICOLON) (found ';')")]
+----------------------------------------
+
+Test Case 4: Invalid expression
+Input: let x:int = 5 +;
+Error detected: Parser errors: [UnexpectedTokenError("Parser Error at line 1, col 16: Expected expression, but found ';' (SEMICOLON) (found ';')")]
+----------------------------------------
+
+Test Case 5: Missing type annotation
+Input: let x = 42;
+Error detected: Parser errors: [UnexpectedTokenError("Parser Error at line 1, col 7: Expected ':' after variable name, but found '=' (EQUAL) (found '=')")]
+----------------------------------------
+
+Test Case 6: Invalid for loop
+Input: for (let i:int = 0 i < 10) { __print i; }
+Error detected: Parser errors: [UnexpectedTokenError("Parser Error at line 1, col 20: Expected ';' after for loop initialization, but found 'i' (IDENTIFIER) (found 'i')")]
+----------------------------------------
+
+Test Case 7: Unclosed block
+Input: if (true) { __print x;
+Error detected: Parser errors: [UnexpectedEOFError("Parser Error at line 1, col 23: Unexpected end of file. Expected '}' (found '')")]
+----------------------------------------
+
+Test Case 8: Missing return type
+Input: fun test() { return 5; }
+Error detected: Parser errors: [UnexpectedTokenError("Parser Error at line 1, col 12: Expected '->' before return type, but found '{' (LBRACE) (found '{')")]
+----------------------------------------
+
+ERROR DETECTION SUMMARY:
+Test cases: 8
+Errors detected: 8
+Detection rate: 100.0%
+
+Syntax error detection working effectively
+
+ERROR DETECTION: Successfully completed
+
+================================================================================
+

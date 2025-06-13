@@ -1,0 +1,186 @@
+TEST: Array Declarations and Initialization
+TASK: TASK_5
+Generated: 2025-06-01 20:30:29
+================================================================================
+
+TEST: Array Declarations and Initialization
+PURPOSE: Tests fixed-size arrays, dynamic arrays, and array literal initialization
+--------------------------------------------------------------------------------
+INPUT PROGRAM:
+
+    // Fixed-size array declarations
+    let numbers:int[5] = [1, 2, 3, 4, 5];
+    let floats:float[3] = [1.1, 2.2, 3.3];
+    let flags:bool[4] = [true, false, true, false];
+    let colors:colour[2] = [#FF0000, #00FF00];
+    
+    // Dynamic array declarations (size inferred from initializer)
+    let dynamic_ints:int[] = [10, 20, 30, 40, 50, 60];
+    let dynamic_colors:colour[] = [#000000, #FFFFFF, #FF0000, #00FF00, #0000FF];
+    
+    // Empty array declaration (fixed size, no initializer)
+    let empty_array:int[10];
+    
+    // Single element arrays
+    let single_int:int[] = [42];
+    let single_color:colour[] = [#ABCDEF];
+    
+    // Mixed expressions in initializers
+    let calculated:int[3] = [1 + 1, 2 * 3, 4 + 5];
+    
+
+PROGRAM AST:
+------------------------------------------------------------
+Program
+  VarDecl: numbers : int[5]
+    ArrayLiteral: [5 elements]
+      Literal: 1 (int)
+      Literal: 2 (int)
+      Literal: 3 (int)
+      Literal: 4 (int)
+      Literal: 5 (int)
+  VarDecl: floats : float[3]
+    ArrayLiteral: [3 elements]
+      Literal: 1.1 (float)
+      Literal: 2.2 (float)
+      Literal: 3.3 (float)
+  VarDecl: flags : bool[4]
+    ArrayLiteral: [4 elements]
+      Literal: True (bool)
+      Literal: False (bool)
+      Literal: True (bool)
+      Literal: False (bool)
+  VarDecl: colors : colour[2]
+    ArrayLiteral: [2 elements]
+      Literal: #FF0000 (colour)
+      Literal: #00FF00 (colour)
+  VarDecl: dynamic_ints : int[6]
+    ArrayLiteral: [6 elements]
+      Literal: 10 (int)
+      Literal: 20 (int)
+      Literal: 30 (int)
+      Literal: 40 (int)
+      Literal: 50 (int)
+      Literal: 60 (int)
+  VarDecl: dynamic_colors : colour[5]
+    ArrayLiteral: [5 elements]
+      Literal: #000000 (colour)
+      Literal: #FFFFFF (colour)
+      Literal: #FF0000 (colour)
+      Literal: #00FF00 (colour)
+      Literal: #0000FF (colour)
+  VarDecl: empty_array : int[10]
+  VarDecl: single_int : int[1]
+    ArrayLiteral: [1 elements]
+      Literal: 42 (int)
+  VarDecl: single_color : colour[1]
+    ArrayLiteral: [1 elements]
+      Literal: #ABCDEF (colour)
+  VarDecl: calculated : int[3]
+    ArrayLiteral: [3 elements]
+      BinaryOp: +
+        Literal: 1 (int)
+        Literal: 1 (int)
+      BinaryOp: *
+        Literal: 2 (int)
+        Literal: 3 (int)
+      BinaryOp: +
+        Literal: 4 (int)
+        Literal: 5 (int)
+------------------------------------------------------------
+
+GENERATED PArIR:
+------------------------------------------------------------
+ .main
+ push 4
+ jmp
+ halt
+ push 41
+ oframe
+ push 5
+ push 4
+ push 3
+ push 2
+ push 1
+ push 5
+ push 1
+ push 0
+ sta
+ push 3.3
+ push 2.2
+ push 1.1
+ push 3
+ push 6
+ push 0
+ sta
+ push 0
+ push 1
+ push 0
+ push 1
+ push 4
+ push 9
+ push 0
+ sta
+ push #00FF00
+ push #FF0000
+ push 2
+ push 13
+ push 0
+ sta
+ push 60
+ push 50
+ push 40
+ push 30
+ push 20
+ push 10
+ push 6
+ push 15
+ push 0
+ sta
+ push #0000FF
+ push #00FF00
+ push #FF0000
+ push #FFFFFF
+ push #000000
+ push 5
+ push 21
+ push 0
+ sta
+ push 42
+ push 1
+ push 36
+ push 0
+ sta
+ push #ABCDEF
+ push 1
+ push 37
+ push 0
+ sta
+ push 5
+ push 4
+ add
+ push 3
+ push 2
+ mul
+ push 1
+ push 1
+ add
+ push 3
+ push 38
+ push 0
+ sta
+ cframe
+ halt
+------------------------------------------------------------
+
+ARRAY INSTRUCTION ANALYSIS:
+Array store operations (sta): 9
+Array element access (push +[...]): 0
+Value push operations: 54
+
+Array declaration and initialization successful
+
+ARRAY DECLARATIONS: Successfully completed
+
+================================================================================
+
